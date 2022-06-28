@@ -1,0 +1,51 @@
+[package]
+name = "integritee-cli"
+version = "0.8.0"
+authors = ["Integritee AG <hello@integritee.network>"]
+edition = "2018"
+
+[dependencies]
+log = "0.4"
+env_logger = "0.9"
+hex = "0.4.2"
+json = "0.12.0"
+substrate-bip39 = "0.4.2"
+tiny-bip39 = "0.6.2"
+serde_json = "1.0"
+clap = { version = "3.1.6", features = ["derive"]}
+primitive-types = { version = "0.11.1", default-features = false, features = ["codec"] }
+base58 			        = "0.1"
+chrono = "*"
+blake2-rfc      = { version = "0.2.18", default-features = false}
+geojson = "0.17"
+ws = { version = "0.9.1", features = ["ssl"] }
+serde = { version = "1.0", features = ["derive"] }
+codec = { version = "3.0.0", package = "parity-scale-codec", features = ["derive"] }
+sgx_crypto_helper = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+
+# scs / integritee
+substrate-api-client = { features = ["ws-client"], git = "https://github.com/scs/substrate-api-client", branch = "polkadot-v0.9.20" }
+substrate-client-keystore = { git = "https://github.com/scs/substrate-api-client", branch = "polkadot-v0.9.20" }
+my-node-runtime = { package = "litmus-parachain-runtime", git = "https://github.com/litentry/litentry-parachain", rev = "40c99332cb4ec1e4381d52ce0546e11e305754a7" }
+teerex-primitives = { git = "https://github.com/integritee-network/pallets.git", branch = "master" }
+
+# substrate dependencies
+sp-runtime = { version = "6.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.20" }
+sc-keystore = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.20" }
+pallet-balances = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.20" }
+frame-system = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.20" }
+sp-keyring = { version = "6.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.20" }
+sp-application-crypto = { version = "6.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.20" }
+sp-core = { version = "6.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.20" }
+
+# local dependencies
+itp-node-api-extensions = { path = "../core-primitives/node-api-extensions" }
+itp-sgx-crypto = { path = "../core-primitives/sgx/crypto" }
+itp-types = { path = "../core-primitives/types" }
+itp-utils = { path = "../core-primitives/utils" }
+ita-stf = { path = "../app-libs/stf" }
+itc-rpc-client = { path = "../core/rpc-client" }
+
+# litentry
+litentry-primitives = { path = "../litentry-primitives" }
+pallet-sgx-account-linker = { default-features = false, git = "https://github.com/litentry/sgx-runtime", branch = "master" }

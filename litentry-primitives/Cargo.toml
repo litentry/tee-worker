@@ -1,0 +1,8 @@
+[package]
+name = "litentry-primitives"
+version = "0.8.0"
+authors = ["Litentry Technologies GmbH <info@litentry.com>"]
+edition = "2018"
+
+[features]
+production = []

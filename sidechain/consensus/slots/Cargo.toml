@@ -1,0 +1,62 @@
+[package]
+name = "its-consensus-slots"
+version = "0.8.0"
+authors = ["Integritee AG <hello@integritee.network>"]
+edition = "2018"
+
+
+[dependencies]
+log = { version = "0.4.14", default-features = false }
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
+derive_more = "0.99.16"
+lazy_static = { version = "1.1.0", features = ["spin_no_std"] }
+
+# only for slot-stream
+futures = { version = "0.3.9", optional = true }
+futures-timer = { version = "3.0.1", optional = true }
+
+# sgx deps
+sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true, features = ["untrusted_time"] }
+
+# substrate deps
+sp-consensus-slots = { version = "0.10.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.20"}
+sp-runtime = { version = "6.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.20"}
+
+# local deps
+itp-settings = { path = "../../../core-primitives/settings" }
+itp-sgx-io = { path = "../../../core-primitives/sgx/io", default-features = false }
+itp-time-utils = { path = "../../../core-primitives/time-utils", default-features = false }
+itp-types = { path = "../../../core-primitives/types", default-features = false }
+its-consensus-common = { path = "../common", default-features = false }
+its-primitives = { path = "../../primitives", default-features = false }
+
+[dev-dependencies]
+its-test = { path = "../../test" }
+sp-keyring = { version = "6.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.20" }
+tokio = "*"
+
+
+[features]
+default = ["std"]
+std = [
+    "codec/std",
+    "log/std",
+    # only for slot-stream
+    "futures",
+    "futures-timer",
+    # substrate
+    "sp-consensus-slots/std",
+    "sp-runtime/std",
+    # local
+    "itp-sgx-io/std",
+    "itp-time-utils/std",
+    "itp-types/std",
+    "its-consensus-common/std",
+    "its-primitives/std",
+]
+sgx = [
+    "itp-sgx-io/sgx",
+    "itp-time-utils/sgx",
+    "its-consensus-common/sgx",
+    "sgx_tstd",
+]

@@ -1,0 +1,11 @@
+.git
+.githooks
+.github
+.idea
+ci/
+docker/
+docs/
+local-setup/
+scripts/
+*.Dockerfile
+Dockerfile

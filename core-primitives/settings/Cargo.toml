@@ -1,0 +1,11 @@
+[package]
+name = "itp-settings"
+version = "0.8.0"
+authors = ["Integritee AG <hello@integritee.network>"]
+edition = "2018"
+
+[dependencies]
+
+
+[features]
+production = []
