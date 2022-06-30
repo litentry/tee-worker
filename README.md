@@ -1,8 +1,8 @@
-# integritee-worker
+# tee worker
 
-Integritee worker for Integritee [node](https://github.com/integritee-network/integritee-node) or [parachain](https://github.com/integritee-network/parachain)
+This tee-worker is based on [Integritee](https://integritee.network)'s [worker](https://github.com/integritee-network/worker)
 
-This is part of [Integritee](https://integritee.network)
+The following is the original README from integritee-worker.
 
 ## Build and Run
 Please see our [Integritee Book](https://book.integritee.network/howto_worker.html) to learn how to build and run this.
