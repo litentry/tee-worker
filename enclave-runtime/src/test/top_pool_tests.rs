@@ -38,18 +38,24 @@ use itp_settings::node::{SHIELD_FUNDS, TEEREX_MODULE};
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_executor::enclave_signer::StfEnclaveSigner;
 use itp_test::{
-	builders::parentchain_block_builder::ParentchainBlockBuilder,
+	builders::{
+		parentchain_block_builder::ParentchainBlockBuilder,
+		parentchain_header_builder::ParentchainHeaderBuilder,
+	},
 	mock::metrics_ocall_mock::MetricsOCallMock,
 };
 use itp_top_pool_author::{author::AuthorTopFilter, traits::AuthorApi};
-use itp_types::{AccountId, Block, ShardIdentifier, ShieldFundsFn};
+use itp_types::{
+	AccountId, Block, ParentchainExtrinsicParams, ParentchainExtrinsicParamsBuilder,
+	ParentchainUncheckedExtrinsic, ShardIdentifier, ShieldFundsFn, H256,
+};
 use jsonrpc_core::futures::executor;
 use log::*;
 use sgx_crypto_helper::RsaKeyPair;
 use sp_core::{ed25519, Pair};
 use sp_runtime::{MultiSignature, OpaqueExtrinsic};
 use std::{sync::Arc, vec::Vec};
-use substrate_api_client::{GenericAddress, GenericExtra, UncheckedExtrinsicV4};
+use substrate_api_client::{ExtrinsicParams, GenericAddress};
 
 pub fn process_indirect_call_in_top_pool() {
 	let _ = env_logger::builder().is_test(true).try_init();
@@ -58,8 +64,9 @@ pub fn process_indirect_call_in_top_pool() {
 	let signer = TestSigner::from_seed(b"42315678901234567890123456789012");
 	let shielding_key = TestShieldingKey::new().unwrap();
 	let shielding_key_repo = Arc::new(TestShieldingKeyRepo::new(shielding_key));
+	let header = ParentchainHeaderBuilder::default().build();
 
-	let ocall_api = create_ocall_api(&signer);
+	let ocall_api = create_ocall_api(&header, &signer);
 
 	let state_handler = Arc::new(TestStateHandler::default());
 	let (_, shard_id) = init_state(state_handler.as_ref(), signer.public().into());
@@ -88,8 +95,9 @@ pub fn submit_shielding_call_to_top_pool() {
 	let signer = TestSigner::from_seed(b"42315678901234567890123456789012");
 	let shielding_key = TestShieldingKey::new().unwrap();
 	let shielding_key_repo = Arc::new(TestShieldingKeyRepo::new(shielding_key.clone()));
+	let header = ParentchainHeaderBuilder::default().build();
 
-	let ocall_api = create_ocall_api(&signer);
+	let ocall_api = create_ocall_api(&header, &signer);
 	let mr_enclave = ocall_api.get_mrenclave_of_self().unwrap();
 
 	let state_handler = Arc::new(TestStateHandler::default());
@@ -157,12 +165,20 @@ fn create_shielding_call_extrinsic<ShieldingKey: ShieldingCryptoEncrypt>(
 	let test_signer = ed25519::Pair::from_seed(b"33345678901234567890123456789012");
 	let signature = test_signer.sign(&[0u8]);
 
+	let default_extra_for_test = ParentchainExtrinsicParams::new(
+		0,
+		0,
+		0,
+		H256::default(),
+		ParentchainExtrinsicParamsBuilder::default(),
+	);
+
 	let opaque_extrinsic = OpaqueExtrinsic::from_bytes(
-		UncheckedExtrinsicV4::<ShieldFundsFn>::new_signed(
+		ParentchainUncheckedExtrinsic::<ShieldFundsFn>::new_signed(
 			([TEEREX_MODULE, SHIELD_FUNDS], target_account, 1000u128, shard),
 			GenericAddress::Address32([1u8; 32]),
 			MultiSignature::Ed25519(signature),
-			GenericExtra::default(),
+			default_extra_for_test.signed_extra(),
 		)
 		.encode()
 		.as_slice(),

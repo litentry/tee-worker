@@ -33,11 +33,11 @@ use itp_settings::node::{TEEREX_MODULE, UNSHIELD_FUNDS};
 use itp_storage::storage_value_key;
 use itp_types::OpaqueCall;
 use itp_utils::stringify::account_id_to_string;
-use its_primitives::types::{BlockHash, BlockNumber as SidechainBlockNumber, Timestamp};
 use its_state::SidechainSystemExt;
 use log::*;
 use sgx_externalities::SgxExternalitiesTrait;
 use sgx_runtime::Runtime;
+use sidechain_primitives::types::{BlockHash, BlockNumber as SidechainBlockNumber, Timestamp};
 use sp_io::hashing::blake2_256;
 use sp_runtime::MultiAddress;
 use std::{prelude::v1::*, vec};
@@ -92,7 +92,8 @@ impl Stf {
 			Getter::trusted(g) => match g.getter {
 				TrustedGetter::free_balance(who) =>
 					if let Some(info) = get_account_info(&who) {
-						debug!("AccountInfo for {:x?} is {:?}", who.encode(), info);
+						debug!("TrustedGetter free_balance");
+						debug!("AccountInfo for {} is {:?}", account_id_to_string(&who), info);
 						debug!("Account free balance is {}", info.data.free);
 						Some(info.data.free.encode())
 					} else {
@@ -100,7 +101,8 @@ impl Stf {
 					},
 				TrustedGetter::reserved_balance(who) =>
 					if let Some(info) = get_account_info(&who) {
-						debug!("AccountInfo for {:x?} is {:?}", who.encode(), info);
+						debug!("TrustedGetter reserved_balance");
+						debug!("AccountInfo for {} is {:?}", account_id_to_string(&who), info);
 						debug!("Account reserved balance is {}", info.data.reserved);
 						Some(info.data.reserved.encode())
 					} else {
@@ -108,7 +110,8 @@ impl Stf {
 					},
 				TrustedGetter::nonce(who) =>
 					if let Some(info) = get_account_info(&who) {
-						debug!("AccountInfo for {:x?} is {:?}", who.encode(), info);
+						debug!("TrustedGetter nonce");
+						debug!("AccountInfo for {} is {:?}", account_id_to_string(&who), info);
 						debug!("Account nonce is {}", info.nonce);
 						Some(info.nonce.encode())
 					} else {
@@ -157,8 +160,8 @@ impl Stf {
 				TrustedCall::balance_set_balance(root, who, free_balance, reserved_balance) => {
 					ensure_root(root)?;
 					debug!(
-						"balance_set_balance({:x?}, {}, {})",
-						who.encode(),
+						"balance_set_balance({}, {}, {})",
+						account_id_to_string(&who),
 						free_balance,
 						reserved_balance
 					);
@@ -173,7 +176,12 @@ impl Stf {
 				},
 				TrustedCall::balance_transfer(from, to, value) => {
 					let origin = sgx_runtime::Origin::signed(from.clone());
-					debug!("balance_transfer({:x?}, {:x?}, {})", from.encode(), to.encode(), value);
+					debug!(
+						"balance_transfer({}, {}, {})",
+						account_id_to_string(&from),
+						account_id_to_string(&to),
+						value
+					);
 					if let Some(info) = get_account_info(&from) {
 						debug!("sender balance is {}", info.data.free);
 					} else {
@@ -189,9 +197,9 @@ impl Stf {
 				},
 				TrustedCall::balance_unshield(account_incognito, beneficiary, value, shard) => {
 					debug!(
-						"balance_unshield({:x?}, {:x?}, {}, {})",
-						account_incognito.encode(),
-						beneficiary.encode(),
+						"balance_unshield({}, {}, {}, {})",
+						account_id_to_string(&account_incognito),
+						account_id_to_string(&beneficiary),
 						value,
 						shard
 					);
@@ -208,7 +216,7 @@ impl Stf {
 				},
 				TrustedCall::balance_shield(enclave_account, who, value) => {
 					ensure_enclave_signer_account(&enclave_account)?;
-					debug!("balance_shield({:x?}, {})", who.encode(), value);
+					debug!("balance_shield({}, {})", account_id_to_string(&who), value);
 					Self::shield_funds(who, value)?;
 					Ok(())
 				},
@@ -297,13 +305,20 @@ impl Stf {
 			}
 			.dispatch_bypass_filter(sgx_runtime::Origin::root())
 			.map_err(|_| StfError::Dispatch("shield_funds".to_string()))?,
-			None => sgx_runtime::BalancesCall::<Runtime>::set_balance {
-				who: MultiAddress::Id(account),
-				new_free: amount,
-				new_reserved: 0,
-			}
-			.dispatch_bypass_filter(sgx_runtime::Origin::root())
-			.map_err(|_| StfError::Dispatch("shield_funds::set_balance".to_string()))?,
+			None => {
+				debug!(
+					"Account {} does not exist yet, initializing by setting free balance to {}",
+					account_id_to_string(&account),
+					amount
+				);
+				sgx_runtime::BalancesCall::<Runtime>::set_balance {
+					who: MultiAddress::Id(account),
+					new_free: amount,
+					new_reserved: 0,
+				}
+				.dispatch_bypass_filter(sgx_runtime::Origin::root())
+				.map_err(|_| StfError::Dispatch("shield_funds::set_balance".to_string()))?
+			},
 		};
 		Ok(())
 	}
@@ -394,7 +409,7 @@ impl Stf {
 	pub fn account_nonce(ext: &mut impl SgxExternalitiesTrait, account: &AccountId) -> Index {
 		ext.execute_with(|| {
 			let nonce = account_nonce(account);
-			debug!("Account {:?} nonce is {}", account.encode(), nonce);
+			debug!("Account {} nonce is {}", account_id_to_string(&account), nonce);
 			nonce
 		})
 	}
