@@ -23,7 +23,7 @@ lazy_static = {version = "1.1.0", features = ["spin_no_std"]}
 
 # internal dependencies
 itc-rest-client = { path = "../rest-client", default-features = false }
-itp-types = {path = "../../core-primitives/types", default-features = false }
+itp-types = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "master" }
 
 itp-ocall-api = {path = "../../core-primitives/ocall-api", default-features = false }
 itp-extrinsics-factory = {path = "../../core-primitives/extrinsics-factory", default-features = false}
