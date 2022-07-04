@@ -36,12 +36,13 @@ git clone -q "$UPSTREAM" worker
 cd worker
 echo "generating patch ..."
 git diff $OLD_COMMIT HEAD > "$ROOTDIR/upstream.patch"
+git rev-parse --short HEAD > "$ROOTDIR/upstream_commit"
 
 echo "==============================================="
+echo "upstream_commit is updated."
 echo "upstream.patch is generated, to apply it, run:"
 echo '  git am -3 --exclude=Cargo.lock --exclude=enclave-runtime/Cargo.lock < upstream.patch'
 echo "after that:"
 echo "- manually resolve any conflicts"
-echo "- update upstream_commit after merging"
 echo "- optionally update both Cargo.lock files"
 echo "==============================================="
