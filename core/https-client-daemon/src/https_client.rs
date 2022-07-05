@@ -91,7 +91,7 @@ impl<T: EnclaveOnChainOCallApi, S: CreateExtrinsics> HttpsRestClient<T, S> {
 
 		let tx = self
 			.create_extrinsics
-			.create_extrinsics(calls.as_slice())
+			.create_extrinsics(calls.as_slice(), None)
 			.map_err(|_| Error::FailedCreateExtrinsic)?;
 
 		let result =

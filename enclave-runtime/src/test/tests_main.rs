@@ -1,4 +1,5 @@
 /*
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
 	Copyright 2021 Integritee AG and Supercomputing Systems AG
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -76,7 +77,10 @@ use sidechain_primitives::{
 	},
 	types::block::SignedBlock,
 };
-use sp_core::{crypto::Pair, ed25519 as spEd25519, H256};
+use sp_core::{
+	crypto::{AccountId32, Pair},
+	ed25519 as spEd25519, H256,
+};
 use sp_runtime::traits::Header as HeaderT;
 use std::{string::String, sync::Arc, vec::Vec};
 

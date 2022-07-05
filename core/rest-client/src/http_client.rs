@@ -18,6 +18,9 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+use base64_sgx as base64;
+
 use crate::{error::Error, Query, RestPath};
 use http::{
 	header::{HeaderName, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE, USER_AGENT},
