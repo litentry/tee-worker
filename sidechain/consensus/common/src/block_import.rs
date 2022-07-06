@@ -21,12 +21,12 @@ use crate::{Error, Verifier};
 use codec::Decode;
 use itp_ocall_api::EnclaveSidechainOCallApi;
 use itp_sgx_crypto::StateCrypto;
-use its_primitives::traits::{
+use its_state::{LastBlockExt, SidechainState};
+use log::*;
+use sidechain_primitives::traits::{
 	Block as SidechainBlockTrait, BlockData, Header as HeaderTrait, ShardIdentifierFor,
 	SignedBlock as SignedSidechainBlockTrait,
 };
-use its_state::{LastBlockExt, SidechainState};
-use log::*;
 use sp_runtime::traits::Block as ParentchainBlockTrait;
 use std::vec::Vec;
 
@@ -113,8 +113,9 @@ where
 		let shard = sidechain_block.header().shard_id();
 
 		debug!(
-			"Attempting to import sidechain block (number: {}, parentchain hash: {:?})",
+			"Attempting to import sidechain block (number: {}, hash: {:?}, parentchain hash: {:?})",
 			signed_sidechain_block.block().header().block_number(),
+			signed_sidechain_block.block().hash(),
 			signed_sidechain_block.block().block_data().layer_one_head()
 		);
 
@@ -127,7 +128,6 @@ where
 
 		let block_import_params = self.verify_import(&shard, |state| {
 			let verifier = self.verifier(state);
-
 			verifier.verify(
 				signed_sidechain_block.clone(),
 				&peeked_parentchain_header,

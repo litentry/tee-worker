@@ -14,7 +14,7 @@ cleanup() {
 #
 # The patch will be generated under tee-worker/upstream.patch
 # to apply this patch:
-# git apply --reject upstream.patch
+# git am -3 --exclude=Cargo.lock --exclude=enclave-runtime/Cargo.lock < upstream.patch
 
 UPSTREAM="https://github.com/integritee-network/worker"
 ROOTDIR=$(git rev-parse --show-toplevel)
@@ -36,10 +36,13 @@ git clone -q "$UPSTREAM" worker
 cd worker
 echo "generating patch ..."
 git diff $OLD_COMMIT HEAD > "$ROOTDIR/upstream.patch"
+git rev-parse --short HEAD > "$ROOTDIR/upstream_commit"
 
-echo "====================================="
-echo "upstream.patch is generated, please:"
-echo '- run `git apply --reject upstream.patch` to apply it'
-echo "- manually resolve any rejected parts"
-echo "- be sure to update upstream_commit after merging"
-echo "====================================="
+echo "==============================================="
+echo "upstream_commit is updated."
+echo "upstream.patch is generated, to apply it, run:"
+echo '  git am -3 --exclude=Cargo.lock --exclude=enclave-runtime/Cargo.lock < upstream.patch'
+echo "after that:"
+echo "- manually resolve any conflicts"
+echo "- optionally update both Cargo.lock files"
+echo "==============================================="

@@ -38,6 +38,9 @@ pub mod files {
 
 	pub const RA_DUMP_CERT_DER_FILE: &str = "ra_dump_cert.der";
 
+	pub const ENCLAVE_CERTIFICATE_FILE_PATH: &str = "cert.pem";
+	pub const ENCLAVE_CERTIFICATE_PRIVATE_KEY_PATH: &str = "private_key.pem";
+
 	// used by worker and enclave
 	pub const SHARDS_PATH: &str = "shards";
 	pub const ENCRYPTED_STATE_FILE: &str = "state.bin";
@@ -111,6 +114,6 @@ pub mod node {
 	pub static SIDECHAIN_MODULE: u8 = 91u8;
 	pub static PROPOSED_SIDECHAIN_BLOCK: u8 = 0u8;
 	// bump this to be consistent with litentry-parachain runtime
-	pub static RUNTIME_SPEC_VERSION: u32 = 9071;
+	pub static RUNTIME_SPEC_VERSION: u32 = 9080;
 	pub static RUNTIME_TRANSACTION_VERSION: u32 = 1;
 }

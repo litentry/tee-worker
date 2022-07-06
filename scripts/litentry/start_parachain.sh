@@ -5,6 +5,7 @@ PARACHAIN_DIR=/tmp/litentry-parachain
 [ -d "$PARACHAIN_DIR" ] && rm -rf "$PARACHAIN_DIR"
 git clone https://github.com/litentry/litentry-parachain "$PARACHAIN_DIR"
 cd "$PARACHAIN_DIR"
+git checkout tee-dev
 
 cp -f docker/litmus-parachain-launch-config.tee-dev.yml docker/litmus-parachain-launch-config.yml
 
