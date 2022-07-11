@@ -73,19 +73,18 @@ impl<T: EnclaveOnChainOCallApi, S: CreateExtrinsics> HttpsRestClient<T, S> {
 			.get::<String, ResponseBody>(request.request_str)
 			.map_err(|e| Error::Other(e.into()))?;
 
-		debug!("https get result as ( {:?},)", response);
+		error!("https get result as ( {:?},)", response);
 
 		// TODO: rewrite this, potentially restructure/refactor
 		//       additionally, litentry-parachain doesn't have such module/method anyway
-		let hardcode_score = 1234_u32;
+		// let hardcode_score = 1234_u32;
 
-		let credit_score_module_id = 60;
+		let credit_score_module_id = 64;
 		let report_credit_score_method_id = 0;
 
 		let call = OpaqueCall::from_tuple(&(
 			[credit_score_module_id, report_credit_score_method_id],
 			request.account_id,
-			hardcode_score,
 		));
 		let calls = std::vec![call];
 
@@ -96,7 +95,7 @@ impl<T: EnclaveOnChainOCallApi, S: CreateExtrinsics> HttpsRestClient<T, S> {
 
 		let result =
 			self.ocall_api.send_to_parentchain(tx).map_err(|_| Error::FailedSendExtrinsic)?;
-		debug!("https daemon send tx result as ( {:?},)", result);
+		error!("https daemon send tx result as ( {:?},)", result);
 
 		Ok(())
 	}
