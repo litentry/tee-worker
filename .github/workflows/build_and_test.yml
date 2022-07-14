@@ -127,7 +127,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test: [M6, M8, Sidechain]
+        test: [M6, M8, Sidechain, HTTPSTest]
         include:
           - test: M6
             demo_name: m6_demo_shielding_unshielding
@@ -138,6 +138,9 @@ jobs:
           - test: Sidechain
             demo_name: sidechain_demo
             demo_script: sidechain.sh
+          - test: HTTPSTest
+            demo_name: https_integration_test
+            demo_script: https_test.sh
 
     env:
       BIN_DIR: bin
