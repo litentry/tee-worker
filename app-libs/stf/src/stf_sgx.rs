@@ -34,6 +34,8 @@ use itp_storage::storage_value_key;
 use itp_types::OpaqueCall;
 use itp_utils::stringify::account_id_to_string;
 use its_state::SidechainSystemExt;
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+extern crate log_sgx as log;
 use log::*;
 use sgx_externalities::SgxExternalitiesTrait;
 use sgx_runtime::Runtime;
