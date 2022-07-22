@@ -3701,6 +3701,7 @@ dependencies = [
  "its-state",
  "litentry-primitives",
  "litmus-parachain-runtime",
+ "log 0.4.14 (git+https://github.com/mesalock-linux/log-sgx)",
  "log 0.4.17",
  "pallet-balances",
  "pallet-sgx-account-linker",
