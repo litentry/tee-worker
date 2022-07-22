@@ -21,6 +21,9 @@ use codec::{Decode, Encode};
 use itp_storage::{storage_double_map_key, storage_map_key, storage_value_key, StorageHasher};
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::eth::EthAddress;
+
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+extern crate log_sgx as log;
 use log::*;
 use pallet_sgx_account_linker::LinkedSubAccount;
 use std::prelude::v1::*;

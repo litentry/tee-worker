@@ -26,6 +26,8 @@ use litentry_primitives::{
 	eth::{EthAddress, EthSignature},
 	BlockNumber, LinkingAccountIndex,
 };
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+extern crate log_sgx as log;
 use log::*;
 use sgx_runtime::Runtime;
 

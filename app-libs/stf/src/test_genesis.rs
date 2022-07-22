@@ -17,6 +17,8 @@
 
 use crate::{helpers::get_account_info, StfError};
 use itp_storage::storage_value_key;
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+extern crate log_sgx as log;
 use log::*;
 use sgx_externalities::{SgxExternalities, SgxExternalitiesTrait};
 use sgx_runtime::{Balance, Runtime};
