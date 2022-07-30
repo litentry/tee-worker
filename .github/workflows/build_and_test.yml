@@ -29,6 +29,8 @@ jobs:
   build-parachain-docker:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
+
       - name: Build docker image
         run: |
           ./scripts/litentry/build_parachain_docker.sh
