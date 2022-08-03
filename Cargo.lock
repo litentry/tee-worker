@@ -3733,6 +3733,7 @@ dependencies = [
  "itp-ocall-api",
  "itp-types",
  "lazy_static",
+ "log 0.4.14 (git+https://github.com/mesalock-linux/log-sgx)",
  "log 0.4.17",
  "serde 1.0.138",
  "serde_json 1.0.82",

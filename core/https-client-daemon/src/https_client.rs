@@ -26,6 +26,8 @@ use itc_rest_client::{
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_types::OpaqueCall;
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+extern crate log_sgx as log;
 use log::*;
 use serde::{Deserialize, Serialize};
 use std::{string::String, time::Duration, vec::Vec};
