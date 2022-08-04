@@ -159,17 +159,17 @@ class Worker:
         """
 
         # Todo: make this configurable
-        # env = dict(os.environ, RUST_LOG='warn,ws=warn,sp_io=error,'
-        #                                 'substrate_api_client=warn,'
-        #                                 'jsonrpsee_ws_client=warn,'
-        #                                 'jsonrpsee_ws_server=warn,'
-        #                                 'enclave_runtime=warn,'
-        #                                 'integritee_service=warn,'
-        #                                 'ita_stf=debug')
+        env = dict(os.environ, RUST_LOG='warn,ws=warn,sp_io=error,'
+                                        'substrate_api_client=warn,'
+                                        'jsonrpsee_ws_client=warn,'
+                                        'jsonrpsee_ws_server=warn,'
+                                        'enclave_runtime=warn,'
+                                        'integritee_service=warn,'
+                                        'ita_stf=debug')
 
         return Popen(
             self._assemble_cmd(flags=flags, subcommand_flags=subcommand_flags),
-            # env=env,
+            env=env,
             stdout=log_file,
             stderr=STDOUT,
             bufsize=1,

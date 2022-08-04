@@ -75,7 +75,7 @@ impl<T: EnclaveOnChainOCallApi, S: CreateExtrinsics> HttpsRestClient<T, S> {
 			.get::<String, ResponseBody>(request.request_str)
 			.map_err(|e| Error::Other(e.into()))?;
 
-		error!("https get result as ( {:?},)", response);
+		debug!("https get result as ( {:?},)", response);
 
 		// TODO: rewrite this, potentially restructure/refactor
 		//       additionally, litentry-parachain doesn't have such module/method anyway
@@ -97,7 +97,7 @@ impl<T: EnclaveOnChainOCallApi, S: CreateExtrinsics> HttpsRestClient<T, S> {
 
 		let result =
 			self.ocall_api.send_to_parentchain(tx).map_err(|_| Error::FailedSendExtrinsic)?;
-		error!("https daemon send tx result as ( {:?},)", result);
+		debug!("https daemon send tx result as ( {:?},)", result);
 
 		Ok(())
 	}
