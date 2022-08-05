@@ -125,11 +125,11 @@ impl Stf {
 	pub fn query_credit(account_id: AccountId) -> StfResult<()> {
 		info!("query_credit({:x?})", account_id.encode(),);
 
-		let str2 = format!("{}", "https://httpbin.org/headers");
-		let request2 = itc_https_client_daemon::Request { account_id, request_str };
-		let sender2 = itc_https_client_daemon::daemon_sender::HttpRequestSender::new();
-		let result2 = sender2.send_https_request(request2);
-		info!("send https request, get result as {:?}", result2);
+		let request_str = format!("{}", "https://httpbin.org/headers");
+		let request = itc_https_client_daemon::Request { account_id, request_str };
+		let sender = itc_https_client_daemon::daemon_sender::HttpRequestSender::new();
+		let result = sender.send_https_request(request);
+		info!("send https request, get result as {:?}", result);
 
 		Ok(())
 	}
