@@ -31,6 +31,10 @@ use http_req::{
 	response::{Headers, Response},
 	uri::Uri,
 };
+
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+extern crate log_sgx as log;
+
 use log::*;
 use std::{
 	collections::HashMap,

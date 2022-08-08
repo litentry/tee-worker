@@ -3858,6 +3858,7 @@ dependencies = [
  "http 0.2.8",
  "http_req 0.7.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "http_req 0.7.2 (git+https://github.com/mesalock-linux/http_req-sgx?tag=sgx_1.1.3)",
+ "log 0.4.14 (git+https://github.com/mesalock-linux/log-sgx)",
  "log 0.4.17",
  "serde 1.0.138",
  "serde_json 1.0.82",

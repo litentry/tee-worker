@@ -23,6 +23,10 @@ use crate::{
 	RestPost, RestPut,
 };
 use http_req::{request::Method, response::Headers};
+
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+extern crate log_sgx as log;
+
 use log::*;
 use std::string::{String, ToString};
 use url::Url;
