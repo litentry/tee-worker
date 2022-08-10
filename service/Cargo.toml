@@ -56,7 +56,7 @@ its-storage = { path = "../sidechain/storage" }
 # scs / integritee
 itp-types = { git = "https://github.com/integritee-network/pallets.git", branch = "master" }
 itp-utils = { git = "https://github.com/integritee-network/pallets.git", branch = "master" }
-my-node-runtime = { package = "litmus-parachain-runtime", git = "https://github.com/litentry/litentry-parachain", branch = "tee-dev" }
+my-node-runtime = { package = "litmus-parachain-runtime", git = "https://github.com/litentry/litentry-parachain", branch = "tee-dev", optional = true }
 sidechain-primitives = { git = "https://github.com/integritee-network/pallets.git", branch = "master" }
 substrate-api-client = { git = "https://github.com/scs/substrate-api-client", branch = "polkadot-v0.9.26" }
 teerex-primitives = { git = "https://github.com/integritee-network/pallets.git", branch = "master" }

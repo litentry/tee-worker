@@ -31,7 +31,7 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 sc-keystore = { optional = true, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
 
 # scs / integritee
-my-node-runtime = { package = "integritee-node-runtime", git = "https://github.com/integritee-network/integritee-node", branch = "master", optional = true }
+my-node-runtime = { package = "litmus-parachain-runtime", git = "https://github.com/litentry/litentry-parachain", branch = "tee-dev", optional = true }
 sgx-externalities = { git = "https://github.com/litentry/sgx-runtime", branch = "master" }
 sgx-runtime = { git = "https://github.com/litentry/sgx-runtime", branch = "master", optional = true }
 sp-io = { git = "https://github.com/litentry/sgx-runtime", branch = "master" }

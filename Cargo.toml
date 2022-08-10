@@ -71,27 +71,6 @@ sgx_crypto_helper = { version = "1.1.5", git = "https://github.com/apache/incuba
 sgx_rand = { version = "1.1.5", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", tag = "v1.1.5"}
 sgx_urts = { version = "1.1.5", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", tag = "v1.1.5"}
 
-#[patch."https://github.com/integritee-network/sgx-runtime"]
-#sgx-runtime = { path = "../sgx-runtime/runtime"}
-#sp-io = { path = "../sgx-runtime/substrate-sgx/sp-io"}
-#sgx-externalities = { path = "../sgx-runtime/substrate-sgx/externalities"}
-
-#[patch."https://github.com/integritee-network/integritee-node"]
-#my-node-runtime = { package = "integritee-node-runtime", path = "../integritee-node/runtime"}
-
-#[patch."https://github.com/scs/substrate-api-client"]
-#substrate-api-client = { path = "../../scs/substrate-api-client" }
-#substrate-client-keystore = { path = "../../scs/substrate-api-client/client-keystore" }
-
-#[patch."https://github.com/integritee-network/pallets.git"]
-#pallet-claims = { path = '../pallets/claims' }
-#pallet-teerex = { path = '../pallets/teerex' }
-#pallet-teeracle = { path = '../pallets/teeracle' }
-#teerex-primitives = {path = '../pallets/primitives/teerex'}
-#pallet-parentchain = { path = '../pallets/parentchain' }
-#itp-types = {  path = '../pallets/primitives/types'}
-#itp-utils = {  path = '../pallets/primitives/utils'}
-
 # litentry overrides
 [patch."https://github.com/integritee-network/sgx-runtime"]
 sgx-runtime = { git = "https://github.com/litentry/sgx-runtime", branch = "master" }
