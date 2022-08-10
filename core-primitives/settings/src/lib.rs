@@ -19,6 +19,13 @@
 
 #![no_std]
 
+#[cfg(all(feature = "sidechain", feature = "offchain-worker"))]
+compile_error!(
+	"feature \"sidechain\" and feature \"offchain-worker\" cannot be enabled at the same time"
+);
+
+pub mod worker_mode;
+
 pub mod files {
 	// used by worker
 	pub static ENCLAVE_TOKEN: &str = "enclave.token";
@@ -77,7 +84,7 @@ pub mod worker {
 	// Factors to tune the initial amount of enclave funding:
 	// Should be set to a value that ensures that the enclave can register itself
 	// and the worker can run for a certain time. Only for development.
-	pub const EXISTENTIAL_DEPOSIT_FACTOR_FOR_INIT_FUNDS: u128 = 1_000;
+	pub const EXISTENTIAL_DEPOSIT_FACTOR_FOR_INIT_FUNDS: u128 = 200_000;
 	// Should be set to a value that ensures that the enclave can register itself
 	// and that the worker can start.
 	pub const REGISTERING_FEE_FACTOR_FOR_INIT_FUNDS: u128 = 10;

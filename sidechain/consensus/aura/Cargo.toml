@@ -5,20 +5,20 @@ authors = ["Integritee AG <hello@integritee.network>"]
 edition = "2018"
 
 [dependencies]
-finality-grandpa = { version = "0.15.0", default-features = false, features = ["derive-codec"] }
+finality-grandpa = { version = "0.16.0", default-features = false, features = ["derive-codec"] }
 itp-types = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "master" }
 itp-utils = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "master" }
-log = { version = "0.4.17", default-features = false }
-sgx-externalities = { default-features = false, git = "https://github.com/integritee-network/sgx-runtime", branch = "master", optional = true }
+log = { version = "0.4", default-features = false }
 sidechain-primitives = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "master" }
+sidechain-block-verification = { optional = true, default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "master" }
 
 # sgx deps
 sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
 
 # substrate deps
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
-sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
+sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
 
 # local deps
 ita-stf = { path = "../../../app-libs/stf", default-features = false }
@@ -27,6 +27,7 @@ itp-enclave-metrics = { path = "../../../core-primitives/enclave-metrics", defau
 itp-ocall-api = { path = "../../../core-primitives/ocall-api", default-features = false }
 itp-settings = { path = "../../../core-primitives/settings" }
 itp-sgx-crypto = { path = "../../../core-primitives/sgx/crypto", default-features = false }
+itp-sgx-externalities = { default-features = false, path = "../../../core-primitives/substrate-sgx/externalities" }
 itp-stf-executor = { path = "../../../core-primitives/stf-executor", default-features = false }
 itp-stf-state-handler = { path = "../../../core-primitives/stf-state-handler", default-features = false }
 itp-time-utils = { path = "../../../core-primitives/time-utils", default-features = false }
@@ -43,9 +44,10 @@ env_logger = "0.9.0"
 itc-parentchain-block-import-dispatcher = { path = "../../../core/parentchain/block-import-dispatcher", features = ["mocks"] }
 itp-storage = { path = "../../../core-primitives/storage" }
 itp-test = { path = "../../../core-primitives/test" }
-its-test = { path = "../../test" }
 its-top-pool-executor = { path = "../../top-pool-executor", features = ["mocks"] }
-sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
+parentchain-test = { git = "https://github.com/integritee-network/pallets.git", branch = "master" }
+sidechain-test = { git = "https://github.com/integritee-network/pallets.git", branch = "master" }
+sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
 
 [features]
 default = ["std"]
@@ -55,6 +57,7 @@ std = [
    "itp-enclave-metrics/std",
    "itp-ocall-api/std",
    "itp-sgx-crypto/std",
+   "itp-sgx-externalities/std",
    "itp-stf-executor/std",
    "itp-stf-state-handler/std",
    "itp-time-utils/std",
@@ -67,8 +70,9 @@ std = [
    "its-top-pool-executor/std",
    "its-validateer-fetch/std",
    "log/std",
-   "sgx-externalities/std",
+   "sidechain-block-verification/std",
    "sidechain-primitives/std",
+   "sidechain-block-verification/std",
 ]
 sgx = [
    "sgx_tstd",
@@ -76,6 +80,7 @@ sgx = [
    "itc-parentchain-block-import-dispatcher/sgx",
    "itp-enclave-metrics/sgx",
    "itp-sgx-crypto/sgx",
+   "itp-sgx-externalities/sgx",
    "itp-stf-executor/sgx",
    "itp-stf-state-handler/sgx",
    "itp-time-utils/sgx",
@@ -85,5 +90,5 @@ sgx = [
    "its-consensus-slots/sgx",
    "its-state/sgx",
    "its-top-pool-executor/sgx",
-   "sgx-externalities/sgx",
+   "sidechain-block-verification/sgx",
 ]

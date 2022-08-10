@@ -28,8 +28,7 @@ futures = "0.3"
 
 # ipfs
 ipfs-api = "0.11.0"
-multihash = "0.8"
-cid = "<0.3.1"
+cid = "0.8"
 sha2 = { version = "0.7", default-features = false }
 
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
@@ -44,7 +43,7 @@ ita-stf = { path = "../app-libs/stf" }
 itc-rpc-client = { path = "../core/rpc-client" }
 itc-rpc-server = { path = "../core/rpc-server" }
 itc-parentchain-light-client = { path = "../core/parentchain/light-client" }
-itp-node-api-extensions = { path = "../core-primitives/node-api-extensions" }
+itp-node-api = { path = "../core-primitives/node-api" }
 itp-enclave-api = { path = "../core-primitives/enclave-api" }
 itp-enclave-metrics = { path = "../core-primitives/enclave-metrics" }
 itp-settings = { path = "../core-primitives/settings" }
@@ -59,28 +58,31 @@ itp-types = { git = "https://github.com/integritee-network/pallets.git", branch 
 itp-utils = { git = "https://github.com/integritee-network/pallets.git", branch = "master" }
 my-node-runtime = { package = "litmus-parachain-runtime", git = "https://github.com/litentry/litentry-parachain", branch = "tee-dev" }
 sidechain-primitives = { git = "https://github.com/integritee-network/pallets.git", branch = "master" }
-substrate-api-client = { git = "https://github.com/scs/substrate-api-client", branch = "polkadot-v0.9.24" }
+substrate-api-client = { git = "https://github.com/scs/substrate-api-client", branch = "polkadot-v0.9.26" }
 teerex-primitives = { git = "https://github.com/integritee-network/pallets.git", branch = "master" }
 
 # Substrate dependencies
-sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
-pallet-balances = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
-sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
-sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
-frame-system = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
-sp-finality-grandpa = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
-frame-support = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
+sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
+pallet-balances = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
+sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
+sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
+frame-system = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
+sp-finality-grandpa = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
+frame-support = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
 
 
 [features]
 default = []
-production = ['itp-settings/production']
+sidechain = ["itp-settings/sidechain"]
+offchain-worker = ["itp-settings/offchain-worker"]
+production = ["itp-settings/production"]
 
 [dev-dependencies]
 # crates.io
 anyhow = "1.0.40"
-mockall = "0.10.1"
+mockall = "0.11"
 # local
 itp-test = { path = "../core-primitives/test" }
 its-peer-fetch = { path = "../sidechain/peer-fetch", features = ["mocks"] }
-its-test = { path = "../sidechain/test" }
+parentchain-test = { git = "https://github.com/integritee-network/pallets.git", branch = "master" }
+sidechain-test = { git = "https://github.com/integritee-network/pallets.git", branch = "master" }

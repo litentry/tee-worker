@@ -13,8 +13,8 @@ sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sd
 # local dependencies
 ita-stf = { path = "../../../app-libs/stf", default-features = false }
 itp-extrinsics-factory = { path = "../../../core-primitives/extrinsics-factory", default-features = false }
+itp-node-api = { path = "../../../core-primitives/node-api", default-features = false }
 itp-ocall-api = { path = "../../../core-primitives/ocall-api", default-features = false }
-itp-settings = { path = "../../../core-primitives/settings" }
 itp-sgx-crypto = { path = "../../../core-primitives/sgx/crypto", default-features = false }
 itp-stf-executor = { path = "../../../core-primitives/stf-executor", default-features = false }
 itp-top-pool-author = { path = "../../../core-primitives/top-pool-author", default-features = false }
@@ -31,12 +31,15 @@ futures = { version = "0.3.8", optional = true }
 bs58 = { version = "0.4.0", default-features = false, features = ["alloc"] }
 codec  = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 log = { version = "0.4", default-features = false }
-sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
+sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
+#beefy-merkle-tree = { default-features = false, features = "keccak", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
+#remove as soon as we can import beefy-merkle-tree:
+tiny-keccak = { version = "2.0.2", features = ["keccak"] }
 
 # scs/integritee
 itp-types = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "master" }
-substrate-api-client = { git = "https://github.com/scs/substrate-api-client", branch = "polkadot-v0.9.24", default-features = false }
+substrate-api-client = { git = "https://github.com/scs/substrate-api-client", branch = "polkadot-v0.9.26", default-features = false }
 
 [dev-dependencies]
 env_logger = "0.9.0"
@@ -44,6 +47,7 @@ itp-sgx-crypto = { path = "../../../core-primitives/sgx/crypto", features = ["mo
 itp-stf-executor = { path = "../../../core-primitives/stf-executor", features = ["mocks"] }
 itp-test = { path = "../../../core-primitives/test" }
 itp-top-pool-author = { path = "../../../core-primitives/top-pool-author", features = ["mocks"] }
+parentchain-test = { git = "https://github.com/integritee-network/pallets.git", branch = "master" }
 
 [features]
 default = ["std"]
@@ -53,6 +57,7 @@ std = [
     "futures",
     "ita-stf/std",
     "itp-extrinsics-factory/std",
+    "itp-node-api/std",
     "itp-ocall-api/std",
     "itp-sgx-crypto/std",
     "itp-stf-executor/std",
@@ -69,9 +74,9 @@ sgx = [
     "futures_sgx",
     "ita-stf/sgx",
     "itp-extrinsics-factory/sgx",
+    "itp-node-api/sgx",
     "itp-sgx-crypto/sgx",
     "itp-stf-executor/sgx",
     "itp-top-pool-author/sgx",
-    "itp-types/sgx",
     "thiserror_sgx",
 ]

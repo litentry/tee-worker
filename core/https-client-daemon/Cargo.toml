@@ -39,7 +39,7 @@ std = [
     "serde_json/std",
     "thiserror",
     "url",
-    "itp-types/std",
+    # "itp-types/std",
 ]
 sgx = [
     "itc-rest-client/sgx",
@@ -47,5 +47,5 @@ sgx = [
     "thiserror_sgx",
     "url_sgx",
     "hex-sgx/sgx_tstd",
-    "itp-types/sgx",
+    # "itp-types/sgx",
 ]

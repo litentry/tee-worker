@@ -1,9 +1,11 @@
 [workspace]
 resolver = "2"
 members = [
+    "app-libs/sgx-runtime",
     "app-libs/stf",
     "cli",
     "core/direct-rpc-server",
+    "core/offchain-worker-executor",
     "core/parentchain/block-import-dispatcher",
     "core/parentchain/block-importer",
     "core/parentchain/indirect-calls-executor",
@@ -19,7 +21,14 @@ members = [
     "core-primitives/enclave-api/ffi",
     "core-primitives/enclave-metrics",
     "core-primitives/extrinsics-factory",
-    "core-primitives/node-api-extensions",
+    "core-primitives/hashing",
+    "core-primitives/networking-utils",
+    "core-primitives/node-api",
+    "core-primitives/node-api/api-client-extensions",
+    "core-primitives/node-api/api-client-types",
+    "core-primitives/node-api/factory",
+    "core-primitives/node-api/metadata",
+    "core-primitives/node-api/metadata-provider",
     "core-primitives/nonce-cache",
     "core-primitives/ocall-api",
     "core-primitives/primitives-cache",
@@ -30,6 +39,8 @@ members = [
     "core-primitives/stf-executor",
     "core-primitives/stf-state-handler",
     "core-primitives/storage",
+    "core-primitives/substrate-sgx/externalities",
+    "core-primitives/substrate-sgx/sp-io",
     "core-primitives/teerex-storage",
     "core-primitives/test",
     "core-primitives/time-utils",
@@ -78,6 +89,8 @@ sgx_urts = { version = "1.1.5", git = "https://github.com/apache/incubator-teacl
 #pallet-teeracle = { path = '../pallets/teeracle' }
 #teerex-primitives = {path = '../pallets/primitives/teerex'}
 #pallet-parentchain = { path = '../pallets/parentchain' }
+#itp-types = {  path = '../pallets/primitives/types'}
+#itp-utils = {  path = '../pallets/primitives/utils'}
 
 # litentry overrides
 [patch."https://github.com/integritee-network/sgx-runtime"]

@@ -25,14 +25,13 @@ use ita_stf::{
 	test_genesis::{endowed_account, test_genesis_setup, ENDOWED_ACC_FUNDS},
 	AccountId, Balance, ShardIdentifier, State, TrustedCall, TrustedGetter, TrustedGetterSigned,
 };
+use itp_node_api::metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository};
 use itp_ocall_api::EnclaveAttestationOCallApi;
+use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_state_handler::handle_state::HandleState;
-use itp_test::{
-	builders::parentchain_header_builder::ParentchainHeaderBuilder,
-	mock::{handle_state_mock::HandleStateMock, onchain_mock::OnchainMock},
-};
+use itp_test::mock::{handle_state_mock::HandleStateMock, onchain_mock::OnchainMock};
 use itp_types::H256;
-use sgx_externalities::SgxExternalitiesTrait;
+use parentchain_test::parentchain_header_builder::ParentchainHeaderBuilder;
 use sgx_tstd::panic;
 use sp_core::Pair;
 use sp_runtime::app_crypto::sp_core::blake2_256;
@@ -286,11 +285,15 @@ pub fn upon_false_signature_get_stf_state_errs() {
 }
 
 // Helper Functions
-fn stf_executor(
-) -> (StfExecutor<OnchainMock, HandleStateMock>, Arc<OnchainMock>, Arc<HandleStateMock>) {
+fn stf_executor() -> (
+	StfExecutor<OnchainMock, HandleStateMock, NodeMetadataRepository<NodeMetadataMock>>,
+	Arc<OnchainMock>,
+	Arc<HandleStateMock>,
+) {
 	let ocall_api = Arc::new(OnchainMock::default());
 	let state_handler = Arc::new(HandleStateMock::default());
-	let executor = StfExecutor::new(ocall_api.clone(), state_handler.clone());
+	let node_metadata_repo = Arc::new(NodeMetadataRepository::new(NodeMetadataMock::new()));
+	let executor = StfExecutor::new(ocall_api.clone(), state_handler.clone(), node_metadata_repo);
 	(executor, ocall_api, state_handler)
 }
 

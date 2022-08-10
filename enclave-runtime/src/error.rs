@@ -50,7 +50,7 @@ impl From<Error> for sgx_status_t {
 		match error {
 			Error::Sgx(status) => status,
 			_ => {
-				log::error!("Returning error {:?} as sgx unexpeted.", error);
+				log::error!("Returning error {:?} as sgx unexpected.", error);
 				sgx_status_t::SGX_ERROR_UNEXPECTED
 			},
 		}
