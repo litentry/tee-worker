@@ -15,7 +15,7 @@ dependencies = [
 [[package]]
 name = "ac-compose-macros"
 version = "0.1.0"
-source = "git+https://github.com/scs/substrate-api-client?branch=polkadot-v0.9.26#81f55b9202ce5e37b53a1aa8beef4e32bee2bba2"
+source = "git+https://github.com/scs/substrate-api-client.git?branch=polkadot-v0.9.26#81f55b9202ce5e37b53a1aa8beef4e32bee2bba2"
 dependencies = [
  "ac-primitives",
  "log 0.4.17",
@@ -29,7 +29,7 @@ dependencies = [
 [[package]]
 name = "ac-node-api"
 version = "0.1.0"
-source = "git+https://github.com/scs/substrate-api-client?branch=polkadot-v0.9.26#81f55b9202ce5e37b53a1aa8beef4e32bee2bba2"
+source = "git+https://github.com/scs/substrate-api-client.git?branch=polkadot-v0.9.26#81f55b9202ce5e37b53a1aa8beef4e32bee2bba2"
 dependencies = [
  "ac-primitives",
  "derive_more",
@@ -52,7 +52,7 @@ dependencies = [
 [[package]]
 name = "ac-primitives"
 version = "0.1.0"
-source = "git+https://github.com/scs/substrate-api-client?branch=polkadot-v0.9.26#81f55b9202ce5e37b53a1aa8beef4e32bee2bba2"
+source = "git+https://github.com/scs/substrate-api-client.git?branch=polkadot-v0.9.26#81f55b9202ce5e37b53a1aa8beef4e32bee2bba2"
 dependencies = [
  "hex 0.4.3",
  "parity-scale-codec",
@@ -169,15 +169,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fbf688625d06217d5b1bb0ea9d9c44a1635fd0ee3534466388d18203174f4d11"
 
 [[package]]
-name = "android_system_properties"
-version = "0.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7ed72e1635e121ca3e79420540282af22da58be50de153d36f81ddc6b83aa9e"
-dependencies = [
- "libc",
-]
-
-[[package]]
 name = "ansi_term"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -188,9 +179,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.60"
+version = "1.0.61"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c794e162a5eff65c72ef524dfe393eb923c354e350bb78b9c7383df13f3bc142"
+checksum = "508b352bb5c066aac251f6daf6b36eccd03e8a88e8081cd44959ea277a3af9a8"
 
 [[package]]
 name = "approx"
@@ -1019,16 +1010,14 @@ dependencies = [
 
 [[package]]
 name = "chrono"
-version = "0.4.21"
+version = "0.4.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f725f340c3854e3cb3ab736dc21f0cca183303acea3b3ffec30f141503ac8eb"
+checksum = "670ad68c9088c2a963aaa298cb369688cf3f9465ce5e2d4ca10e6e0098a1ce73"
 dependencies = [
- "iana-time-zone",
- "js-sys",
+ "libc",
  "num-integer 0.1.45",
  "num-traits 0.2.15",
  "time",
- "wasm-bindgen",
  "winapi 0.3.9",
 ]
 
@@ -2509,7 +2498,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.26#e8a7d161f39db70cb27fdad6c6e215cf493ebc3b"
 dependencies = [
  "Inflector",
- "chrono 0.4.21",
+ "chrono 0.4.19",
  "clap 3.2.16",
  "comfy-table",
  "frame-benchmarking",
@@ -3563,25 +3552,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "iana-time-zone"
-version = "0.1.42"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9512e544c25736b82aebbd2bf739a47c8a1c935dfcc3a6adcde10e35cd3cd468"
-dependencies = [
- "android_system_properties",
- "core-foundation",
- "js-sys",
- "wasm-bindgen",
- "winapi 0.3.9",
-]
-
-[[package]]
 name = "ias-verify"
 version = "0.1.4"
 source = "git+https://github.com/integritee-network/pallets.git?branch=master#d70118c28a6039f1cfd181451aca1a553000f0b3"
 dependencies = [
  "base64 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "chrono 0.4.21",
+ "chrono 0.4.19",
  "frame-support",
  "parity-scale-codec",
  "scale-info",
@@ -3598,7 +3574,7 @@ version = "0.1.4"
 source = "git+https://github.com/litentry/integritee-pallets.git?branch=polkadot-v0.9.26#90e49fa298338869335a820f8746cc4127801ca1"
 dependencies = [
  "base64 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "chrono 0.4.21",
+ "chrono 0.4.19",
  "frame-support",
  "parity-scale-codec",
  "scale-info",
@@ -3738,7 +3714,7 @@ version = "0.8.0"
 dependencies = [
  "base58",
  "blake2-rfc",
- "chrono 0.4.21",
+ "chrono 0.4.19",
  "clap 3.2.16",
  "env_logger",
  "frame-system",
@@ -4232,7 +4208,7 @@ name = "itc-tls-websocket-server"
 version = "0.8.0"
 dependencies = [
  "bit-vec",
- "chrono 0.4.21",
+ "chrono 0.4.19",
  "env_logger",
  "itp-sgx-crypto",
  "itp-sgx-io",
@@ -4703,7 +4679,7 @@ name = "itp-types"
 version = "0.8.0"
 source = "git+https://github.com/integritee-network/pallets.git?branch=master#d70118c28a6039f1cfd181451aca1a553000f0b3"
 dependencies = [
- "chrono 0.4.21",
+ "chrono 0.4.19",
  "parity-scale-codec",
  "primitive-types",
  "serde 1.0.143",
@@ -6049,7 +6025,7 @@ version = "0.8.0"
 [[package]]
 name = "litmus-parachain-runtime"
 version = "0.9.9"
-source = "git+https://github.com/litentry/litentry-parachain?branch=tee-dev#e22fc370bfb512b09213a923fcb21173748897f0"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#e22fc370bfb512b09213a923fcb21173748897f0"
 dependencies = [
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
@@ -7247,7 +7223,7 @@ dependencies = [
 [[package]]
 name = "pallet-asset-manager"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain?branch=tee-dev#e22fc370bfb512b09213a923fcb21173748897f0"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#e22fc370bfb512b09213a923fcb21173748897f0"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -7424,7 +7400,7 @@ dependencies = [
 [[package]]
 name = "pallet-bridge"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain?branch=tee-dev#e22fc370bfb512b09213a923fcb21173748897f0"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#e22fc370bfb512b09213a923fcb21173748897f0"
 dependencies = [
  "blake2-rfc",
  "frame-benchmarking",
@@ -7442,7 +7418,7 @@ dependencies = [
 [[package]]
 name = "pallet-bridge-transfer"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain?branch=tee-dev#e22fc370bfb512b09213a923fcb21173748897f0"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#e22fc370bfb512b09213a923fcb21173748897f0"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7532,7 +7508,7 @@ dependencies = [
 [[package]]
 name = "pallet-drop3"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain?branch=tee-dev#e22fc370bfb512b09213a923fcb21173748897f0"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#e22fc370bfb512b09213a923fcb21173748897f0"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7611,7 +7587,7 @@ dependencies = [
 [[package]]
 name = "pallet-extrinsic-filter"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain?branch=tee-dev#e22fc370bfb512b09213a923fcb21173748897f0"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#e22fc370bfb512b09213a923fcb21173748897f0"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7664,7 +7640,7 @@ dependencies = [
 [[package]]
 name = "pallet-identity-management"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain?branch=tee-dev#e22fc370bfb512b09213a923fcb21173748897f0"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#e22fc370bfb512b09213a923fcb21173748897f0"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9651,7 +9627,7 @@ dependencies = [
 [[package]]
 name = "primitives"
 version = "0.9.9"
-source = "git+https://github.com/litentry/litentry-parachain?branch=tee-dev#e22fc370bfb512b09213a923fcb21173748897f0"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#e22fc370bfb512b09213a923fcb21173748897f0"
 dependencies = [
  "sp-core",
  "sp-runtime",
@@ -10070,7 +10046,7 @@ version = "0.9.2"
 source = "git+https://github.com/integritee-network/rcgen#1852c8dbeb74de36a422d218254b659497daf717"
 dependencies = [
  "chrono 0.4.11",
- "chrono 0.4.21",
+ "chrono 0.4.19",
  "pem",
  "ring 0.16.19",
  "ring 0.16.20",
@@ -10336,7 +10312,7 @@ dependencies = [
 [[package]]
 name = "runtime-common"
 version = "0.9.9"
-source = "git+https://github.com/litentry/litentry-parachain?branch=tee-dev#e22fc370bfb512b09213a923fcb21173748897f0"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#e22fc370bfb512b09213a923fcb21173748897f0"
 dependencies = [
  "cumulus-pallet-parachain-system",
  "cumulus-primitives-core",
@@ -10707,7 +10683,7 @@ name = "sc-cli"
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.26#e8a7d161f39db70cb27fdad6c6e215cf493ebc3b"
 dependencies = [
- "chrono 0.4.21",
+ "chrono 0.4.19",
  "clap 3.2.16",
  "fdlimit",
  "futures 0.3.21",
@@ -11472,7 +11448,7 @@ name = "sc-telemetry"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.26#e8a7d161f39db70cb27fdad6c6e215cf493ebc3b"
 dependencies = [
- "chrono 0.4.21",
+ "chrono 0.4.19",
  "futures 0.3.21",
  "libp2p",
  "log 0.4.17",
@@ -11492,7 +11468,7 @@ source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.2
 dependencies = [
  "ansi_term",
  "atty",
- "chrono 0.4.21",
+ "chrono 0.4.19",
  "lazy_static",
  "libc",
  "log 0.4.17",
@@ -13318,7 +13294,7 @@ dependencies = [
 [[package]]
 name = "substrate-api-client"
 version = "0.6.0"
-source = "git+https://github.com/scs/substrate-api-client?branch=polkadot-v0.9.26#81f55b9202ce5e37b53a1aa8beef4e32bee2bba2"
+source = "git+https://github.com/scs/substrate-api-client.git?branch=polkadot-v0.9.26#81f55b9202ce5e37b53a1aa8beef4e32bee2bba2"
 dependencies = [
  "ac-compose-macros",
  "ac-node-api",
@@ -13360,7 +13336,7 @@ dependencies = [
 [[package]]
 name = "substrate-client-keystore"
 version = "0.6.0"
-source = "git+https://github.com/scs/substrate-api-client?branch=polkadot-v0.9.26#81f55b9202ce5e37b53a1aa8beef4e32bee2bba2"
+source = "git+https://github.com/scs/substrate-api-client.git?branch=polkadot-v0.9.26#81f55b9202ce5e37b53a1aa8beef4e32bee2bba2"
 dependencies = [
  "async-trait",
  "hex 0.4.3",
@@ -13956,7 +13932,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0e0d2eaa99c3c2e41547cfa109e910a68ea03823cccad4a0525dcbc9b01e8c71"
 dependencies = [
  "ansi_term",
- "chrono 0.4.21",
+ "chrono 0.4.19",
  "lazy_static",
  "matchers",
  "parking_lot 0.11.2",
@@ -14137,7 +14113,7 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "digest 0.10.3",
  "rand 0.8.5",
  "static_assertions",
@@ -15150,7 +15126,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e262a29d0e61ccf2b6190d7050d4b237535fc76ce4c1210d9caa316f71dffa75"
 dependencies = [
  "bit-vec",
- "chrono 0.4.21",
+ "chrono 0.4.19",
  "num-bigint 0.4.3",
 ]
 

@@ -22,7 +22,7 @@ thiserror_sgx = { package = "thiserror", version = "1.0.9", git = "https://githu
 # local deps
 itp-sgx-externalities = { default-features = false, path = "../../core-primitives/substrate-sgx/externalities" }
 itp-storage = { path = "../../core-primitives/storage", default-features = false}
-sp-io = { git = "https://github.com/litentry/sgx-runtime", branch = "master", optional = true }
+sp-io = { git = "https://github.com/litentry/sgx-runtime.git", branch = "master" }
 
 # scs deps
 sidechain-primitives = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "master" }

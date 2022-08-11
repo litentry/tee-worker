@@ -74,5 +74,5 @@ sgx_urts = { version = "1.1.5", git = "https://github.com/apache/incubator-teacl
 # litentry overrides
 [patch."https://github.com/integritee-network/sgx-runtime"]
 sgx-runtime = { git = "https://github.com/litentry/sgx-runtime", branch = "master", optional = true }
-sp-io = { git = "https://github.com/litentry/sgx-runtime", branch = "master", optional = true }
-sgx-externalities = { git = "https://github.com/litentry/sgx-runtime", branch = "master", optional = true }
+sp-io = { git = "https://github.com/litentry/sgx-runtime", branch = "master" }
+sgx-externalities = { git = "https://github.com/litentry/sgx-runtime", branch = "master" }
