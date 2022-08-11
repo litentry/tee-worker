@@ -68,6 +68,10 @@ pub use pallet_timestamp::Call as TimestampCall;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
+/// litentry
+pub use pallet_sgx_account_linker;
+pub use pallet_sgx_account_linker::Call as SgxAccountLinkerCall;
+
 /// The address format for describing accounts.
 pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
 /// Block header type as expected by this sgx-runtime.
@@ -290,6 +294,11 @@ impl pallet_parentchain::Config for Runtime {
 	type WeightInfo = ();
 }
 
+impl pallet_sgx_account_linker::Config for Runtime {
+	type Event = Event;
+	type WeightInfo = ();
+}
+
 // The plain sgx-runtime without the `evm-pallet`
 #[cfg(not(feature = "evm"))]
 construct_runtime!(
@@ -304,6 +313,7 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>},
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		Parentchain: pallet_parentchain::{Pallet, Call, Storage},
+		SgxAccountLinker: pallet_sgx_account_linker::{Pallet, Call, Storage, Event<T>},
 	}
 );
 

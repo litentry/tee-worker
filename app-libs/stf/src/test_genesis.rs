@@ -19,8 +19,6 @@ use crate::{helpers::get_account_info, StfError};
 use ita_sgx_runtime::{Balance, Runtime};
 use itp_sgx_externalities::{SgxExternalities, SgxExternalitiesTrait};
 use itp_storage::storage_value_key;
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-extern crate log_sgx as log;
 use log::*;
 use sgx_tstd as std;
 use sp_core::{crypto::AccountId32, ed25519, Pair};
