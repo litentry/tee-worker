@@ -3492,7 +3492,6 @@ dependencies = [
  "its-state",
  "litentry-primitives",
  "litmus-parachain-runtime",
- "log",
  "pallet-balances",
  "pallet-sgx-account-linker",
  "parity-scale-codec",
@@ -11720,7 +11719,7 @@ dependencies = [
 [[package]]
 name = "sp-std"
 version = "4.0.0"
-source = "git+https://github.com/paritytech/substrate.git?branch=master#a1a9b475c354d873f91135ed5fa028ac9ef6a2c4"
+source = "git+https://github.com/paritytech/substrate.git?branch=master#389cc11d8d836a28cd4462bf8f63a36ff794a976"
 
 [[package]]
 name = "sp-std"

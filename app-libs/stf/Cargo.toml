@@ -9,7 +9,6 @@ edition = "2018"
 codec = { version = "3.0.0", default-features = false, features = ["derive"], package = "parity-scale-codec" }
 derive_more = { version = "0.99.5" }
 log = { version = "0.4", default-features = false, optional = true }
-log-sgx = { package = "log", git = "https://github.com/mesalock-linux/log-sgx", optional = true }
 
 # sgx deps
 sgx_tstd = { branch = "master", features = ["untrusted_fs","net","backtrace"], git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
@@ -62,7 +61,6 @@ sgx = [
     "sgx-externalities/sgx",
     "sgx-runtime",
     "itc-https-client-daemon/sgx",
-    "log-sgx",
 ]
 std = [
     # crates.io
