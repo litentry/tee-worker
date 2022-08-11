@@ -1029,7 +1029,7 @@ checksum = "f6ed9c8b2d17acb8110c46f1da5bf4a696d745e1474a16db0cd2b49cd0249bf2"
 dependencies = [
  "core2",
  "multibase",
- "multihash 0.16.2",
+ "multihash 0.16.3",
  "serde 1.0.143",
  "unsigned-varint 0.7.1",
 ]
@@ -5464,7 +5464,7 @@ dependencies = [
  "libsecp256k1",
  "log 0.4.17",
  "multiaddr",
- "multihash 0.16.2",
+ "multihash 0.16.3",
  "multistream-select",
  "parking_lot 0.12.1",
  "pin-project",
@@ -6486,7 +6486,7 @@ dependencies = [
  "bs58",
  "byteorder 1.4.3",
  "data-encoding",
- "multihash 0.16.2",
+ "multihash 0.16.3",
  "percent-encoding 2.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.143",
  "static_assertions",
@@ -6518,9 +6518,9 @@ dependencies = [
 
 [[package]]
 name = "multihash"
-version = "0.16.2"
+version = "0.16.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e3db354f401db558759dfc1e568d010a5d4146f4d3f637be1275ec4a3cf09689"
+checksum = "1c346cf9999c631f002d8f977c4eaeaa0e6386f16007202308d0b3757522c2cc"
 dependencies = [
  "blake2b_simd",
  "blake2s_simd",
@@ -13020,7 +13020,7 @@ dependencies = [
 [[package]]
 name = "sp-std"
 version = "4.0.0"
-source = "git+https://github.com/paritytech/substrate.git?branch=master#389cc11d8d836a28cd4462bf8f63a36ff794a976"
+source = "git+https://github.com/paritytech/substrate.git?branch=master#6cd7ac7bd1e9da914adb7c8066d759f0a2d3849f"
 
 [[package]]
 name = "sp-std"

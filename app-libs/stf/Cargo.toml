@@ -8,7 +8,7 @@ edition = "2018"
 # crates.io
 codec = { version = "3.0.0", default-features = false, features = ["derive"], package = "parity-scale-codec" }
 derive_more = { version = "0.99.5" }
-log = { version = "0.4", default-features = false, optional = true }
+log = { version = "0.4", default-features = false }
 
 # sgx deps
 sgx_tstd = { branch = "master", features = ["untrusted_fs","net","backtrace"], git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
@@ -30,7 +30,7 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 sc-keystore = { optional = true, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
 
 # scs / integritee
-my-node-runtime = { package = "litmus-parachain-runtime", git = "https://github.com/litentry/litentry-parachain.git", branch = "tee-dev" }
+my-node-runtime = { package = "litmus-parachain-runtime", git = "https://github.com/litentry/litentry-parachain.git", branch = "tee-dev", optional = true }
 sgx-externalities = { git = "https://github.com/litentry/sgx-runtime.git", branch = "master" }
 sgx-runtime = { git = "https://github.com/litentry/sgx-runtime.git", branch = "master", optional = true }
 sp-io = { git = "https://github.com/litentry/sgx-runtime.git", branch = "master" }
@@ -81,7 +81,7 @@ std = [
     "sp-runtime/std",
     "sc-keystore",
     # scs/integritee
-    # "my-node-runtime",
+    "my-node-runtime",
     "sidechain-primitives/std",
     "sp-io/std",
     "substrate-api-client/std",
