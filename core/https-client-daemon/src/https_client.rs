@@ -88,7 +88,8 @@ fn add_to_headers(headers: &mut Headers, key: HeaderName, value: HeaderValue) {
 
 impl<T: EnclaveOnChainOCallApi, S: CreateExtrinsics> HttpsRestClient<T, S> {
 	pub fn new(url: Url, ocall_api: T, create_extrinsics: S) -> Self {
-		let http_client = HttpClient::new(true, Some(TIMEOUT), Some(headers_connection_close()), None);
+		let http_client =
+			HttpClient::new(true, Some(TIMEOUT), Some(headers_connection_close()), None);
 		let rest_client = RestClient::new(http_client, url.clone());
 		Self { url, client: rest_client, ocall_api, create_extrinsics }
 	}
