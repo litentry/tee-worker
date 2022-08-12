@@ -16,7 +16,7 @@
 
 use crate::{
 	error::{Error, Result},
-	global_components::GLOBAL_PARENTCHAIN_BLOCK_VALIDATOR_ACCESS_COMPONENT,
+	global_components::{GLOBAL_PARENTCHAIN_BLOCK_VALIDATOR_ACCESS_COMPONENT, GLOBAL_NODE_METADATA_REPOSITORY_COMPONENT,},
 	ocall::OcallApi,
 };
 use itc_https_client_daemon::{daemon_sender, https_client::HttpsRestClient};
@@ -62,9 +62,10 @@ fn run_https_client_daemon_internal(url: &str) -> Result<()> {
 	})?;
 
 	let authority = Ed25519Seal::unseal_from_static_file()?;
+	let node_metadata_repository = GLOBAL_NODE_METADATA_REPOSITORY_COMPONENT.get()?;
 
 	let extrinsics_factory =
-		ExtrinsicsFactory::new(genesis_hash, authority, GLOBAL_NONCE_CACHE.clone());
+		ExtrinsicsFactory::new(genesis_hash, authority, GLOBAL_NONCE_CACHE.clone(), node_metadata_repository);
 
 	let mut daemon = HttpsRestClient::new(Url::parse(url)?, OcallApi {}, extrinsics_factory);
 

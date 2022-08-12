@@ -35,8 +35,9 @@ use sgx_types::size_t;
 use crate::{
 	error::{Error, Result},
 	global_components::{
-		GLOBAL_PARENTCHAIN_IMPORT_DISPATCHER_COMPONENT, GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT,
-		GLOBAL_STATE_HANDLER_COMPONENT,
+		GLOBAL_IMMEDIATE_PARENTCHAIN_IMPORT_DISPATCHER_COMPONENT,
+		GLOBAL_NODE_METADATA_REPOSITORY_COMPONENT, GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT,
+		GLOBAL_STATE_HANDLER_COMPONENT, GLOBAL_TRIGGERED_PARENTCHAIN_IMPORT_DISPATCHER_COMPONENT,
 	},
 	ocall::OcallApi,
 	rpc::worker_api_direct::sidechain_io_handler,
@@ -52,11 +53,12 @@ use itc_parentchain::{
 };
 use itp_block_import_queue::PushToBlockQueue;
 use itp_component_container::ComponentGetter;
+use itp_node_api::metadata::{
+	pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata, NodeMetadata,
+};
 use itp_nonce_cache::{MutateNonce, Nonce, GLOBAL_NONCE_CACHE};
 use itp_ocall_api::EnclaveAttestationOCallApi;
-use itp_settings::node::{
-	REGISTER_ENCLAVE, RUNTIME_SPEC_VERSION, RUNTIME_TRANSACTION_VERSION, TEEREX_MODULE,
-};
+use itp_settings::worker_mode::{ProvideWorkerMode, WorkerMode, WorkerModeProvider};
 use itp_sgx_crypto::{ed25519, Ed25519Seal, Rsa3072Seal};
 use itp_sgx_io as io;
 use itp_sgx_io::StaticSealedIO;
@@ -197,6 +199,34 @@ pub unsafe extern "C" fn set_nonce(nonce: *const u32) -> sgx_status_t {
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn set_node_metadata(
+	node_metadata: *const u8,
+	node_metadata_size: u32,
+) -> sgx_status_t {
+	let mut node_metadata_slice = slice::from_raw_parts(node_metadata, node_metadata_size as usize);
+	let metadata = match NodeMetadata::decode(&mut node_metadata_slice).map_err(Error::Codec) {
+		Err(e) => {
+			error!("Failed to decode node metadata: {:?}", e);
+			return sgx_status_t::SGX_ERROR_UNEXPECTED
+		},
+		Ok(m) => m,
+	};
+
+	let node_metadata_repository = match GLOBAL_NODE_METADATA_REPOSITORY_COMPONENT.get() {
+		Ok(r) => r,
+		Err(e) => {
+			error!("Component get failure: {:?}", e);
+			return sgx_status_t::SGX_ERROR_UNEXPECTED
+		},
+	};
+
+	node_metadata_repository.set_metadata(metadata);
+	info!("Successfully set the node meta data");
+
+	sgx_status_t::SGX_SUCCESS
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn mock_register_enclave_xt(
 	genesis_hash: *const u8,
 	genesis_hash_size: u32,
@@ -219,15 +249,48 @@ pub unsafe extern "C" fn mock_register_enclave_xt(
 		.map_or_else(|_| Vec::<u8>::new(), |m| m.m.encode());
 
 	let signer = Ed25519Seal::unseal_from_static_file().unwrap();
-	let call = ([TEEREX_MODULE, REGISTER_ENCLAVE], mre, url);
+
+	let node_metadata_repository = match GLOBAL_NODE_METADATA_REPOSITORY_COMPONENT.get() {
+		Ok(r) => r,
+		Err(e) => {
+			error!("Component get failure: {:?}", e);
+			return sgx_status_t::SGX_ERROR_UNEXPECTED
+		},
+	};
+
+	let (register_enclave_call, runtime_spec_version, runtime_transaction_version) =
+		match node_metadata_repository.get_from_metadata(|m| {
+			(
+				m.register_enclave_call_indexes(),
+				m.get_runtime_version(),
+				m.get_runtime_transaction_version(),
+			)
+		}) {
+			Ok(r) => r,
+			Err(e) => {
+				error!("Failed to get node metadata: {:?}", e);
+				return sgx_status_t::SGX_ERROR_UNEXPECTED
+			},
+		};
+
+	let call_ids =
+		match register_enclave_call {
+			Ok(c) => c,
+			Err(e) => {
+				error!("Failed to get the indexes for the register_enclave cal from the metadata: {:?}", e);
+				return sgx_status_t::SGX_ERROR_UNEXPECTED
+			},
+		};
+
+	let call = (call_ids, mre, url);
 
 	let nonce_cache = GLOBAL_NONCE_CACHE.clone();
 	let mut nonce_lock = nonce_cache.load_for_mutation().expect("Nonce lock poisoning");
 	let nonce_value = nonce_lock.0;
 
 	let extrinsic_params = ParentchainExtrinsicParams::new(
-		RUNTIME_SPEC_VERSION,
-		RUNTIME_TRANSACTION_VERSION,
+		runtime_spec_version,
+		runtime_transaction_version,
 		nonce_value,
 		genesis_hash,
 		ParentchainExtrinsicParamsBuilder::default(),
@@ -401,7 +464,7 @@ pub unsafe extern "C" fn init_light_client(
 		Err(e) => return Error::Codec(e).into(),
 	};
 
-	let latest_header = match initialization::init_light_client(params) {
+	let latest_header = match initialization::init_light_client::<WorkerModeProvider>(params) {
 		Ok(h) => h,
 		Err(e) => return e.into(),
 	};
@@ -437,24 +500,33 @@ pub unsafe extern "C" fn sync_parentchain(
 		Err(e) => return Error::Codec(e).into(),
 	};
 
-	if let Err(e) = sync_parentchain_internal(blocks_to_sync) {
+	if let Err(e) = dispatch_parentchain_blocks_for_import::<WorkerModeProvider>(blocks_to_sync) {
 		return e.into()
 	}
 
 	sgx_status_t::SGX_SUCCESS
 }
 
-/// Internal [`sync_parentchain`] function to be able to use the handy `?` operator.
+/// Dispatch the parentchain blocks for import.
+/// Depending on the worker mode, a different dispatcher is used:
 ///
-/// Sync parentchain blocks to the light-client:
-/// * iterates over parentchain blocks and scans for relevant extrinsics
-/// * validates and execute those extrinsics (containing indirect calls), mutating state
-/// * sends `confirm_call` xt's of the executed unshielding calls
-/// * sends `confirm_blocks` xt's for every synced parentchain block
-fn sync_parentchain_internal(blocks_to_sync: Vec<SignedBlock>) -> Result<()> {
-	let block_import_dispatcher = GLOBAL_PARENTCHAIN_IMPORT_DISPATCHER_COMPONENT.get()?;
-
-	block_import_dispatcher.dispatch_import(blocks_to_sync).map_err(|e| e.into())
+/// * An immediate dispatcher will immediately import any parentchain blocks and execute
+///   the corresponding extrinsics (offchain-worker executor).
+/// * The sidechain uses a triggered dispatcher, where the import of a parentchain block is
+///   synchronized and triggered by the sidechain block production cycle.
+///
+fn dispatch_parentchain_blocks_for_import<WorkerModeProvider: ProvideWorkerMode>(
+	blocks_to_sync: Vec<SignedBlock>,
+) -> Result<()> {
+	match WorkerModeProvider::worker_mode() {
+		WorkerMode::Sidechain => GLOBAL_TRIGGERED_PARENTCHAIN_IMPORT_DISPATCHER_COMPONENT
+			.get()?
+			.dispatch_import(blocks_to_sync)?,
+		_ => GLOBAL_IMMEDIATE_PARENTCHAIN_IMPORT_DISPATCHER_COMPONENT
+			.get()?
+			.dispatch_import(blocks_to_sync)?,
+	}
+	Ok(())
 }
 
 /// Triggers the import of parentchain blocks when using a queue to sync parentchain block import
@@ -464,7 +536,7 @@ fn sync_parentchain_internal(blocks_to_sync: Vec<SignedBlock>) -> Result<()> {
 /// sidechain and the `ImmediateDispatcher` are used, this function is obsolete.
 #[no_mangle]
 pub unsafe extern "C" fn trigger_parentchain_block_import() -> sgx_status_t {
-	match GLOBAL_PARENTCHAIN_IMPORT_DISPATCHER_COMPONENT.get() {
+	match GLOBAL_TRIGGERED_PARENTCHAIN_IMPORT_DISPATCHER_COMPONENT.get() {
 		Ok(dispatcher) => match dispatcher.import_all() {
 			Ok(_) => sgx_status_t::SGX_SUCCESS,
 			Err(e) => {

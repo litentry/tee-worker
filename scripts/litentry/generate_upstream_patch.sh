@@ -10,7 +10,7 @@ cleanup() {
 # This script generates a patch for the diffs between commit-A and commit-B
 # of the upstream repo (https://github.com/integritee-network/worker), where
 # commit-A: the commit recorded in tee-worker/upstream_commit
-# commit-B: the HEAD commit of upstream master
+# commit-B: the HEAD commit of upstream master or a given commit
 #
 # The patch will be generated under tee-worker/upstream.patch
 # to apply this patch:
@@ -34,6 +34,7 @@ cd "$TMPDIR"
 echo "cloning $UPSTREAM ..."
 git clone -q "$UPSTREAM" worker
 cd worker
+[ ! -z "$1" ] && git checkout "$1"
 echo "generating patch ..."
 git diff $OLD_COMMIT HEAD > "$ROOTDIR/upstream.patch"
 git rev-parse --short HEAD > "$ROOTDIR/upstream_commit"

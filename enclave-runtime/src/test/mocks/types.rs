@@ -20,7 +20,9 @@
 
 use crate::test::mocks::rpc_responder_mock::RpcResponderMock;
 use itc_parentchain::block_import_dispatcher::trigger_parentchain_block_import_mock::TriggerParentchainBlockImportMock;
+use itp_node_api::metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository};
 use itp_sgx_crypto::{mocks::KeyRepositoryMock, Aes};
+use itp_sgx_externalities::SgxExternalities;
 use itp_stf_executor::executor::StfExecutor;
 use itp_test::mock::{
 	handle_state_mock::HandleStateMock, metrics_ocall_mock::MetricsOCallMock,
@@ -38,7 +40,6 @@ use its_sidechain::{
 };
 use primitive_types::H256;
 use sgx_crypto_helper::rsa3072::Rsa3072KeyPair;
-use sgx_externalities::SgxExternalities;
 use sidechain_primitives::types::{Block as SidechainBlock, SignedBlock as SignedSidechainBlock};
 use sp_core::ed25519 as spEd25519;
 
@@ -59,7 +60,9 @@ pub type TestOCallApi = OnchainMock;
 pub type TestParentchainBlockImportTrigger =
 	TriggerParentchainBlockImportMock<SignedParentchainBlock>;
 
-pub type TestStfExecutor = StfExecutor<TestOCallApi, TestStateHandler>;
+pub type TestNodeMetadataRepository = NodeMetadataRepository<NodeMetadataMock>;
+
+pub type TestStfExecutor = StfExecutor<TestOCallApi, TestStateHandler, TestNodeMetadataRepository>;
 
 pub type TestRpcResponder = RpcResponderMock<H256>;
 
@@ -76,8 +79,13 @@ pub type TestTopPoolExecutor = TopPoolOperationHandler<
 	TestStfExecutor,
 >;
 
-pub type TestBlockComposer =
-	BlockComposer<ParentchainBlock, SignedSidechainBlock, TestSigner, TestStateKeyRepo>;
+pub type TestBlockComposer = BlockComposer<
+	ParentchainBlock,
+	SignedSidechainBlock,
+	TestSigner,
+	TestStateKeyRepo,
+	TestNodeMetadataRepository,
+>;
 
 pub type TestBlockImporter = BlockImporter<
 	TestSigner,

@@ -22,14 +22,12 @@ use crate::{
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 use codec::Encode;
+use ita_sgx_runtime::Runtime;
 use litentry_primitives::{
 	eth::{EthAddress, EthSignature},
 	BlockNumber, LinkingAccountIndex,
 };
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-extern crate log_sgx as log;
 use log::*;
-use sgx_runtime::Runtime;
 
 use pallet_sgx_account_linker::{MultiSignature, NetworkType};
 
@@ -56,11 +54,11 @@ impl Stf {
 		);
 
 		// set origin from enclave to original user (otherwise pallet throws BadOrigin error)
-		let origin = sgx_runtime::Origin::signed(account.clone());
+		let origin = ita_sgx_runtime::Origin::signed(account.clone());
 
 		match get_parentchain_number() {
 			Some(number) => {
-				sgx_runtime::SgxAccountLinkerCall::<Runtime>::link_eth {
+				ita_sgx_runtime::SgxAccountLinkerCall::<Runtime>::link_eth {
 					account,
 					index,
 					addr_expected: eth_address,
@@ -98,11 +96,11 @@ impl Stf {
 		);
 
 		// set origin from enclave to original user (otherwise pallet throws BadOrigin error)
-		let origin = sgx_runtime::Origin::signed(account.clone());
+		let origin = ita_sgx_runtime::Origin::signed(account.clone());
 
 		match get_parentchain_number() {
 			Some(number) => {
-				sgx_runtime::SgxAccountLinkerCall::<Runtime>::link_sub {
+				ita_sgx_runtime::SgxAccountLinkerCall::<Runtime>::link_sub {
 					account,
 					index,
 					network_type,

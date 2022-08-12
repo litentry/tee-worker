@@ -16,16 +16,14 @@
 */
 
 use crate::{helpers::get_account_info, StfError};
+use ita_sgx_runtime::{Balance, Runtime};
+use itp_sgx_externalities::{SgxExternalities, SgxExternalitiesTrait};
 use itp_storage::storage_value_key;
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-extern crate log_sgx as log;
 use log::*;
-use sgx_externalities::{SgxExternalities, SgxExternalitiesTrait};
-use sgx_runtime::{Balance, Runtime};
 use sgx_tstd as std;
 use sp_core::{crypto::AccountId32, ed25519, Pair};
 use sp_runtime::MultiAddress;
-use std::{string::ToString, vec, vec::Vec};
+use std::{format, vec, vec::Vec};
 use support::traits::UnfilteredDispatchable;
 
 type Seed = [u8; 32];
@@ -86,13 +84,13 @@ fn endow(
 		for e in endowees.into_iter() {
 			let account = e.0;
 
-			sgx_runtime::BalancesCall::<Runtime>::set_balance {
+			ita_sgx_runtime::BalancesCall::<Runtime>::set_balance {
 				who: MultiAddress::Id(account.clone()),
 				new_free: e.1,
 				new_reserved: e.2,
 			}
-			.dispatch_bypass_filter(sgx_runtime::Origin::root())
-			.map_err(|_| StfError::Dispatch("balance_set_balance".to_string()))
+			.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+			.map_err(|e| StfError::Dispatch(format!("Balance Set Balance error: {:?}", e.error)))
 			.unwrap();
 
 			let print_public: [u8; 32] = account.clone().into();

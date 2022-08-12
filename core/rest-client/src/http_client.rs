@@ -32,9 +32,6 @@ use http_req::{
 	uri::Uri,
 };
 
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-extern crate log_sgx as log;
-
 use log::*;
 use std::{
 	collections::HashMap,
@@ -156,7 +153,8 @@ impl SendHttpRequest for HttpClient {
 				add_to_headers(
 					&mut request_headers,
 					CONTENT_TYPE,
-					HeaderValue::from_str("application/json").unwrap(),
+					HeaderValue::from_str("application/json")
+						.expect("Request Header: invalid characters"),
 				);
 
 				trace!("set request body: {}", body);
