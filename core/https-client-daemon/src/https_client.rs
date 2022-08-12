@@ -16,6 +16,12 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+use http_sgx as http;
+
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+use http_req_sgx as http_req;
+
 use crate::{
 	error::{Error, Result},
 	Request,
@@ -32,6 +38,12 @@ use std::{string::String, time::Duration, vec::Vec};
 use url::Url;
 
 const TIMEOUT: Duration = Duration::from_secs(3u64);
+
+use http::{
+	header::{HeaderName, CONNECTION},
+	HeaderValue,
+};
+use http_req::response::Headers;
 
 /// Https rest client. Handles the https requests and responses.
 pub struct HttpsRestClient<T: EnclaveOnChainOCallApi, S: CreateExtrinsics> {
@@ -55,9 +67,28 @@ impl RestPath<String> for ResponseBody {
 	}
 }
 
+fn headers_connection_close() -> Headers {
+	let mut headers = Headers::new();
+	add_to_headers(&mut headers, CONNECTION, HeaderValue::from_str("close").unwrap());
+	headers
+}
+
+fn add_to_headers(headers: &mut Headers, key: HeaderName, value: HeaderValue) {
+	let header_value_str = value.to_str();
+
+	match header_value_str {
+		Ok(v) => {
+			headers.insert(key.as_str(), v);
+		},
+		Err(e) => {
+			error!("Failed to add header to request: {:?}", e);
+		},
+	}
+}
+
 impl<T: EnclaveOnChainOCallApi, S: CreateExtrinsics> HttpsRestClient<T, S> {
 	pub fn new(url: Url, ocall_api: T, create_extrinsics: S) -> Self {
-		let http_client = HttpClient::new(true, Some(TIMEOUT), None, None);
+		let http_client = HttpClient::new(true, Some(TIMEOUT), Some(headers_connection_close()), None);
 		let rest_client = RestClient::new(http_client, url.clone());
 		Self { url, client: rest_client, ocall_api, create_extrinsics }
 	}

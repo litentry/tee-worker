@@ -3991,6 +3991,10 @@ dependencies = [
 name = "itc-https-client-daemon"
 version = "0.8.0"
 dependencies = [
+ "http 0.2.1 (git+https://github.com/mesalock-linux/http-sgx?tag=sgx_1.1.3)",
+ "http 0.2.8",
+ "http_req 0.7.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "http_req 0.7.2 (git+https://github.com/mesalock-linux/http_req-sgx?tag=sgx_1.1.3)",
  "itc-rest-client",
  "itp-extrinsics-factory",
  "itp-ocall-api",
