@@ -22,14 +22,12 @@ use crate::{
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 use codec::Encode;
+use ita_sgx_runtime::Runtime;
 use litentry_primitives::{
 	eth::{EthAddress, EthSignature},
 	BlockNumber, LinkingAccountIndex,
 };
-// #[cfg(all(not(feature = "std"), feature = "sgx"))]
-// extern crate log_sgx as log;
 use log::*;
-use ita_sgx_runtime::Runtime;
 
 use pallet_sgx_account_linker::{MultiSignature, NetworkType};
 

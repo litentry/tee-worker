@@ -34,10 +34,10 @@ use itp_types::{
 use litentry_primitives::{eth::EthAddress, BlockNumber, LinkingAccountIndex};
 use log::*;
 use my_node_runtime::Balance;
+use pallet_sgx_account_linker::LinkedSubAccount;
 use rand::Rng;
 use rayon::prelude::*;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
-use pallet_sgx_account_linker::LinkedSubAccount;
 use sp_application_crypto::{ed25519, sr25519};
 use sp_core::{
 	crypto::{AccountId32, Ss58Codec},
