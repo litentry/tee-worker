@@ -56,7 +56,7 @@ pub struct HttpsRestClient<T: EnclaveOnChainOCallApi, S: CreateExtrinsics> {
 // TODO: restructure this
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ResponseBody {
-	pub args: Vec<String>,
+	// pub args: Vec<String>,
 	pub origin: String,
 	pub url: String,
 }
@@ -105,7 +105,7 @@ impl<T: EnclaveOnChainOCallApi, S: CreateExtrinsics> HttpsRestClient<T, S> {
 			.get::<String, ResponseBody>(request.request_str)
 			.map_err(|e| Error::Other(e.into()))?;
 
-		debug!("https get result as ( {:?},)", response);
+			debug!("https get result as ( {:?},)", response);
 
 		// TODO: rewrite this, potentially restructure/refactor
 		//       additionally, litentry-parachain doesn't have such module/method anyway
