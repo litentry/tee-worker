@@ -183,7 +183,8 @@ pub extern "C" fn test_main_entrance() -> size_t {
 		test_call_link_eth,
 		test_call_link_sub_sr25519,
 		test_call_link_sub_ed25519,
-		test_call_link_sub_ecdsa,
+		// comment out for the moment
+		// test_call_link_sub_ecdsa,
 	)
 }
 
