@@ -52,4 +52,4 @@ itc-rpc-client = { path = "../core/rpc-client" }
 
 # litentry
 litentry-primitives = { path = "../litentry-primitives" }
-pallet-sgx-account-linker = { default-features = false, git = "https://github.com/litentry/sgx-runtime", branch = "master" }
+pallet-sgx-account-linker = { path = "../litentry/pallets/account-linker", default-features = false }
