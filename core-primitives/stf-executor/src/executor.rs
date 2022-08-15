@@ -25,35 +25,44 @@ use crate::{
 };
 use codec::{Decode, Encode};
 use ita_stf::{
-	hash::TrustedOperationOrHash,
+	hash::{Hash, TrustedOperationOrHash},
 	stf_sgx::{shards_key_hash, storage_hashes_to_update_per_shard},
 	ParentchainHeader, ShardIdentifier, StateTypeDiff, Stf, TrustedGetterSigned, TrustedOperation,
 };
+use itp_node_api::metadata::{pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata};
 use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveOnChainOCallApi};
+use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
 use itp_time_utils::duration_now;
 use itp_types::{storage::StorageEntryVerified, OpaqueCall, H256};
 use log::*;
-use sgx_externalities::SgxExternalitiesTrait;
 use sp_runtime::{app_crypto::sp_core::blake2_256, traits::Header as HeaderTrait};
 use std::{
 	collections::BTreeMap, fmt::Debug, format, result::Result as StdResult, sync::Arc,
 	time::Duration, vec::Vec,
 };
 
-pub struct StfExecutor<OCallApi, StateHandler> {
+pub struct StfExecutor<OCallApi, StateHandler, NodeMetadataRepository> {
 	ocall_api: Arc<OCallApi>,
 	state_handler: Arc<StateHandler>,
+	node_metadata_repo: Arc<NodeMetadataRepository>,
 }
 
-impl<OCallApi, StateHandler> StfExecutor<OCallApi, StateHandler>
+impl<OCallApi, StateHandler, NodeMetadataRepository>
+	StfExecutor<OCallApi, StateHandler, NodeMetadataRepository>
 where
 	OCallApi: EnclaveAttestationOCallApi + EnclaveOnChainOCallApi,
 	StateHandler: HandleState<HashType = H256>,
 	StateHandler::StateT: SgxExternalitiesTrait + Encode,
+	NodeMetadataRepository: AccessNodeMetadata,
+	NodeMetadataRepository::MetadataType: TeerexCallIndexes,
 {
-	pub fn new(ocall_api: Arc<OCallApi>, state_handler: Arc<StateHandler>) -> Self {
-		StfExecutor { ocall_api, state_handler }
+	pub fn new(
+		ocall_api: Arc<OCallApi>,
+		state_handler: Arc<StateHandler>,
+		node_metadata_repo: Arc<NodeMetadataRepository>,
+	) -> Self {
+		StfExecutor { ocall_api, state_handler, node_metadata_repo }
 	}
 
 	/// Execute a trusted call on the STF
@@ -77,7 +86,7 @@ where
 		debug!("query mrenclave of self");
 		let mrenclave = self.ocall_api.get_mrenclave_of_self()?;
 
-		let top_or_hash = top_or_hash::<H256>(trusted_operation.clone());
+		let top_or_hash = TrustedOperationOrHash::from_top(trusted_operation.clone());
 
 		let trusted_call = match trusted_operation.to_call().ok_or(Error::InvalidTrustedCallType) {
 			Ok(c) => c,
@@ -92,6 +101,10 @@ where
 			return Ok(ExecutedOperation::failed(top_or_hash))
 		}
 
+		let unshield_funds_fn = self
+			.node_metadata_repo
+			.get_from_metadata(|m| m.unshield_funds_call_indexes())??;
+
 		// Necessary because light client sync may not be up to date
 		// see issue #208
 		debug!("Update STF storage!");
@@ -105,12 +118,14 @@ where
 
 		debug!("execute STF, call with nonce {}", trusted_call.nonce);
 		let mut extrinsic_call_backs: Vec<OpaqueCall> = Vec::new();
-		if let Err(e) = Stf::execute(state, trusted_call.clone(), &mut extrinsic_call_backs) {
+		if let Err(e) =
+			Stf::execute(state, trusted_call.clone(), &mut extrinsic_call_backs, unshield_funds_fn)
+		{
 			error!("Stf::execute failed: {:?}", e);
 			return Ok(ExecutedOperation::failed(top_or_hash))
 		}
 
-		let operation_hash: H256 = blake2_256(&trusted_operation.encode()).into();
+		let operation_hash = trusted_operation.hash();
 		debug!("Operation hash {:?}", operation_hash);
 
 		if let StatePostProcessing::Prune = post_processing {
@@ -121,11 +136,13 @@ where
 	}
 }
 
-impl<OCallApi, StateHandler> StfUpdateState for StfExecutor<OCallApi, StateHandler>
+impl<OCallApi, StateHandler, NodeMetadataRepository> StfUpdateState
+	for StfExecutor<OCallApi, StateHandler, NodeMetadataRepository>
 where
 	OCallApi: EnclaveAttestationOCallApi + EnclaveOnChainOCallApi,
 	StateHandler: HandleState<HashType = H256> + QueryShardState,
 	StateHandler::StateT: SgxExternalitiesTrait + Encode,
+	NodeMetadataRepository: AccessNodeMetadata,
 {
 	fn update_states(&self, header: &ParentchainHeader) -> Result<()> {
 		debug!("Update STF storage upon block import!");
@@ -188,11 +205,14 @@ where
 	}
 }
 
-impl<OCallApi, StateHandler> StateUpdateProposer for StfExecutor<OCallApi, StateHandler>
+impl<OCallApi, StateHandler, NodeMetadataRepository> StateUpdateProposer
+	for StfExecutor<OCallApi, StateHandler, NodeMetadataRepository>
 where
 	OCallApi: EnclaveAttestationOCallApi + EnclaveOnChainOCallApi,
 	StateHandler: HandleState<HashType = H256>,
 	StateHandler::StateT: SgxExternalitiesTrait + Encode,
+	NodeMetadataRepository: AccessNodeMetadata,
+	NodeMetadataRepository::MetadataType: TeerexCallIndexes,
 {
 	type Externalities = StateHandler::StateT;
 
@@ -248,11 +268,13 @@ where
 	}
 }
 
-impl<OCallApi, StateHandler> StfExecuteTimedGettersBatch for StfExecutor<OCallApi, StateHandler>
+impl<OCallApi, StateHandler, NodeMetadataRepository> StfExecuteTimedGettersBatch
+	for StfExecutor<OCallApi, StateHandler, NodeMetadataRepository>
 where
 	OCallApi: EnclaveAttestationOCallApi + EnclaveOnChainOCallApi,
 	StateHandler: HandleState<HashType = H256>,
 	StateHandler::StateT: SgxExternalitiesTrait + Encode,
+	NodeMetadataRepository: AccessNodeMetadata,
 {
 	type Externalities = StateHandler::StateT;
 
@@ -294,10 +316,12 @@ where
 	}
 }
 
-impl<OCallApi, StateHandler> StfExecuteGenericUpdate for StfExecutor<OCallApi, StateHandler>
+impl<OCallApi, StateHandler, NodeMetadataRepository> StfExecuteGenericUpdate
+	for StfExecutor<OCallApi, StateHandler, NodeMetadataRepository>
 where
 	StateHandler: HandleState<HashType = H256>,
 	StateHandler::StateT: SgxExternalitiesTrait + Encode,
+	NodeMetadataRepository: AccessNodeMetadata,
 {
 	type Externalities = StateHandler::StateT;
 
@@ -328,10 +352,6 @@ fn into_map(
 	storage_entries: Vec<StorageEntryVerified<Vec<u8>>>,
 ) -> BTreeMap<Vec<u8>, Option<Vec<u8>>> {
 	storage_entries.into_iter().map(|e| e.into_tuple()).collect()
-}
-
-fn top_or_hash<H>(tcs: TrustedOperation) -> TrustedOperationOrHash<H> {
-	TrustedOperationOrHash::<H>::Operation(tcs)
 }
 
 /// Compute the state hash.

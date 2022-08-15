@@ -8,33 +8,32 @@ edition = "2018"
 # crates.io
 codec = { version = "3.0.0", default-features = false, features = ["derive"], package = "parity-scale-codec" }
 derive_more = { version = "0.99.5" }
-log = { version = "0.4", default-features = false, optional = true }
-log-sgx = { package = "log", git = "https://github.com/mesalock-linux/log-sgx", optional = true }
+log = { version = "0.4", default-features = false }
 
 # sgx deps
 sgx_tstd = { branch = "master", features = ["untrusted_fs","net","backtrace"], git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
 
 # local crates
-itp-settings = { path = "../../core-primitives/settings" }
+ita-sgx-runtime = { optional = true, default-features = false, path = "../sgx-runtime" }
+itp-hashing = { path = "../../core-primitives/hashing" }
+itp-sgx-externalities = { default-features = false, path = "../../core-primitives/substrate-sgx/externalities" }
 itp-storage = { default-features = false, path = "../../core-primitives/storage" }
 its-state = { default-features = false, optional = true, path = "../../sidechain/state" }
+sp-io = { optional = true, default-features = false, features = ["disable_oom", "disable_panic_handler", "disable_allocator"], path = "../../core-primitives/substrate-sgx/sp-io" }
 
 # Substrate dependencies
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24", features = ["full_crypto"] }
-balances = { package = 'pallet-balances', default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
-system = { package = "frame-system", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
-support = { package = "frame-support", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
-sp-application-crypto = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
-sc-keystore = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24", optional = true }
+sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
+balances = { package = "pallet-balances", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
+system = { package = "frame-system", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
+support = { package = "frame-support", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
+sp-application-crypto = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
+sc-keystore = { optional = true, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
 
 # scs / integritee
-my-node-runtime = { package = "litmus-parachain-runtime", git = "https://github.com/litentry/litentry-parachain", branch = "tee-dev", optional = true }
-sgx-externalities = { default-features = false, git = "https://github.com/integritee-network/sgx-runtime", branch = "master" }
-sgx-runtime = { default-features = false, git = "https://github.com/integritee-network/sgx-runtime", branch = "master", optional = true }
-sp-io = { default-features = false, git = "https://github.com/integritee-network/sgx-runtime", branch = "master", features = ["disable_oom", "disable_panic_handler", "disable_allocator"], optional = true }
-substrate-api-client = { git = "https://github.com/scs/substrate-api-client", branch = "polkadot-v0.9.24", optional = true }
-substrate-client-keystore = { git = "https://github.com/scs/substrate-api-client", branch = "polkadot-v0.9.24", optional = true }
+my-node-runtime = { package = "litmus-parachain-runtime", git = "https://github.com/litentry/litentry-parachain.git", branch = "tee-dev", optional = true }
+substrate-api-client = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.26", optional = true }
+substrate-client-keystore = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.26", optional = true }
 sidechain-primitives = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "master" }
 itp-types = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "master" }
 itp-utils = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "master" }
@@ -46,26 +45,25 @@ hex-sgx =  {package = "hex", git = "https://github.com/mesalock-linux/rust-hex-s
 pallet-sgx-account-linker = { default-features = false, git = "https://github.com/litentry/sgx-runtime", branch = "master" }
 
 [dev-dependencies]
-sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
-
+sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
 
 [features]
 default = ["std"]
 sgx = [
     "sgx_tstd",
+    "ita-sgx-runtime",
+    "itp-sgx-externalities/sgx",
     "its-state/sgx",
     "itp-utils/sgx",
     "sp-io/sgx",
-    "sgx-externalities/sgx",
-    "sgx-runtime",
     "itc-https-client-daemon/sgx",
-    "log-sgx",
 ]
 std = [
     # crates.io
     "codec/std",
     "log/std",
     # local
+    "itp-sgx-externalities/std",
     "itp-storage/std",
     "itp-types/std",
     "itp-utils/std",
@@ -81,9 +79,8 @@ std = [
     # scs/integritee
     "my-node-runtime",
     "sidechain-primitives/std",
-    "sgx-externalities/std",
     "sp-io/std",
-    "substrate-api-client",
+    "substrate-api-client/std",
     "substrate-client-keystore",
 ]
 test = []

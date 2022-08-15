@@ -16,6 +16,7 @@
 */
 
 use finality_grandpa::BlockNumberOps;
+use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StateUpdateProposer;
 use itp_time_utils::now_as_u64;
 use itp_types::H256;
@@ -24,7 +25,6 @@ use its_consensus_common::{Error as ConsensusError, Proposal, Proposer};
 use its_state::{SidechainDB, SidechainState, SidechainSystemExt, StateHash};
 use its_top_pool_executor::call_operator::TopPoolCallOperator;
 use log::*;
-use sgx_externalities::SgxExternalitiesTrait;
 use sidechain_primitives::traits::{
 	Block as SidechainBlockTrait, Header as HeaderTrait, ShardIdentifierFor,
 	SignedBlock as SignedSidechainBlockTrait,
@@ -33,7 +33,7 @@ use sp_runtime::{
 	traits::{Block, NumberFor},
 	MultiSignature,
 };
-use std::{marker::PhantomData, string::ToString, sync::Arc, time::Duration};
+use std::{marker::PhantomData, string::ToString, sync::Arc, time::Duration, vec::Vec};
 
 pub type ExternalitiesFor<T> = <T as StateUpdateProposer>::Externalities;
 ///! `SlotProposer` instance that has access to everything needed to propose a sidechain block.
@@ -126,8 +126,9 @@ impl<ParentchainBlock, SignedSidechainBlock, TopPoolExecutor, BlockComposer, Stf
 
 		let mut parentchain_extrinsics = batch_execution_result.get_extrinsic_callbacks();
 
-		let executed_operation_hashes =
+		let executed_operation_hashes: Vec<_> =
 			batch_execution_result.get_executed_operation_hashes().to_vec();
+		let number_executed_transactions = executed_operation_hashes.len();
 
 		// Remove all not successfully executed operations from the top pool.
 		let failed_operations = batch_execution_result.get_failed_operations();
@@ -146,6 +147,13 @@ impl<ParentchainBlock, SignedSidechainBlock, TopPoolExecutor, BlockComposer, Stf
 			.map_err(|e| ConsensusError::Other(e.to_string().into()))?;
 
 		parentchain_extrinsics.push(confirmation_extrinsic);
+
+		info!(
+			"Queue/Timeslot/Transactions: {:?};{};{}",
+			trusted_calls.len(),
+			max_duration.as_millis(),
+			number_executed_transactions
+		);
 
 		Ok(Proposal { block: sidechain_block, parentchain_effects: parentchain_extrinsics })
 	}

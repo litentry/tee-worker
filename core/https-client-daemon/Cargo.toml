@@ -28,7 +28,7 @@ itp-types = { default-features = false, git = "https://github.com/integritee-net
 itp-ocall-api = {path = "../../core-primitives/ocall-api", default-features = false }
 itp-extrinsics-factory = {path = "../../core-primitives/extrinsics-factory", default-features = false}
 
-hex-sgx = { package = "hex", git = "https://github.com/mesalock-linux/rust-hex-sgx", tag = "sgx_1.1.3", features = ["sgx_tstd"] }
+# hex-sgx = { package = "hex", git = "https://github.com/mesalock-linux/rust-hex-sgx", tag = "sgx_1.1.3", features = ["sgx_tstd"] }
 
 [features]
 default = ["std"]
@@ -46,6 +46,6 @@ sgx = [
     "sgx_tstd",
     "thiserror_sgx",
     "url_sgx",
-    "hex-sgx/sgx_tstd",
-    "itp-types/sgx",
+    # "hex-sgx/sgx_tstd",
+    # "itp-types/sgx",
 ]

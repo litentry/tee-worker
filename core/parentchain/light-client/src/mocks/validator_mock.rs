@@ -17,11 +17,12 @@
 
 use crate::{
 	error::Result, AuthorityList, ExtrinsicSender, HashFor, LightClientState, LightValidationState,
-	RelayId, SetId, Validator,
+	RelayId, Validator,
 };
 use itp_storage::StorageProof;
 use itp_types::Block;
-use sp_runtime::{generic::SignedBlock, traits::Block as BlockT, Justifications, OpaqueExtrinsic};
+use parentchain_test::parentchain_header_builder::ParentchainHeaderBuilder;
+use sp_runtime::{generic::SignedBlock, traits::Block as BlockT, OpaqueExtrinsic};
 use std::vec::Vec;
 
 type Header = <Block as BlockT>::Header;
@@ -50,30 +51,10 @@ impl Validator<Block> for ValidatorMock {
 		todo!()
 	}
 
-	fn submit_finalized_headers(
-		&mut self,
-		_relay_id: RelayId,
-		_header: Header,
-		_ancestry_proof: Vec<Header>,
-		_validator_set: AuthorityList,
-		_validator_set_id: SetId,
-		_justifications: Option<Justifications>,
-	) -> Result<()> {
-		Ok(())
-	}
-
 	fn submit_block(
 		&mut self,
 		_relay_id: RelayId,
 		_signed_block: &SignedBlock<Block>,
-	) -> Result<()> {
-		Ok(())
-	}
-
-	fn submit_xt_to_be_included(
-		&mut self,
-		_relay_id: RelayId,
-		_extrinsic: OpaqueExtrinsic,
 	) -> Result<()> {
 		Ok(())
 	}
@@ -98,7 +79,7 @@ impl ExtrinsicSender for ValidatorMock {
 }
 
 impl LightClientState<Block> for ValidatorMock {
-	fn num_xt_to_be_included(&mut self, _relay_id: RelayId) -> Result<usize> {
+	fn num_xt_to_be_included(&self, _relay_id: RelayId) -> Result<usize> {
 		todo!()
 	}
 
@@ -107,14 +88,14 @@ impl LightClientState<Block> for ValidatorMock {
 	}
 
 	fn latest_finalized_header(&self, _relay_id: RelayId) -> Result<Header> {
-		todo!()
+		Ok(ParentchainHeaderBuilder::default().build())
 	}
 
 	fn penultimate_finalized_block_header(&self, _relay_id: RelayId) -> Result<Header> {
-		todo!()
+		Ok(ParentchainHeaderBuilder::default().build())
 	}
 
 	fn num_relays(&self) -> RelayId {
-		todo!()
+		0
 	}
 }
