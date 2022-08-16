@@ -264,8 +264,8 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			ensure!(expiring_block_number > layer_one_blocknumber, Error::<T>::LinkRequestExpired);
 			ensure!(
-				(expiring_block_number - layer_one_blocknumber) <
-					T::BlockNumber::from(EXPIRING_BLOCK_NUMBER_MAX),
+				(expiring_block_number - layer_one_blocknumber)
+					< T::BlockNumber::from(EXPIRING_BLOCK_NUMBER_MAX),
 				Error::<T>::InvalidExpiringBlockNumber
 			);
 
@@ -309,8 +309,8 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			ensure!(expiring_block_number > layer_one_blocknumber, Error::<T>::LinkRequestExpired);
 			ensure!(
-				(expiring_block_number - layer_one_blocknumber) <
-					T::BlockNumber::from(EXPIRING_BLOCK_NUMBER_MAX),
+				(expiring_block_number - layer_one_blocknumber)
+					< T::BlockNumber::from(EXPIRING_BLOCK_NUMBER_MAX),
 				Error::<T>::InvalidExpiringBlockNumber
 			);
 
