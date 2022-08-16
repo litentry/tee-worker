@@ -17,6 +17,9 @@
 
 #![cfg_attr(test, feature(assert_matches))]
 
+#[cfg(feature = "teeracle")]
+use crate::teeracle::start_interval_market_update;
+
 use crate::{
 	account_funding::{setup_account_funding, EnclaveAccountInfoProvider},
 	error::Error,
@@ -51,6 +54,7 @@ use itp_enclave_api::{
 	https_client_daemon::HttpsClientDaemon,
 	remote_attestation::{RemoteAttestation, TlsRemoteAttestation},
 	sidechain::Sidechain,
+	teeracle_api::TeeracleApi,
 	teerex_api::TeerexApi,
 	Enclave,
 };
@@ -106,7 +110,9 @@ mod utils;
 mod worker;
 mod worker_peers_updater;
 
-/// how many blocks will be synced before storing the chain db to disk
+#[cfg(feature = "teeracle")]
+mod teeracle;
+
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub type EnclaveWorker =
@@ -174,12 +180,10 @@ fn main() {
 		enclave_metrics_receiver,
 	)));
 
-	if let Some(smatches) = matches.subcommand_matches("run") {
-		let shard = extract_shard(smatches, enclave.as_ref());
+	if let Some(run_config) = &config.run_config {
+		let shard = extract_shard(&run_config.shard, enclave.as_ref());
 
 		println!("Worker Config: {:?}", config);
-		let skip_ra = smatches.is_present("skip-ra");
-		let dev = smatches.is_present("dev");
 
 		if clean_reset {
 			setup::initialize_shard_and_keys(enclave.as_ref(), &shard).unwrap();
@@ -188,13 +192,12 @@ fn main() {
 		let node_api =
 			node_api_factory.create_api().expect("Failed to create parentchain node API");
 
-		let request_state = smatches.is_present("request-state");
-		if request_state {
+		if run_config.request_state {
 			sync_state::sync_state::<_, _, WorkerModeProvider>(
 				&node_api,
 				&shard,
 				enclave.as_ref(),
-				skip_ra,
+				run_config.skip_ra,
 			);
 		}
 
@@ -203,8 +206,6 @@ fn main() {
 			&shard,
 			enclave,
 			sidechain_blockstorage,
-			skip_ra,
-			dev,
 			node_api,
 			tokio_handle,
 			initialization_handler,
@@ -215,7 +216,7 @@ fn main() {
 			node_api_factory.create_api().expect("Failed to create parentchain node API");
 		sync_state::sync_state::<_, _, WorkerModeProvider>(
 			&node_api,
-			&extract_shard(smatches, enclave.as_ref()),
+			&extract_shard(&smatches.value_of("shard").map(|s| s.to_string()), enclave.as_ref()),
 			enclave.as_ref(),
 			smatches.is_present("skip-ra"),
 		);
@@ -229,7 +230,10 @@ fn main() {
 	} else if matches.is_present("mrenclave") {
 		println!("{}", enclave.get_mrenclave().unwrap().encode().to_base58());
 	} else if let Some(sub_matches) = matches.subcommand_matches("init-shard") {
-		setup::init_shard(enclave.as_ref(), &extract_shard(sub_matches, enclave.as_ref()));
+		setup::init_shard(
+			enclave.as_ref(),
+			&extract_shard(&sub_matches.value_of("shard").map(|s| s.to_string()), enclave.as_ref()),
+		);
 	} else if let Some(sub_matches) = matches.subcommand_matches("test") {
 		if sub_matches.is_present("provisioning-server") {
 			println!("*** Running Enclave MU-RA TLS server\n");
@@ -242,7 +246,10 @@ fn main() {
 			println!("[+] Done!");
 		} else if sub_matches.is_present("provisioning-client") {
 			println!("*** Running Enclave MU-RA TLS client\n");
-			let shard = extract_shard(sub_matches, enclave.as_ref());
+			let shard = extract_shard(
+				&sub_matches.value_of("shard").map(|s| s.to_string()),
+				enclave.as_ref(),
+			);
 			enclave_request_state_provisioning(
 				enclave.as_ref(),
 				sgx_quote_sign_type_t::SGX_UNLINKABLE_SIGNATURE,
@@ -267,8 +274,6 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	shard: &ShardIdentifier,
 	enclave: Arc<E>,
 	sidechain_storage: Arc<D>,
-	skip_ra: bool,
-	dev: bool,
 	node_api: ParentchainApi,
 	tokio_handle_getter: Arc<T>,
 	initialization_handler: Arc<InitializationHandler>,
@@ -280,6 +285,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		+ RemoteAttestation
 		+ TlsRemoteAttestation
 		+ TeerexApi
+		+ TeeracleApi
 		+ HttpsClientDaemon
 		+ Clone,
 	D: BlockPruner + FetchBlocks<SignedSidechainBlock> + Sync + Send + 'static,
@@ -295,10 +301,14 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	// initialize the enclave
 	let mrenclave = enclave.get_mrenclave().unwrap();
 	println!("MRENCLAVE={}", mrenclave.to_base58());
+	println!("MRENCLAVE in hex {:?}", hex::encode(mrenclave));
 
 	// ------------------------------------------------------------------------
 	// let new workers call us for key provisioning
 	println!("MU-RA server listening on {}", config.mu_ra_url());
+	let run_config = config.run_config.clone().expect("Run config missing");
+	let skip_ra = run_config.skip_ra;
+	let is_development_mode = run_config.dev;
 	let ra_url = config.mu_ra_url();
 	let enclave_api_key_prov = enclave.clone();
 	thread::spawn(move || {
@@ -312,10 +322,14 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 
 	let tokio_handle = tokio_handle_getter.get_handle();
 
+	#[cfg(feature = "teeracle")]
+	let teeracle_tokio_handle = tokio_handle.clone();
+
 	// ------------------------------------------------------------------------
 	// Get the public key of our TEE.
 	let genesis_hash = node_api.genesis_hash.as_bytes().to_vec();
 	let tee_accountid = enclave_account(enclave.as_ref());
+	println!("Enclave account {:} ", &tee_accountid.to_ss58check());
 
 	// ------------------------------------------------------------------------
 	// Start `is_initialized` server.
@@ -350,18 +364,22 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 
 	// ------------------------------------------------------------------------
 	// Start trusted worker rpc server
-	let direct_invocation_server_addr = config.trusted_worker_url_internal();
-	let enclave_for_direct_invocation = enclave.clone();
-	thread::spawn(move || {
-		println!(
-			"[+] Trusted RPC direct invocation server listening on {}",
-			direct_invocation_server_addr
-		);
-		enclave_for_direct_invocation
-			.init_direct_invocation_server(direct_invocation_server_addr)
-			.unwrap();
-		println!("[+] RPC direct invocation server shut down");
-	});
+	if WorkerModeProvider::worker_mode() == WorkerMode::Sidechain
+		|| WorkerModeProvider::worker_mode() == WorkerMode::OffChainWorker
+	{
+		let direct_invocation_server_addr = config.trusted_worker_url_internal();
+		let enclave_for_direct_invocation = enclave.clone();
+		thread::spawn(move || {
+			println!(
+				"[+] Trusted RPC direct invocation server listening on {}",
+				direct_invocation_server_addr
+			);
+			enclave_for_direct_invocation
+				.init_direct_invocation_server(direct_invocation_server_addr)
+				.unwrap();
+			println!("[+] RPC direct invocation server shut down");
+		});
+	}
 
 	// ------------------------------------------------------------------------
 	// Start untrusted worker rpc server.
@@ -408,7 +426,9 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	xthex.insert_str(0, "0x");
 
 	// Account funds
-	if let Err(x) = setup_account_funding(&node_api, &tee_accountid, xthex.clone(), dev) {
+	if let Err(x) =
+		setup_account_funding(&node_api, &tee_accountid, xthex.clone(), is_development_mode)
+	{
 		error!("Starting worker failed: {:?}", x);
 		// Return without registering the enclave. This will fail and the transaction will be banned for 30min.
 		return
@@ -461,6 +481,18 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	}
 
 	// ------------------------------------------------------------------------
+	// initialize teeracle interval
+	#[cfg(feature = "teeracle")]
+	if WorkerModeProvider::worker_mode() == WorkerMode::Teeracle {
+		start_interval_market_update(
+			&node_api.clone(),
+			run_config.teeracle_update_interval,
+			enclave.clone().as_ref(),
+			&teeracle_tokio_handle,
+		);
+	}
+
+	// ------------------------------------------------------------------------
 	// start parentchain syncing loop (subscribe to header updates)
 	let api4 = node_api.clone();
 	let parentchain_sync_enclave_api = enclave.clone();
@@ -480,16 +512,22 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 
 	//-------------------------------------------------------------------------
 	// start execution of trusted getters
-	let trusted_getters_enclave_api = enclave;
-	thread::Builder::new()
-		.name("trusted_getters_execution".to_owned())
-		.spawn(move || {
-			start_interval_trusted_getter_execution(trusted_getters_enclave_api.as_ref())
-		})
-		.unwrap();
+	if WorkerModeProvider::worker_mode() == WorkerMode::Sidechain
+		|| WorkerModeProvider::worker_mode() == WorkerMode::OffChainWorker
+	{
+		let trusted_getters_enclave_api = enclave;
+		thread::Builder::new()
+			.name("trusted_getters_execution".to_owned())
+			.spawn(move || {
+				start_interval_trusted_getter_execution(trusted_getters_enclave_api.as_ref())
+			})
+			.unwrap();
+	}
 
 	// ------------------------------------------------------------------------
-	spawn_worker_for_shard_polling(shard, node_api.clone(), initialization_handler);
+	if WorkerModeProvider::worker_mode() == WorkerMode::Sidechain {
+		spawn_worker_for_shard_polling(shard, node_api.clone(), initialization_handler);
+	}
 
 	// ------------------------------------------------------------------------
 	// subscribe to events and react on firing
@@ -517,6 +555,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 /// Start polling loop to wait until we have a worker for a shard registered on
 /// the parentchain (TEEREX WorkerForShard). This is the pre-requisite to be
 /// considered initialized and ready for the next worker to start (in sidechain mode only).
+/// considered initialized and ready for the next worker to start.
 fn spawn_worker_for_shard_polling<InitializationHandler>(
 	shard: &ShardIdentifier,
 	node_api: ParentchainApi,
@@ -624,6 +663,22 @@ fn print_events(events: Events, _sender: Sender<String>) {
 					},
 				}
 			},
+			/*
+			/// FIXME: to add as soon as worker, node, and pallet are compatible (based on the same substrate version)
+						Event::Teeracle(re) => {
+							debug!("{:?}", re);
+							match &re {
+								my_node_runtime::pallet_teeracle::RawEvent::ExchangeRateUpdated(
+									currency,
+									new_value,
+								) => {
+									println!("[+] Received ExchangeRateUpdated event");
+									println!("    Currency:  {:?}", str::from_utf8(&currency).unwrap());
+									println!("    Exchange rate: {}", new_value.to_string());
+								},
+							}
+						},
+			*/
 			Event::Sidechain(re) => match &re {
 				my_node_runtime::pallet_sidechain::Event::ProposedSidechainBlock(
 					sender,

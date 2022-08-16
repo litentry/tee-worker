@@ -19,9 +19,13 @@
 
 #![no_std]
 
-#[cfg(all(feature = "sidechain", feature = "offchain-worker"))]
+#[cfg(any(
+	all(feature = "sidechain", feature = "offchain-worker"),
+	all(feature = "sidechain", feature = "teeracle"),
+	all(feature = "teeracle", feature = "offchain-worker")
+))]
 compile_error!(
-	"feature \"sidechain\" and feature \"offchain-worker\" cannot be enabled at the same time"
+	"feature \"sidechain\" , \"offchain-worker\" or \"teeracle\" cannot be enabled at the same time"
 );
 
 pub mod worker_mode;
@@ -106,21 +110,10 @@ pub mod enclave {
 	pub static TRUSTED_GETTERS_SLOT_DURATION: Duration = Duration::from_millis(400);
 }
 
-/// Settings concerning the node
-pub mod node {
-	// you may have to update these indices upon new builds of the runtime
-	// you can get the index from metadata, counting modules starting with zero
-	pub static TEEREX_MODULE: u8 = 90u8;
-	pub static REGISTER_ENCLAVE: u8 = 0u8;
-	//pub static UNREGISTER_ENCLAVE: u8 = 1u8;
-	pub static CALL_WORKER: u8 = 2u8;
-	pub static PROCESSED_PARENTCHAIN_BLOCK: u8 = 3u8;
-	pub static SHIELD_FUNDS: u8 = 4u8;
-	pub static UNSHIELD_FUNDS: u8 = 5u8;
-	// Sidechain module values
-	pub static SIDECHAIN_MODULE: u8 = 91u8;
-	pub static PROPOSED_SIDECHAIN_BLOCK: u8 = 0u8;
-	// bump this to be consistent with litentry-parachain runtime
-	pub static RUNTIME_SPEC_VERSION: u32 = 9080;
-	pub static RUNTIME_TRANSACTION_VERSION: u32 = 1;
+/// Settings for the Teeracle
+#[cfg(feature = "teeracle")]
+pub mod teeracle {
+	use core::time::Duration;
+	// Send extrinsic to update market exchange rate on the parentchain once per day
+	pub static DEFAULT_MARKET_DATA_UPDATE_INTERVAL: Duration = Duration::from_secs(86400);
 }
