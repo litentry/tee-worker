@@ -105,7 +105,7 @@ impl<T: EnclaveOnChainOCallApi, S: CreateExtrinsics> HttpsRestClient<T, S> {
 			.get::<String, ResponseBody>(request.request_str)
 			.map_err(|e| Error::Other(e.into()))?;
 
-			debug!("https get result as ( {:?},)", response);
+		debug!("https get result as ( {:?},)", response);
 
 		// TODO: rewrite this, potentially restructure/refactor
 		//       additionally, litentry-parachain doesn't have such module/method anyway
