@@ -35,8 +35,10 @@
 // --output=./pallets/account-linker/src/weights.rs
 // --template=./.maintain/frame-weight-template.hbs
 
+#![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
 #![allow(unused_imports)]
+#![allow(clippy::unnecessary_cast)]
 
 use frame_support::{
 	traits::Get,

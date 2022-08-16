@@ -194,6 +194,8 @@ pub mod pallet {
 		///
 		/// Emits `SubAddressLinked` event when successful.
 		// TODO will update weight when do the benchmark testing
+
+		#[allow(clippy::too_many_arguments)]
 		#[pallet::weight(T::WeightInfo::link_eth())]
 		pub fn link_sub(
 			origin: OriginFor<T>,
@@ -264,8 +266,8 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			ensure!(expiring_block_number > layer_one_blocknumber, Error::<T>::LinkRequestExpired);
 			ensure!(
-				(expiring_block_number - layer_one_blocknumber) <
-					T::BlockNumber::from(EXPIRING_BLOCK_NUMBER_MAX),
+				(expiring_block_number - layer_one_blocknumber)
+					< T::BlockNumber::from(EXPIRING_BLOCK_NUMBER_MAX),
 				Error::<T>::InvalidExpiringBlockNumber
 			);
 
@@ -285,11 +287,11 @@ pub mod pallet {
 				let index = index as usize;
 				// NOTE: allow linking `MAX_ETH_LINKS` eth addresses.
 				if (index >= addrs.len()) && (addrs.len() != MAX_ETH_LINKS) {
-					addrs.push(addr.clone());
+					addrs.push(addr);
 				} else if (index >= addrs.len()) && (addrs.len() == MAX_ETH_LINKS) {
-					addrs[MAX_ETH_LINKS - 1] = addr.clone();
+					addrs[MAX_ETH_LINKS - 1] = addr;
 				} else {
-					addrs[index] = addr.clone();
+					addrs[index] = addr;
 				}
 			});
 
@@ -309,8 +311,8 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			ensure!(expiring_block_number > layer_one_blocknumber, Error::<T>::LinkRequestExpired);
 			ensure!(
-				(expiring_block_number - layer_one_blocknumber) <
-					T::BlockNumber::from(EXPIRING_BLOCK_NUMBER_MAX),
+				(expiring_block_number - layer_one_blocknumber)
+					< T::BlockNumber::from(EXPIRING_BLOCK_NUMBER_MAX),
 				Error::<T>::InvalidExpiringBlockNumber
 			);
 
