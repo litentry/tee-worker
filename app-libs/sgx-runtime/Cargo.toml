@@ -45,7 +45,8 @@ sp-version = { default-features = false, git = "https://github.com/paritytech/su
 pallet-parentchain = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "master" }
 pallet-evm = { default-features = false, optional = true, git = "https://github.com/integritee-network/frontier.git", branch = "polkadot-v0.9.26" }
 
-pallet-sgx-account-linker = { default-features = false, git = "https://github.com/litentry/sgx-runtime", branch = "master" }
+# Litentry
+pallet-sgx-account-linker = { path = "../../litentry/pallets/account-linker", default-features = false }
 
 [features]
 default = ["std"]
