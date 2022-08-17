@@ -39,7 +39,7 @@ pub use evm::{
 };
 
 use core::convert::{TryFrom, TryInto};
-use frame_support::weights::ConstantMultiplier;
+use frame_support::{traits::ConstU32, weights::ConstantMultiplier};
 use pallet_transaction_payment::CurrencyAdapter;
 use sp_api::impl_runtime_apis;
 use sp_core::OpaqueMetadata;
@@ -68,6 +68,7 @@ pub use pallet_timestamp::Call as TimestampCall;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
+pub use pallet_identity_management;
 /// litentry
 pub use pallet_sgx_account_linker;
 pub use pallet_sgx_account_linker::Call as SgxAccountLinkerCall;
@@ -299,6 +300,15 @@ impl pallet_sgx_account_linker::Config for Runtime {
 	type WeightInfo = ();
 }
 
+impl pallet_identity_management::Config for Runtime {
+	type Event = Event;
+	type ChallengeCode = u32;
+	type UserShieldingKeyLength = ConstU32<384>;
+	type MaxDidLength = ConstU32<128>;
+	type MaxMetadataLength = ConstU32<128>;
+	type MaxVerificationDelay = ConstU32<2>;
+}
+
 // The plain sgx-runtime without the `evm-pallet`
 #[cfg(not(feature = "evm"))]
 construct_runtime!(
@@ -313,7 +323,8 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>},
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		Parentchain: pallet_parentchain::{Pallet, Call, Storage},
-		SgxAccountLinker: pallet_sgx_account_linker::{Pallet, Call, Storage, Event<T>},
+		SgxAccountLinker: pallet_sgx_account_linker,
+		IdentityManagement: pallet_identity_management,
 	}
 );
 

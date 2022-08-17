@@ -1311,6 +1311,7 @@ dependencies = [
  "pallet-aura",
  "pallet-balances",
  "pallet-grandpa",
+ "pallet-identity-management",
  "pallet-parentchain",
  "pallet-randomness-collective-flip",
  "pallet-sgx-account-linker",
@@ -2535,6 +2536,25 @@ dependencies = [
  "sp-runtime",
  "sp-session",
  "sp-staking",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.26)",
+]
+
+[[package]]
+name = "pallet-identity-management"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "hex 0.4.3",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "serde 1.0.137",
+ "serde_derive 1.0.137",
+ "serde_json 1.0.81",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
  "sp-std 4.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.26)",
 ]
 
