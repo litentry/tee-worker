@@ -53,7 +53,7 @@ pub fn count_exchange_rate_update_events(api: &ParentchainApi, duration: Duratio
 							count += 1;
 							debug!("Received ExchangeRateUpdated event");
 							println!(
-								"ExchangeRateUpdated: TRADING_PAIR : {}, SRC : {}, VALUE :{:?}",
+								"ExchangeRateUpdated: TRADING_PAIR : {:?}, SRC : {:?}, VALUE :{:?}",
 								trading_pair, src, exchange_rate
 							);
 						},
