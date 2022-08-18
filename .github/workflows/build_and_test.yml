@@ -205,10 +205,15 @@ jobs:
           docker tag integritee-cli-client-${{ matrix.mode }}-${{ github.sha }} ${{ env.CLIENT_IMAGE_TAG }} 
           docker images --all
 
+      - name: Build litentry parachain docker images
+        run: |
+          cd docker
+          docker-compose -f litentry-parachain.build.yml build
+
       - name: Integration Test ${{ matrix.test }}-${{ matrix.mode }}
         run: |
           cd docker
-          docker compose -f litentry-parachain.yml -f docker-compose.yml -f ${{ matrix.demo_name }}.yml up ${{ matrix.demo_name }} --exit-code-from ${{ matrix.demo_name }}
+          docker compose -f litentry-parachain.yml -f docker-compose.yml -f ${{ matrix.demo_name }}.yml up ${{ matrix.demo_name }} --no-build --exit-code-from ${{ matrix.demo_name }}
 
       - name: Collect Docker Logs
         continue-on-error: true

@@ -63,7 +63,7 @@ services:
       - integritee-test-network
     ports:
       # integritee uses 9912 as ws port (why?)
-      - 9912:9944
+      - 9944:9912
       - 9933:9933
       - 30333:30333
     volumes:
@@ -71,6 +71,7 @@ services:
     build:
       context: litentry
       dockerfile: parachain-2106.Dockerfile
+    depends_on: ['relaychain-alice', 'relaychain-bob']
     command:
       - --base-path=/data
       - --chain=/app/litmus-dev-2106.json
@@ -78,6 +79,7 @@ services:
       - --rpc-external
       - --rpc-cors=all
       - --name=parachain-2106-0
+      - --ws-port=9912
       - --collator
       - --rpc-methods=unsafe
       - --force-authoring
