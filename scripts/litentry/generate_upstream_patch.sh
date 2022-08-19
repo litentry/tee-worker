@@ -41,6 +41,7 @@ git rev-parse --short HEAD > "$ROOTDIR/upstream_commit"
 
 echo "==============================================="
 echo "upstream_commit is updated."
+echo "be sure to fetch the upstream to update the hashes of files."
 echo "upstream.patch is generated, to apply it, run:"
 echo '  git am -3 --exclude=Cargo.lock --exclude=enclave-runtime/Cargo.lock < upstream.patch'
 echo "after that:"
