@@ -211,6 +211,7 @@ jobs:
           docker-compose -f litentry-parachain.build.yml build
 
       - name: Integration Test ${{ matrix.test }}-${{ matrix.mode }}
+        timeout-minutes: 30
         run: |
           cd docker
           docker compose -f docker-compose.yml -f ${{ matrix.demo_name }}.yml up ${{ matrix.demo_name }} --no-build --exit-code-from ${{ matrix.demo_name }}
