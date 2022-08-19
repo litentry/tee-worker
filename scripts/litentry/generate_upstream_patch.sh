@@ -21,10 +21,17 @@ ROOTDIR=$(git rev-parse --show-toplevel)
 cd "$ROOTDIR"
 
 if [ -f upstream_commit ]; then
-    OLD_COMMIT=$(head -1 upstream_commit)
+  OLD_COMMIT=$(head -1 upstream_commit)
 else
-    echo "Can't find upstream_commit file, quit"
-    exit 1
+  echo "Can't find upstream_commit file, quit"
+  exit 1
+fi
+
+if [ "$(git remote get-url upstream 2>/dev/null)" != "$UPSTREAM" ]; then
+  echo "please set your upstream origin to $UPSTREAM"
+  exit 1
+else
+  git fetch -q upstream
 fi
 
 TMPDIR=$(mktemp -d)
