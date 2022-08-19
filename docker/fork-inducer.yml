@@ -1,4 +1,3 @@
-version: "3.4"
 services:
   worker-ping:
     image: worker-ping:dev
@@ -20,7 +19,7 @@ services:
       - integritee-test-network
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-    entrypoint: "dockerize -wait http://integritee-worker-2:4646/is_initialized -timeout 250s
+    entrypoint: "dockerize -wait http://integritee-worker-2:4646/is_initialized -timeout 600s
      pumba --interval 3m netem --interface eth0 --duration 30s delay --time 1000 integritee-worker-2"
 networks:
   integritee-test-network:

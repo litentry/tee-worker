@@ -32,6 +32,7 @@ pub enum Error {
 	HttpsClientDaemon(itc_https_client_daemon::error::Error),
 	IO(std::io::Error),
 	LightClient(itc_parentchain::light_client::error::Error),
+	NodeMetadataProvider(itp_node_api::metadata::provider::Error),
 	Sgx(sgx_status_t),
 	Consensus(its_sidechain::consensus_common::Error),
 	Stf(String),

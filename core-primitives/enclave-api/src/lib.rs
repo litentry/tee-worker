@@ -23,6 +23,7 @@ pub mod error;
 pub mod https_client_daemon;
 pub mod remote_attestation;
 pub mod sidechain;
+pub mod teeracle_api;
 pub mod teerex_api;
 pub mod utils;
 

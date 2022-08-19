@@ -21,6 +21,7 @@ serde_derive = "1.0"
 jsonrpsee = { version = "0.2.0", features = ["client", "ws-server", "macros"] }
 async-trait = "0.1.50"
 tokio = { version = "1.6.1", features = ["full"] }
+parse_duration = "2.1.1"
 # for litentry-parachain: otherwise we have a conflict in substrate-prometheus-endpoint
 prometheus = { version = "0.13.0", features = ["process"], default-features = false }
 warp = "0.3"
@@ -76,6 +77,7 @@ default = []
 sidechain = ["itp-settings/sidechain"]
 offchain-worker = ["itp-settings/offchain-worker"]
 production = ["itp-settings/production"]
+teeracle = ["itp-settings/teeracle"]
 
 [dev-dependencies]
 # crates.io
