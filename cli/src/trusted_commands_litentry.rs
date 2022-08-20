@@ -14,10 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use std::convert::TryInto;
+
 use crate::{
 	trusted_command_utils::{get_accountid_from_str, get_identifiers, get_pair_from_str},
 	trusted_commands::{
-		perform_operation, LinkedEthereumAddress, LinkedSubstrateAddress, TrustedArgs,
+		perform_operation, BlockNumber, LinkedEthereumAddress, LinkedSubstrateAddress, TrustedArgs,
+		UserShieldingKey,
 	},
 	Cli,
 };
@@ -25,11 +28,45 @@ use codec::Decode;
 use ita_stf::{Index, KeyPair, TrustedCall, TrustedGetter, TrustedOperation};
 use litentry_primitives::{
 	eth::{EthAddress, EthSignature},
-	BlockNumber, LinkingAccountIndex,
+	LinkingAccountIndex,
 };
 use log::*;
 use pallet_sgx_account_linker::{MultiSignature, NetworkType};
 use sp_core::Pair;
+
+pub(crate) fn set_shielding_key(cli: &Cli, trusted_args: &TrustedArgs, arg_who: &str, key: &str) {
+	debug!("arg_who = {:?}, key = {:?}", arg_who, key);
+	let account_pair = get_pair_from_str(trusted_args, arg_who);
+	let account = get_accountid_from_str(arg_who);
+
+	let (mrenclave, shard) = get_identifiers(trusted_args);
+	// get nonce
+	let top: TrustedOperation = TrustedGetter::nonce(account_pair.public().into())
+		.sign(&KeyPair::Sr25519(account_pair.clone()))
+		.into();
+	let nonce = perform_operation(cli, trusted_args, &top)
+		.and_then(|v| Index::decode(&mut v.as_slice()).ok())
+		.unwrap_or_default();
+	debug!("got nonce: {:?}", nonce);
+
+	// compose the extrinsic
+	let top: TrustedOperation =
+		TrustedCall::set_shielding_key(account, key.as_bytes().to_vec().try_into().unwrap())
+			.sign(&KeyPair::Sr25519(account_pair), nonce, &mrenclave, &shard)
+			.into_trusted_operation(trusted_args.direct);
+	let _ = perform_operation(cli, trusted_args, &top);
+}
+
+pub(crate) fn shielding_key(cli: &Cli, trusted_args: &TrustedArgs, arg_who: &str) {
+	debug!("arg_who = {:?}", arg_who);
+	let who = get_pair_from_str(trusted_args, arg_who);
+	let top: TrustedOperation = TrustedGetter::shielding_key(who.public().into())
+		.sign(&KeyPair::Sr25519(who))
+		.into();
+	let key = perform_operation(cli, trusted_args, &top)
+		.and_then(|v| UserShieldingKey::decode(&mut v.as_slice()).ok());
+	println!("shielding_key is {:?}", key);
+}
 
 pub(crate) fn linked_eth_addresses(cli: &Cli, trusted_args: &TrustedArgs, arg_who: &str) {
 	debug!("arg_who = {:?}", arg_who);

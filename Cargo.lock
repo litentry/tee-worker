@@ -3885,6 +3885,7 @@ dependencies = [
  "geojson",
  "hdrhistogram",
  "hex 0.4.3",
+ "ita-sgx-runtime",
  "ita-stf",
  "itc-rpc-client",
  "itp-node-api",

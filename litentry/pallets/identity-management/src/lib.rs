@@ -38,7 +38,9 @@ use frame_support::{pallet_prelude::*, traits::StorageVersion};
 use frame_system::pallet_prelude::*;
 use identity_context::IdentityContext;
 
-pub type UserShieldingKeyOf<T> = BoundedVec<u8, <T as Config>::UserShieldingKeyLength>;
+// TODO: maybe use sgx_crypto_helper::rsa3072::Rsa3072PubKey and implement traits for it
+
+pub type UserShieldingKeyOf<T> = BoundedVec<u8, <T as Config>::MaxUserShieldingKeyLength>;
 pub type ChallengeCodeOf<T> = <T as Config>::ChallengeCode;
 pub type DidOf<T> = BoundedVec<u8, <T as Config>::MaxDidLength>;
 pub(crate) type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
@@ -63,9 +65,9 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		/// challenge code type
 		type ChallengeCode: Member + Parameter + Default + Copy + MaxEncodedLen;
-		/// constant for the user shielding key length
+		/// maximum user shielding key length
 		#[pallet::constant]
-		type UserShieldingKeyLength: Get<u32>;
+		type MaxUserShieldingKeyLength: Get<u32>;
 		/// maximum did length
 		#[pallet::constant]
 		type MaxDidLength: Get<u32>;
@@ -94,8 +96,6 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// the shielding key length is invalid
-		InvalidUserShieldingKeyLength,
 		/// challenge code doesn't exist
 		ChallengeCodeNotExist,
 		/// the pair (litentry-account, did) already exists
@@ -149,10 +149,6 @@ pub mod pallet {
 			key: UserShieldingKeyOf<T>,
 		) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
-			ensure!(
-				key.len() == T::UserShieldingKeyLength::get() as usize,
-				Error::<T>::InvalidUserShieldingKeyLength
-			);
 			// we don't care about the current key
 			UserShieldingKeys::<T>::insert(&who, &key);
 			Self::deposit_event(Event::UserShieldingKeySet { who, key });

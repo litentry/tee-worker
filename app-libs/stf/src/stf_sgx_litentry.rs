@@ -16,7 +16,7 @@
 
 use crate::{
 	helpers::{get_linked_ethereum_addresses, get_parentchain_number},
-	stf_sgx_primitives::types::*,
+	stf_sgx_primitives::{litentry::*, types::*},
 	AccountId, StfError, StfResult,
 };
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
@@ -25,7 +25,7 @@ use codec::Encode;
 use ita_sgx_runtime::Runtime;
 use litentry_primitives::{
 	eth::{EthAddress, EthSignature},
-	BlockNumber, LinkingAccountIndex,
+	LinkingAccountIndex,
 };
 use log::*;
 
@@ -37,6 +37,14 @@ use support::traits::UnfilteredDispatchable;
 use itc_https_client_daemon::daemon_sender::SendHttpsRequest;
 
 impl Stf {
+	pub fn set_shielding_key(who: AccountId, key: UserShieldingKey) -> StfResult<()> {
+		let origin = ita_sgx_runtime::Origin::signed(who.clone());
+		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_user_shielding_key { who, key }
+			.dispatch_bypass_filter(origin)
+			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+		Ok(())
+	}
+
 	pub fn link_eth(
 		account: AccountId,
 		index: LinkingAccountIndex,

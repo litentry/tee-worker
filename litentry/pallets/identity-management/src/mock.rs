@@ -89,7 +89,7 @@ impl pallet_balances::Config for Test {
 impl pallet_tee_identity_management::Config for Test {
 	type Event = Event;
 	type ChallengeCode = u32;
-	type UserShieldingKeyLength = ConstU32<384>;
+	type MaxUserShieldingKeyLength = ConstU32<1024>;
 	type MaxDidLength = ConstU32<128>;
 	type MaxMetadataLength = ConstU32<128>;
 	type MaxVerificationDelay = ConstU64<2>;

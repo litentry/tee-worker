@@ -26,16 +26,17 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
+use ita_sgx_runtime::UserShieldingKey;
 #[cfg(feature = "sgx")]
-pub use ita_sgx_runtime::{Balance, Index};
+pub use ita_sgx_runtime::{Balance, BlockNumber, Index};
 #[cfg(feature = "std")]
-pub use my_node_runtime::{Balance, Index};
+pub use my_node_runtime::{Balance, BlockNumber, Index};
 
 use codec::{Compact, Decode, Encode};
 use derive_more::Display;
 use litentry_primitives::{
 	eth::{EthAddress, EthSignature},
-	BlockNumber, LinkingAccountIndex,
+	LinkingAccountIndex,
 };
 use sp_core::{crypto::AccountId32, ed25519, sr25519, Pair, H256};
 use sp_runtime::{traits::Verify, MultiSignature};
@@ -192,6 +193,7 @@ pub enum TrustedCall {
 	balance_unshield(AccountId, AccountId, Balance, ShardIdentifier), // (AccountIncognito, BeneficiaryPublicAccount, Amount, Shard)
 	balance_shield(AccountId, AccountId, Balance), // (Root, AccountIncognito, Amount)
 	// litentry
+	set_shielding_key(AccountId, UserShieldingKey),
 	link_eth(AccountId, LinkingAccountIndex, EthAddress, BlockNumber, EthSignature), // (LitentryAcc, EthAcc Index, EthAcc, ParentchainBlockNr, Signature)
 	link_sub(
 		AccountId,
@@ -212,6 +214,7 @@ impl TrustedCall {
 			TrustedCall::balance_unshield(account, _, _, _) => account,
 			TrustedCall::balance_shield(account, _, _) => account,
 			// litentry
+			TrustedCall::set_shielding_key(account, _) => account,
 			TrustedCall::link_eth(account, _, _, _, _) => account,
 			TrustedCall::link_sub(account, _, _, _, _, _) => account,
 			TrustedCall::query_credit(account) => account,
@@ -241,6 +244,7 @@ pub enum TrustedGetter {
 	reserved_balance(AccountId),
 	nonce(AccountId),
 	// litentry
+	shielding_key(AccountId),
 	linked_ethereum_addresses(AccountId),
 	linked_substrate_addresses(AccountId),
 }
@@ -252,6 +256,7 @@ impl TrustedGetter {
 			TrustedGetter::reserved_balance(account) => account,
 			TrustedGetter::nonce(account) => account,
 			// litentry
+			TrustedGetter::shielding_key(account) => account,
 			TrustedGetter::linked_ethereum_addresses(account) => account,
 			TrustedGetter::linked_substrate_addresses(account) => account,
 		}

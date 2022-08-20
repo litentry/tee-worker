@@ -22,7 +22,7 @@ use crate::{
 	helpers::{
 		account_data, account_nonce, enclave_signer_account, ensure_enclave_signer_account,
 		ensure_root, get_account_info, get_linked_ethereum_addresses,
-		get_linked_substrate_addresses, increment_nonce, root, validate_nonce,
+		get_linked_substrate_addresses, get_shielding_key, increment_nonce, root, validate_nonce,
 	},
 	AccountData, AccountId, Getter, Index, ParentchainHeader, PublicGetter, ShardIdentifier, State,
 	StateTypeDiff, Stf, StfError, StfResult, TrustedCall, TrustedCallSigned, TrustedGetter,
@@ -117,6 +117,12 @@ impl Stf {
 						None
 					},
 				// litentry
+				TrustedGetter::shielding_key(who) =>
+					if let Some(key) = get_shielding_key(&who) {
+						Some(key.encode())
+					} else {
+						None
+					},
 				TrustedGetter::linked_ethereum_addresses(who) =>
 					if let Some(addresses) = get_linked_ethereum_addresses(&who) {
 						debug!(
@@ -225,6 +231,11 @@ impl Stf {
 					Ok(())
 				},
 				// litentry
+				TrustedCall::set_shielding_key(who, key) => {
+					debug!("set_shielding_key({}, {:?})", account_id_to_string(&who), key);
+					Self::set_shielding_key(who, key)?;
+					Ok(())
+				},
 				TrustedCall::link_eth(
 					litentry_account,
 					account_index,
@@ -386,6 +397,7 @@ impl Stf {
 			TrustedCall::balance_unshield(_, _, _, _) => debug!("No storage updates needed..."),
 			TrustedCall::balance_shield(_, _, _) => debug!("No storage updates needed..."),
 			// litentry
+			TrustedCall::set_shielding_key(_, _) => debug!("No storage updates needed..."),
 			TrustedCall::link_eth(_, _, _, _, _) => debug!("No storage updates needed..."),
 			TrustedCall::link_sub(_, _, _, _, _, _) => debug!("No storage updates needed..."),
 			TrustedCall::query_credit(_) => debug!("No storage updates needed..."),

@@ -91,7 +91,16 @@ pub fn get_account_info(who: &AccountId) -> Option<AccountInfo> {
 	maybe_storage_map
 }
 
-// litentry get linked etherem addresses
+/// Litentry
+pub fn get_shielding_key(who: &AccountId) -> Option<Vec<EthAddress>> {
+	get_storage_map(
+		"IdentityManagement",
+		"UserShieldingKeys",
+		who,
+		&StorageHasher::Blake2_128Concat,
+	)
+}
+
 pub fn get_linked_ethereum_addresses(who: &AccountId) -> Option<Vec<EthAddress>> {
 	get_storage_map("SgxAccountLinker", "EthereumLink", who, &StorageHasher::Blake2_128Concat)
 }
