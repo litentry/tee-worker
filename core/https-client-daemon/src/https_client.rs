@@ -27,14 +27,17 @@ use crate::{
 	Request,
 };
 use itc_rest_client::{
-	error::Error as HttpError, http_client::HttpClient, rest_client::RestClient, RestGet, RestPath,
+	error::Error as HttpError,
+	http_client::{DefaultSend, HttpClient},
+	rest_client::RestClient,
+	RestGet, RestPath,
 };
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_types::OpaqueCall;
 use log::*;
 use serde::{Deserialize, Serialize};
-use std::{string::String, time::Duration, vec::Vec};
+use std::{string::String, time::Duration};
 use url::Url;
 
 const TIMEOUT: Duration = Duration::from_secs(3u64);
@@ -43,12 +46,12 @@ use http::{
 	header::{HeaderName, CONNECTION},
 	HeaderValue,
 };
-use http_req::response::Headers;
+use itc_rest_client::sgx_reexport_prelude::http_req::response::Headers;
 
 /// Https rest client. Handles the https requests and responses.
 pub struct HttpsRestClient<T: EnclaveOnChainOCallApi, S: CreateExtrinsics> {
 	url: Url,
-	client: RestClient<HttpClient>,
+	client: RestClient<HttpClient<DefaultSend>>,
 	ocall_api: T,
 	create_extrinsics: S,
 }
@@ -88,8 +91,13 @@ fn add_to_headers(headers: &mut Headers, key: HeaderName, value: HeaderValue) {
 
 impl<T: EnclaveOnChainOCallApi, S: CreateExtrinsics> HttpsRestClient<T, S> {
 	pub fn new(url: Url, ocall_api: T, create_extrinsics: S) -> Self {
-		let http_client =
-			HttpClient::new(true, Some(TIMEOUT), Some(headers_connection_close()), None);
+		let http_client = HttpClient::new(
+			DefaultSend {},
+			true,
+			Some(TIMEOUT),
+			Some(headers_connection_close()),
+			None,
+		);
 		let rest_client = RestClient::new(http_client, url.clone());
 		Self { url, client: rest_client, ocall_api, create_extrinsics }
 	}
