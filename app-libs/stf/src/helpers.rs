@@ -18,6 +18,7 @@ use crate::{
 	stf_sgx_primitives::types::*, AccountId, Index, StfError, StfResult, ENCLAVE_ACCOUNT_KEY, H256,
 };
 use codec::{Decode, Encode};
+use ita_sgx_runtime::UserShieldingKey;
 use itp_storage::{storage_double_map_key, storage_map_key, storage_value_key, StorageHasher};
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::eth::EthAddress;
@@ -92,7 +93,7 @@ pub fn get_account_info(who: &AccountId) -> Option<AccountInfo> {
 }
 
 /// Litentry
-pub fn get_shielding_key(who: &AccountId) -> Option<Vec<EthAddress>> {
+pub fn get_shielding_key(who: &AccountId) -> Option<UserShieldingKey> {
 	get_storage_map(
 		"IdentityManagement",
 		"UserShieldingKeys",

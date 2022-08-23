@@ -37,6 +37,7 @@ pub use evm::{
 	FixedGasWeightMapping, GasWeightMapping, HashedAddressMapping, IntoAddressMapping,
 	SubstrateBlockHashMapping, GAS_PER_SECOND, MAXIMUM_BLOCK_WEIGHT, WEIGHT_PER_GAS,
 };
+use frame_system::EnsureRoot;
 
 use core::convert::{TryFrom, TryInto};
 use frame_support::{traits::ConstU32, weights::ConstantMultiplier};
@@ -304,6 +305,7 @@ impl pallet_sgx_account_linker::Config for Runtime {
 
 impl pallet_identity_management::Config for Runtime {
 	type Event = Event;
+	type ManageOrigin = EnsureRoot<AccountId>;
 	type ChallengeCode = u32;
 	type MaxUserShieldingKeyLength = ConstU32<1024>;
 	type MaxDidLength = ConstU32<128>;

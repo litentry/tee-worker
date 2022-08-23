@@ -19,7 +19,8 @@
 // to be called only by enclave
 //
 // TODO:
-// - origin management, only allow calls from TEE (= origin is signed with the ECC key)
+// - origin management, only allow calls from TEE (= origin is signed with the ECC key), or root?
+//   otherwise we'd always require the origin has some fund
 // - maybe don't emit events at all, or at least remove sensistive data
 // - benchmarking
 
@@ -56,13 +57,14 @@ pub mod pallet {
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	#[pallet::storage_version(STORAGE_VERSION)]
-	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// the event
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		/// the manager origin for extrincis
+		type ManageOrigin: EnsureOrigin<Self::Origin>;
 		/// challenge code type
 		type ChallengeCode: Member + Parameter + Default + Copy + MaxEncodedLen;
 		/// maximum user shielding key length
@@ -112,16 +114,16 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn user_shielding_keys)]
 	pub type UserShieldingKeys<T: Config> =
-		StorageMap<_, Blake2_256, T::AccountId, UserShieldingKeyOf<T>, OptionQuery>;
+		StorageMap<_, Blake2_128Concat, T::AccountId, UserShieldingKeyOf<T>, OptionQuery>;
 
 	/// challenge code is per Litentry account + did
 	#[pallet::storage]
 	#[pallet::getter(fn challenge_codes)]
 	pub type ChallengeCodes<T: Config> = StorageDoubleMap<
 		_,
-		Blake2_256,
+		Blake2_128Concat,
 		T::AccountId,
-		Blake2_256,
+		Blake2_128Concat,
 		DidOf<T>,
 		ChallengeCodeOf<T>,
 		OptionQuery,
@@ -132,9 +134,9 @@ pub mod pallet {
 	#[pallet::getter(fn id_graphs)]
 	pub type IDGraphs<T: Config> = StorageDoubleMap<
 		_,
-		Blake2_256,
+		Blake2_128Concat,
 		T::AccountId,
-		Blake2_256,
+		Blake2_128Concat,
 		DidOf<T>,
 		IdentityContext<T>,
 		OptionQuery,
@@ -148,7 +150,7 @@ pub mod pallet {
 			who: T::AccountId,
 			key: UserShieldingKeyOf<T>,
 		) -> DispatchResult {
-			let _ = ensure_signed(origin)?;
+			T::ManageOrigin::ensure_origin(origin)?;
 			// we don't care about the current key
 			UserShieldingKeys::<T>::insert(&who, &key);
 			Self::deposit_event(Event::UserShieldingKeySet { who, key });
@@ -162,7 +164,7 @@ pub mod pallet {
 			did: DidOf<T>,
 			code: ChallengeCodeOf<T>,
 		) -> DispatchResult {
-			let _ = ensure_signed(origin)?;
+			T::ManageOrigin::ensure_origin(origin)?;
 			// we don't care if it has already associated with any challenge code
 			ChallengeCodes::<T>::insert(&who, &did, &code);
 			Self::deposit_event(Event::ChallengeCodeSet { who, did, code });
@@ -175,7 +177,7 @@ pub mod pallet {
 			who: T::AccountId,
 			did: DidOf<T>,
 		) -> DispatchResult {
-			let _ = ensure_signed(origin)?;
+			T::ManageOrigin::ensure_origin(origin)?;
 			ensure!(
 				ChallengeCodes::<T>::contains_key(&who, &did),
 				Error::<T>::ChallengeCodeNotExist
@@ -193,7 +195,7 @@ pub mod pallet {
 			metadata: Option<MetadataOf<T>>,
 			linking_request_block: BlockNumberOf<T>,
 		) -> DispatchResult {
-			let _ = ensure_signed(origin)?;
+			T::ManageOrigin::ensure_origin(origin)?;
 			ensure!(!IDGraphs::<T>::contains_key(&who, &did), Error::<T>::IdentityAlreadyExist);
 			let context = IdentityContext { metadata, linking_request_block, is_verified: false };
 			IDGraphs::<T>::insert(&who, &did, context);
@@ -207,7 +209,7 @@ pub mod pallet {
 			who: T::AccountId,
 			did: DidOf<T>,
 		) -> DispatchResult {
-			let _ = ensure_signed(origin)?;
+			T::ManageOrigin::ensure_origin(origin)?;
 			ensure!(IDGraphs::<T>::contains_key(&who, &did), Error::<T>::IdentityNotExist);
 			IDGraphs::<T>::remove(&who, &did);
 			Self::deposit_event(Event::IdentityUnlinked { who, did });
@@ -221,7 +223,7 @@ pub mod pallet {
 			did: DidOf<T>,
 			verification_request_block: BlockNumberOf<T>,
 		) -> DispatchResult {
-			let _ = ensure_signed(origin)?;
+			T::ManageOrigin::ensure_origin(origin)?;
 			IDGraphs::<T>::try_mutate(&who, &did, |context| -> DispatchResult {
 				let mut c = context.take().ok_or(Error::<T>::IdentityNotExist)?;
 				ensure!(

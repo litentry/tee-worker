@@ -58,6 +58,7 @@ pub type LinkedSubstrateAddress = std::vec::Vec<LinkedSubAccount<AccountId>>;
 
 use crate::trusted_commands_litentry::*;
 
+#[macro_export]
 macro_rules! get_layer_two_nonce {
 	($signer_pair:ident, $cli: ident, $trusted_args:ident ) => {{
 		let top: TrustedOperation =

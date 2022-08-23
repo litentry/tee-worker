@@ -35,12 +35,13 @@ use std::format;
 use support::traits::UnfilteredDispatchable;
 
 use itc_https_client_daemon::daemon_sender::SendHttpsRequest;
+use itp_utils::stringify::account_id_to_string;
 
 impl Stf {
 	pub fn set_shielding_key(who: AccountId, key: UserShieldingKey) -> StfResult<()> {
-		let origin = ita_sgx_runtime::Origin::signed(who.clone());
+		debug!("who.str = {:?}, key = {:?}", account_id_to_string(&who), key.clone());
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_user_shielding_key { who, key }
-			.dispatch_bypass_filter(origin)
+			.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
 			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
 		Ok(())
 	}

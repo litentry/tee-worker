@@ -17,6 +17,7 @@
 use std::convert::TryInto;
 
 use crate::{
+	get_layer_two_nonce,
 	trusted_command_utils::{get_accountid_from_str, get_identifiers, get_pair_from_str},
 	trusted_commands::{
 		perform_operation, BlockNumber, LinkedEthereumAddress, LinkedSubstrateAddress, TrustedArgs,
@@ -32,28 +33,26 @@ use litentry_primitives::{
 };
 use log::*;
 use pallet_sgx_account_linker::{MultiSignature, NetworkType};
-use sp_core::Pair;
+use sp_application_crypto::Ss58Codec;
+use sp_core::{sr25519 as sr25519_core, Pair};
 
 pub(crate) fn set_shielding_key(cli: &Cli, trusted_args: &TrustedArgs, arg_who: &str, key: &str) {
-	debug!("arg_who = {:?}, key = {:?}", arg_who, key);
-	let account_pair = get_pair_from_str(trusted_args, arg_who);
-	let account = get_accountid_from_str(arg_who);
+	warn!("arg_who = {:?}, key = {:?}", arg_who, key);
+	let who = get_pair_from_str(trusted_args, arg_who);
+	let root = get_pair_from_str(trusted_args, "//Alice");
+
+	warn!("account ss58 is {}", who.public().to_ss58check());
+	warn!("set shielding key for {}, key = {}", who.public(), key.clone());
 
 	let (mrenclave, shard) = get_identifiers(trusted_args);
-	// get nonce
-	let top: TrustedOperation = TrustedGetter::nonce(account_pair.public().into())
-		.sign(&KeyPair::Sr25519(account_pair.clone()))
-		.into();
-	let nonce = perform_operation(cli, trusted_args, &top)
-		.and_then(|v| Index::decode(&mut v.as_slice()).ok())
-		.unwrap_or_default();
-	debug!("got nonce: {:?}", nonce);
-
-	// compose the extrinsic
-	let top: TrustedOperation =
-		TrustedCall::set_shielding_key(account, key.as_bytes().to_vec().try_into().unwrap())
-			.sign(&KeyPair::Sr25519(account_pair), nonce, &mrenclave, &shard)
-			.into_trusted_operation(trusted_args.direct);
+	let nonce = get_layer_two_nonce!(root, cli, trusted_args);
+	let top: TrustedOperation = TrustedCall::set_shielding_key(
+		root.public().into(),
+		who.public().into(),
+		key.as_bytes().to_vec().try_into().unwrap(),
+	)
+	.sign(&KeyPair::Sr25519(root), nonce, &mrenclave, &shard)
+	.into_trusted_operation(trusted_args.direct);
 	let _ = perform_operation(cli, trusted_args, &top);
 }
 
@@ -65,7 +64,7 @@ pub(crate) fn shielding_key(cli: &Cli, trusted_args: &TrustedArgs, arg_who: &str
 		.into();
 	let key = perform_operation(cli, trusted_args, &top)
 		.and_then(|v| UserShieldingKey::decode(&mut v.as_slice()).ok());
-	println!("shielding_key is {:?}", key);
+	println!("{}", String::from_utf8(key.unwrap().into_inner()).unwrap());
 }
 
 pub(crate) fn linked_eth_addresses(cli: &Cli, trusted_args: &TrustedArgs, arg_who: &str) {
