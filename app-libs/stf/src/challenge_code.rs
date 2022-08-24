@@ -1,19 +1,18 @@
-/*
-	Copyright 2022 Integritee AG and Supercomputing Systems AG
-
-	Licensed under the Apache License, Version 2.0 (the "License");
-	you may not use this file except in compliance with the License.
-	You may obtain a copy of the License at
-
-		http://www.apache.org/licenses/LICENSE-2.0
-
-	Unless required by applicable law or agreed to in writing, software
-	distributed under the License is distributed on an "AS IS" BASIS,
-	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	See the License for the specific language governing permissions and
-	limitations under the License.
-
-*/
+// Copyright 2020-2022 Litentry Technologies GmbH.
+// This file is part of Litentry.
+//
+// Litentry is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Litentry is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use rand::Rng;
 
@@ -22,74 +21,46 @@ pub trait ChallengeCodeGenerator {
 }
 
 #[derive(Default)]
-pub struct NumericChallengeCode {
-	pub name: String,
-	pub len: u8,
+pub struct AlphanumericChallengeCode {
+	pub len: usize,
 }
 
-impl ChallengeCodeGenerator for NumericChallengeCode{
+impl ChallengeCodeGenerator for AlphanumericChallengeCode{
 	fn generate(&mut self) -> String {
 		if self.len == 0 {
 			self.len = 6;
 		}
-
+		const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
+								abcdefghijklmnopqrstuvwxyz\
+								0123456789)(*&^%$#@!~";
 		let mut rng = rand::thread_rng();
-		let first_digit: u8 = rng.gen_range(0..=9) + 48;
-		let mut code = vec![first_digit];
 
-		while code.len() < self.len as usize {
-			code.push(rng.gen_range(0..=9) + 48);
-		}
+		let password: String = (0..self.len)
+			.map(|_| {
+				let idx = rng.gen_range(0..CHARSET.len());
+				CHARSET[idx] as char
+			})
+			.collect();
 
-		String::from_utf8(code).unwrap()
-	}
-}
-
-#[derive(Default)]
-pub struct CharChallengeCode {
-	pub name: String,
-	pub len: u8,
-}
-
-impl ChallengeCodeGenerator for CharChallengeCode{
-	fn generate(&mut self) -> String {
-		if self.len == 0 {
-			self.len = 6;
-		}
-
-		let mut rng = rand::thread_rng();
-		let first_digit: u8 = rng.gen_range(0..=16) + 65;
-		let mut code = vec![first_digit];
-
-		while code.len() < self.len as usize {
-			if rng.gen_range(0..=1) == 0 {
-				code.push(rng.gen_range(0..=9) + 65);
-			} else {
-				code.push(rng.gen_range(0..=9) + 48);
-			}
-		}
-
-		String::from_utf8(code).unwrap()
+		password
 	}
 }
 
 #[test]
 fn gen_code(){
-	let mut ncode = NumericChallengeCode {
-		name: String::from("my numeric challenge code"),
+	let mut a_code = AlphanumericChallengeCode {
 		..Default::default()
 	};
 
-	let ncode_str = ncode.generate();
-	assert_eq!(ncode_str.len(), 6);
+	let passwd = a_code.generate();
+	assert_eq!(passwd.len(), 6);
 
-	let mut ccode = CharChallengeCode {
-		name: String::from("my character challenge code"),
-		len: 10
+
+	let mut a_code = AlphanumericChallengeCode {
+		len: 40
 	};
 
-	let ccode_str = ccode.generate();
-	assert_ne!(ccode_str.len(), 6);
-	assert_eq!(ccode_str.len(), ccode.len as usize);
+	let passwd = a_code.generate();
+	assert_ne!(passwd.len(), 6);
+	assert_eq!(passwd.len(), a_code.len);
 }
-
