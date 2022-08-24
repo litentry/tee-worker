@@ -15,6 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use rand::Rng;
+use rand::distributions::Alphanumeric;
 
 pub trait ChallengeCodeGenerator {
 	fn generate(&mut self) -> String;
@@ -27,35 +28,16 @@ pub struct AlphanumericChallengeCode {
 
 impl ChallengeCodeGenerator for AlphanumericChallengeCode{
 	fn generate(&mut self) -> String {
-		if self.len == 0 {
-			self.len = 6;
-		}
-		const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
-								abcdefghijklmnopqrstuvwxyz\
-								0123456789)(*&^%$#@!~";
-		let mut rng = rand::thread_rng();
-
-		let password: String = (0..self.len)
-			.map(|_| {
-				let idx = rng.gen_range(0..CHARSET.len());
-				CHARSET[idx] as char
-			})
-			.collect();
-
-		password
+		rand::thread_rng()
+			.sample_iter(&Alphanumeric)
+			.take(self.len)
+			.map(char::from)
+			.collect()
 	}
 }
 
 #[test]
 fn gen_code(){
-	let mut a_code = AlphanumericChallengeCode {
-		..Default::default()
-	};
-
-	let passwd = a_code.generate();
-	assert_eq!(passwd.len(), 6);
-
-
 	let mut a_code = AlphanumericChallengeCode {
 		len: 40
 	};
