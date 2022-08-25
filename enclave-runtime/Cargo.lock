@@ -1356,6 +1356,7 @@ dependencies = [
  "pallet-balances",
  "pallet-sgx-account-linker",
  "parity-scale-codec",
+ "rand 0.8.5",
  "sgx_tstd",
  "sidechain-primitives",
  "sp-application-crypto",

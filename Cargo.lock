@@ -4144,6 +4144,7 @@ dependencies = [
  "pallet-balances",
  "pallet-sgx-account-linker",
  "parity-scale-codec 3.1.5",
+ "rand 0.8.5",
  "sc-keystore",
  "sgx_tstd",
  "sidechain-primitives 0.1.0 (git+https://github.com/integritee-network/pallets.git?branch=master)",
