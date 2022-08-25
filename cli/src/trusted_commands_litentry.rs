@@ -42,7 +42,6 @@ pub(crate) fn set_shielding_key(cli: &Cli, trusted_args: &TrustedArgs, arg_who: 
 	let root = get_pair_from_str(trusted_args, "//Alice");
 
 	warn!("account ss58 is {}", who.public().to_ss58check());
-	warn!("set shielding key for {}, key = {}", who.public(), key.clone());
 
 	let (mrenclave, shard) = get_identifiers(trusted_args);
 	let nonce = get_layer_two_nonce!(root, cli, trusted_args);
