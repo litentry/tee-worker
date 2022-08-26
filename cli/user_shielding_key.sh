@@ -1,8 +1,5 @@
 #!/bin/bash
 
-ROOTDIR=$(git rev-parse --show-toplevel)
-cd "$ROOTDIR"
-
 while getopts ":m:p:P:t:u:V:C:" opt; do
     case $opt in
         t)
