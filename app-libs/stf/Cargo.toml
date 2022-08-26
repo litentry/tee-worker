@@ -83,5 +83,6 @@ std = [
     "sp-io/std",
     "substrate-api-client/std",
     "substrate-client-keystore",
+    "ita-sgx-runtime/std",
 ]
 test = []
