@@ -25,15 +25,16 @@ use crate::{
 };
 use codec::Decode;
 use hdrhistogram::Histogram;
+pub use ita_sgx_runtime::UserShieldingKey;
 use ita_stf::{Index, KeyPair, TrustedCall, TrustedGetter, TrustedOperation};
 use itc_rpc_client::direct_client::{DirectApi, DirectClient};
 use itp_types::{
 	TrustedOperationStatus,
 	TrustedOperationStatus::{InSidechainBlock, Submitted},
 };
-use litentry_primitives::{eth::EthAddress, BlockNumber, LinkingAccountIndex};
+use litentry_primitives::{eth::EthAddress, LinkingAccountIndex};
 use log::*;
-use my_node_runtime::Balance;
+pub use my_node_runtime::{Balance, BlockNumber};
 use pallet_sgx_account_linker::LinkedSubAccount;
 use rand::Rng;
 use rayon::prelude::*;
@@ -57,6 +58,7 @@ pub type LinkedSubstrateAddress = std::vec::Vec<LinkedSubAccount<AccountId>>;
 
 use crate::trusted_commands_litentry::*;
 
+#[macro_export]
 macro_rules! get_layer_two_nonce {
 	($signer_pair:ident, $cli: ident, $trusted_args:ident ) => {{
 		let top: TrustedOperation =
@@ -175,7 +177,25 @@ pub enum TrustedCommands {
 	},
 
 	/// litentry
-	/// TODO: add doc
+	///
+	/// Set a shielding key for a given account
+	SetShieldingKey {
+		/// AccountId in ss58check format
+		account: String,
+
+		/// Shielding key
+		key: String,
+	},
+
+	/// Get a shielding key for a given account
+	ShieldingKey {
+		/// AccountId in ss58check format
+		account: String,
+	},
+
+	/// ================================================
+	/// TODO: the following is deprecated, to be removed
+	/// ================================================
 	LinkedEthAddresses {
 		account: String,
 	},
@@ -233,6 +253,10 @@ pub fn match_trusted_commands(cli: &Cli, trusted_args: &TrustedArgs) {
 			*wait_for_confirmation,
 			funding_account,
 		),
+		// Litentry
+		TrustedCommands::SetShieldingKey { account, key } =>
+			set_shielding_key(cli, trusted_args, account, key),
+		TrustedCommands::ShieldingKey { account } => shielding_key(cli, trusted_args, account),
 		TrustedCommands::LinkedEthAddresses { account } =>
 			linked_eth_addresses(cli, trusted_args, account),
 		TrustedCommands::LinkedSubAddresses { account } =>

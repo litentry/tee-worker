@@ -35,18 +35,6 @@ fn set_user_shielding_key_works() {
 }
 
 #[test]
-fn wrong_shielding_key_length_fails() {
-	new_test_ext().execute_with(|| {
-		let shielding_key: UserShieldingKeyOf<Test> = vec![0u8; 383].try_into().unwrap();
-		assert_eq!(IMT::user_shielding_keys(2), None);
-		assert_noop!(
-			IMT::set_user_shielding_key(Origin::signed(1), 2, shielding_key),
-			Error::<Test>::InvalidUserShieldingKeyLength
-		);
-	});
-}
-
-#[test]
 fn link_identity_works() {
 	new_test_ext().execute_with(|| {
 		let did: DidOf<Test> =

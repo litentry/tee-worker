@@ -1261,7 +1261,7 @@ dependencies = [
 [[package]]
 name = "common-primitives"
 version = "0.1.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=polkadot-v0.9.26#bd804ba63d4944952075b5fb8798066b8af87ab6"
+source = "git+https://github.com/integritee-network/pallets.git?branch=sdk-v0.9.0-polkadot-v0.9.26#170582c91c79cd5e2489e3e958aa27e26fce8bbc"
 dependencies = [
  "sp-std 4.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.26)",
 ]
@@ -3752,24 +3752,7 @@ dependencies = [
 [[package]]
 name = "ias-verify"
 version = "0.1.4"
-source = "git+https://github.com/integritee-network/pallets.git?branch=master#bd804ba63d4944952075b5fb8798066b8af87ab6"
-dependencies = [
- "base64 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "chrono 0.4.22",
- "frame-support",
- "parity-scale-codec 3.1.5",
- "scale-info",
- "serde_json 1.0.83",
- "sp-core",
- "sp-io 6.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.26)",
- "sp-std 4.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.26)",
- "webpki 0.21.0",
-]
-
-[[package]]
-name = "ias-verify"
-version = "0.1.4"
-source = "git+https://github.com/integritee-network/pallets.git?branch=polkadot-v0.9.26#bd804ba63d4944952075b5fb8798066b8af87ab6"
+source = "git+https://github.com/integritee-network/pallets.git?branch=sdk-v0.9.0-polkadot-v0.9.26#170582c91c79cd5e2489e3e958aa27e26fce8bbc"
 dependencies = [
  "base64 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "chrono 0.4.22",
@@ -3928,6 +3911,7 @@ dependencies = [
  "geojson",
  "hdrhistogram",
  "hex 0.4.3",
+ "ita-sgx-runtime",
  "ita-stf",
  "itc-rpc-client",
  "itp-node-api",
@@ -3957,7 +3941,7 @@ dependencies = [
  "substrate-api-client",
  "substrate-bip39",
  "substrate-client-keystore",
- "teerex-primitives 0.1.0 (git+https://github.com/integritee-network/pallets.git?branch=master)",
+ "teerex-primitives",
  "tiny-bip39",
  "ws",
 ]
@@ -4013,14 +3997,14 @@ dependencies = [
  "sgx_types",
  "sgx_urts",
  "sha2 0.7.1",
- "sidechain-primitives 0.1.0 (git+https://github.com/integritee-network/pallets.git?branch=master)",
+ "sidechain-primitives",
  "sidechain-test",
  "sp-core",
  "sp-finality-grandpa",
  "sp-keyring",
  "sp-runtime",
  "substrate-api-client",
- "teerex-primitives 0.1.0 (git+https://github.com/integritee-network/pallets.git?branch=master)",
+ "teerex-primitives",
  "thiserror 1.0.32",
  "tokio",
  "warp",
@@ -4186,9 +4170,10 @@ dependencies = [
  "pallet-balances",
  "pallet-sgx-account-linker",
  "parity-scale-codec 3.1.5",
+ "rand 0.8.5",
  "sc-keystore",
  "sgx_tstd",
- "sidechain-primitives 0.1.0 (git+https://github.com/integritee-network/pallets.git?branch=master)",
+ "sidechain-primitives",
  "sp-application-crypto",
  "sp-core",
  "sp-io 6.0.0",
@@ -4429,7 +4414,7 @@ dependencies = [
  "log 0.4.17",
  "parity-scale-codec 3.1.5",
  "serde_json 1.0.83",
- "sidechain-primitives 0.1.0 (git+https://github.com/integritee-network/pallets.git?branch=master)",
+ "sidechain-primitives",
  "sidechain-test",
  "sp-core",
  "tokio",
@@ -4869,7 +4854,7 @@ dependencies = [
  "serde 1.0.143",
  "sgx_tstd",
  "sgx_types",
- "sidechain-primitives 0.1.0 (git+https://github.com/integritee-network/pallets.git?branch=master)",
+ "sidechain-primitives",
  "sp-application-crypto",
  "sp-core",
  "sp-runtime",
@@ -4911,7 +4896,7 @@ dependencies = [
 [[package]]
 name = "itp-types"
 version = "0.8.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=master#bd804ba63d4944952075b5fb8798066b8af87ab6"
+source = "git+https://github.com/integritee-network/pallets.git?branch=sdk-v0.9.0-polkadot-v0.9.26#170582c91c79cd5e2489e3e958aa27e26fce8bbc"
 dependencies = [
  "chrono 0.4.22",
  "parity-scale-codec 3.1.5",
@@ -4928,7 +4913,7 @@ dependencies = [
 [[package]]
 name = "itp-utils"
 version = "0.8.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=master#bd804ba63d4944952075b5fb8798066b8af87ab6"
+source = "git+https://github.com/integritee-network/pallets.git?branch=sdk-v0.9.0-polkadot-v0.9.26#170582c91c79cd5e2489e3e958aa27e26fce8bbc"
 dependencies = [
  "frame-support",
  "hex 0.4.3",
@@ -4956,7 +4941,7 @@ dependencies = [
  "parity-scale-codec 3.1.5",
  "sgx_tstd",
  "sgx_types",
- "sidechain-primitives 0.1.0 (git+https://github.com/integritee-network/pallets.git?branch=master)",
+ "sidechain-primitives",
  "sp-core",
  "sp-runtime",
  "thiserror 1.0.32",
@@ -4995,7 +4980,7 @@ dependencies = [
  "parity-scale-codec 3.1.5",
  "sgx_tstd",
  "sidechain-block-verification",
- "sidechain-primitives 0.1.0 (git+https://github.com/integritee-network/pallets.git?branch=master)",
+ "sidechain-primitives",
  "sidechain-test",
  "sp-core",
  "sp-keyring",
@@ -5020,7 +5005,7 @@ dependencies = [
  "sgx_tstd",
  "sgx_types",
  "sidechain-block-verification",
- "sidechain-primitives 0.1.0 (git+https://github.com/integritee-network/pallets.git?branch=master)",
+ "sidechain-primitives",
  "sidechain-test",
  "sp-core",
  "sp-keyring",
@@ -5047,7 +5032,7 @@ dependencies = [
  "parity-scale-codec 3.1.5",
  "sgx_tstd",
  "sidechain-block-verification",
- "sidechain-primitives 0.1.0 (git+https://github.com/integritee-network/pallets.git?branch=master)",
+ "sidechain-primitives",
  "sidechain-test",
  "sp-consensus-slots",
  "sp-keyring",
@@ -5070,7 +5055,7 @@ dependencies = [
  "log 0.4.17",
  "serde 1.0.143",
  "serde_json 1.0.83",
- "sidechain-primitives 0.1.0 (git+https://github.com/integritee-network/pallets.git?branch=master)",
+ "sidechain-primitives",
  "sidechain-test",
  "thiserror 1.0.32",
  "tokio",
@@ -5092,7 +5077,7 @@ dependencies = [
  "rust-base58 0.0.4 (git+https://github.com/mesalock-linux/rust-base58-sgx?rev=sgx_1.1.3)",
  "sgx_tstd",
  "sgx_types",
- "sidechain-primitives 0.1.0 (git+https://github.com/integritee-network/pallets.git?branch=master)",
+ "sidechain-primitives",
  "sp-core",
 ]
 
@@ -5108,7 +5093,7 @@ dependencies = [
  "its-state",
  "its-top-pool-executor",
  "its-validateer-fetch",
- "sidechain-primitives 0.1.0 (git+https://github.com/integritee-network/pallets.git?branch=master)",
+ "sidechain-primitives",
 ]
 
 [[package]]
@@ -5122,7 +5107,7 @@ dependencies = [
  "parity-scale-codec 3.1.5",
  "serde 1.0.143",
  "sgx_tstd",
- "sidechain-primitives 0.1.0 (git+https://github.com/integritee-network/pallets.git?branch=master)",
+ "sidechain-primitives",
  "sp-core",
  "sp-io 6.0.0",
  "sp-runtime",
@@ -5142,7 +5127,7 @@ dependencies = [
  "parity-scale-codec 3.1.5",
  "parking_lot 0.12.1",
  "rocksdb",
- "sidechain-primitives 0.1.0 (git+https://github.com/integritee-network/pallets.git?branch=master)",
+ "sidechain-primitives",
  "sidechain-test",
  "sp-core",
  "temp-dir",
@@ -5164,7 +5149,7 @@ dependencies = [
  "parity-scale-codec 3.1.5",
  "sgx_tstd",
  "sgx_types",
- "sidechain-primitives 0.1.0 (git+https://github.com/integritee-network/pallets.git?branch=master)",
+ "sidechain-primitives",
  "sp-core",
  "sp-runtime",
  "thiserror 1.0.32",
@@ -6260,7 +6245,7 @@ version = "0.8.0"
 [[package]]
 name = "litmus-parachain-runtime"
 version = "0.9.9"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#848c9675fa23af450962fa27bdd762af18f7cb60"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#0d1d828dc5378b6c600cfef4fa0b21921e7b24c8"
 dependencies = [
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
@@ -7484,7 +7469,7 @@ dependencies = [
 [[package]]
 name = "pallet-asset-manager"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#848c9675fa23af450962fa27bdd762af18f7cb60"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#0d1d828dc5378b6c600cfef4fa0b21921e7b24c8"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -7661,7 +7646,7 @@ dependencies = [
 [[package]]
 name = "pallet-bridge"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#848c9675fa23af450962fa27bdd762af18f7cb60"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#0d1d828dc5378b6c600cfef4fa0b21921e7b24c8"
 dependencies = [
  "blake2-rfc",
  "frame-benchmarking",
@@ -7679,7 +7664,7 @@ dependencies = [
 [[package]]
 name = "pallet-bridge-transfer"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#848c9675fa23af450962fa27bdd762af18f7cb60"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#0d1d828dc5378b6c600cfef4fa0b21921e7b24c8"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7769,7 +7754,7 @@ dependencies = [
 [[package]]
 name = "pallet-drop3"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#848c9675fa23af450962fa27bdd762af18f7cb60"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#0d1d828dc5378b6c600cfef4fa0b21921e7b24c8"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7848,7 +7833,7 @@ dependencies = [
 [[package]]
 name = "pallet-extrinsic-filter"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#848c9675fa23af450962fa27bdd762af18f7cb60"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#0d1d828dc5378b6c600cfef4fa0b21921e7b24c8"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7922,7 +7907,7 @@ dependencies = [
 [[package]]
 name = "pallet-identity-management"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#848c9675fa23af450962fa27bdd762af18f7cb60"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#0d1d828dc5378b6c600cfef4fa0b21921e7b24c8"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7937,7 +7922,7 @@ dependencies = [
  "sp-io 6.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.26)",
  "sp-runtime",
  "sp-std 4.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.26)",
- "teerex-primitives 0.1.0 (git+https://github.com/integritee-network/pallets.git?branch=polkadot-v0.9.26)",
+ "teerex-primitives",
 ]
 
 [[package]]
@@ -8059,7 +8044,7 @@ dependencies = [
 [[package]]
 name = "pallet-parentchain"
 version = "0.9.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=master#bd804ba63d4944952075b5fb8798066b8af87ab6"
+source = "git+https://github.com/integritee-network/pallets.git?branch=sdk-v0.9.0-polkadot-v0.9.26#170582c91c79cd5e2489e3e958aa27e26fce8bbc"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -8178,7 +8163,7 @@ dependencies = [
 [[package]]
 name = "pallet-sidechain"
 version = "0.9.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=polkadot-v0.9.26#bd804ba63d4944952075b5fb8798066b8af87ab6"
+source = "git+https://github.com/integritee-network/pallets.git?branch=sdk-v0.9.0-polkadot-v0.9.26#170582c91c79cd5e2489e3e958aa27e26fce8bbc"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -8188,12 +8173,12 @@ dependencies = [
  "parity-scale-codec 3.1.5",
  "scale-info",
  "serde 1.0.143",
- "sidechain-primitives 0.1.0 (git+https://github.com/integritee-network/pallets.git?branch=polkadot-v0.9.26)",
+ "sidechain-primitives",
  "sp-core",
  "sp-io 6.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.26)",
  "sp-runtime",
  "sp-std 4.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.26)",
- "teerex-primitives 0.1.0 (git+https://github.com/integritee-network/pallets.git?branch=polkadot-v0.9.26)",
+ "teerex-primitives",
 ]
 
 [[package]]
@@ -8245,7 +8230,7 @@ dependencies = [
 [[package]]
 name = "pallet-teeracle"
 version = "0.1.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=polkadot-v0.9.26#bd804ba63d4944952075b5fb8798066b8af87ab6"
+source = "git+https://github.com/integritee-network/pallets.git?branch=sdk-v0.9.0-polkadot-v0.9.26#170582c91c79cd5e2489e3e958aa27e26fce8bbc"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -8264,11 +8249,11 @@ dependencies = [
 [[package]]
 name = "pallet-teerex"
 version = "0.9.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=polkadot-v0.9.26#bd804ba63d4944952075b5fb8798066b8af87ab6"
+source = "git+https://github.com/integritee-network/pallets.git?branch=sdk-v0.9.0-polkadot-v0.9.26#170582c91c79cd5e2489e3e958aa27e26fce8bbc"
 dependencies = [
  "frame-support",
  "frame-system",
- "ias-verify 0.1.4 (git+https://github.com/integritee-network/pallets.git?branch=polkadot-v0.9.26)",
+ "ias-verify",
  "log 0.4.17",
  "pallet-timestamp",
  "parity-scale-codec 3.1.5",
@@ -8278,7 +8263,7 @@ dependencies = [
  "sp-io 6.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.26)",
  "sp-runtime",
  "sp-std 4.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.26)",
- "teerex-primitives 0.1.0 (git+https://github.com/integritee-network/pallets.git?branch=polkadot-v0.9.26)",
+ "teerex-primitives",
 ]
 
 [[package]]
@@ -8438,7 +8423,7 @@ dependencies = [
 [[package]]
 name = "parentchain-test"
 version = "0.8.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=master#bd804ba63d4944952075b5fb8798066b8af87ab6"
+source = "git+https://github.com/integritee-network/pallets.git?branch=sdk-v0.9.0-polkadot-v0.9.26#170582c91c79cd5e2489e3e958aa27e26fce8bbc"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -10050,7 +10035,7 @@ dependencies = [
 [[package]]
 name = "primitives"
 version = "0.9.9"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#848c9675fa23af450962fa27bdd762af18f7cb60"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#0d1d828dc5378b6c600cfef4fa0b21921e7b24c8"
 dependencies = [
  "sp-core",
  "sp-runtime",
@@ -10859,7 +10844,7 @@ dependencies = [
 [[package]]
 name = "runtime-common"
 version = "0.9.9"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#848c9675fa23af450962fa27bdd762af18f7cb60"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#0d1d828dc5378b6c600cfef4fa0b21921e7b24c8"
 dependencies = [
  "cumulus-pallet-parachain-system",
  "cumulus-primitives-core",
@@ -12737,14 +12722,14 @@ checksum = "43b2853a4d09f215c24cc5489c992ce46052d359b5109343cbafbf26bc62f8a3"
 [[package]]
 name = "sidechain-block-verification"
 version = "0.9.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=master#bd804ba63d4944952075b5fb8798066b8af87ab6"
+source = "git+https://github.com/integritee-network/pallets.git?branch=sdk-v0.9.0-polkadot-v0.9.26#170582c91c79cd5e2489e3e958aa27e26fce8bbc"
 dependencies = [
  "frame-support",
  "itp-types",
  "itp-utils",
  "log 0.4.17",
  "sgx_tstd",
- "sidechain-primitives 0.1.0 (git+https://github.com/integritee-network/pallets.git?branch=master)",
+ "sidechain-primitives",
  "sp-consensus-slots",
  "sp-core",
  "sp-runtime",
@@ -12755,21 +12740,7 @@ dependencies = [
 [[package]]
 name = "sidechain-primitives"
 version = "0.1.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=master#bd804ba63d4944952075b5fb8798066b8af87ab6"
-dependencies = [
- "parity-scale-codec 3.1.5",
- "scale-info",
- "serde 1.0.143",
- "sp-core",
- "sp-io 6.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.26)",
- "sp-runtime",
- "sp-std 4.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.26)",
-]
-
-[[package]]
-name = "sidechain-primitives"
-version = "0.1.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=polkadot-v0.9.26#bd804ba63d4944952075b5fb8798066b8af87ab6"
+source = "git+https://github.com/integritee-network/pallets.git?branch=sdk-v0.9.0-polkadot-v0.9.26#170582c91c79cd5e2489e3e958aa27e26fce8bbc"
 dependencies = [
  "parity-scale-codec 3.1.5",
  "scale-info",
@@ -12783,11 +12754,11 @@ dependencies = [
 [[package]]
 name = "sidechain-test"
 version = "0.8.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=master#bd804ba63d4944952075b5fb8798066b8af87ab6"
+source = "git+https://github.com/integritee-network/pallets.git?branch=sdk-v0.9.0-polkadot-v0.9.26#170582c91c79cd5e2489e3e958aa27e26fce8bbc"
 dependencies = [
  "itp-types",
  "parity-scale-codec 3.1.5",
- "sidechain-primitives 0.1.0 (git+https://github.com/integritee-network/pallets.git?branch=master)",
+ "sidechain-primitives",
  "sp-core",
 ]
 
@@ -14035,7 +14006,7 @@ checksum = "c02424087780c9b71cc96799eaeddff35af2bc513278cda5c99fc1f5d026d3c1"
 [[package]]
 name = "teeracle-primitives"
 version = "0.1.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=polkadot-v0.9.26#bd804ba63d4944952075b5fb8798066b8af87ab6"
+source = "git+https://github.com/integritee-network/pallets.git?branch=sdk-v0.9.0-polkadot-v0.9.26#170582c91c79cd5e2489e3e958aa27e26fce8bbc"
 dependencies = [
  "common-primitives",
  "sp-std 4.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.26)",
@@ -14045,23 +14016,9 @@ dependencies = [
 [[package]]
 name = "teerex-primitives"
 version = "0.1.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=master#bd804ba63d4944952075b5fb8798066b8af87ab6"
+source = "git+https://github.com/integritee-network/pallets.git?branch=sdk-v0.9.0-polkadot-v0.9.26#170582c91c79cd5e2489e3e958aa27e26fce8bbc"
 dependencies = [
- "ias-verify 0.1.4 (git+https://github.com/integritee-network/pallets.git?branch=master)",
- "parity-scale-codec 3.1.5",
- "scale-info",
- "serde 1.0.143",
- "sp-core",
- "sp-io 6.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.26)",
- "sp-std 4.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.26)",
-]
-
-[[package]]
-name = "teerex-primitives"
-version = "0.1.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=polkadot-v0.9.26#bd804ba63d4944952075b5fb8798066b8af87ab6"
-dependencies = [
- "ias-verify 0.1.4 (git+https://github.com/integritee-network/pallets.git?branch=polkadot-v0.9.26)",
+ "ias-verify",
  "parity-scale-codec 3.1.5",
  "scale-info",
  "serde 1.0.143",

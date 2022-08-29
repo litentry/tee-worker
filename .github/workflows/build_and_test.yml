@@ -163,6 +163,9 @@ jobs:
           - test: Benchmark
             mode: sidechain
             demo_name: sidechain-benchmark
+          - test: Litentry-user-shielding-key
+            mode: sidechain
+            demo_name: user-shielding-key
           - test: HTTPSTest
             demo_name: https_integration_test
             demo_script: https_test.sh

@@ -16,10 +16,11 @@
 
 use crate as pallet_tee_identity_management;
 use frame_support::{
-	parameter_types,
+	ord_parameter_types, parameter_types,
 	traits::{ConstU128, ConstU16, ConstU32, ConstU64},
 };
 use frame_system as system;
+use frame_system::EnsureSignedBy;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
@@ -86,10 +87,15 @@ impl pallet_balances::Config for Test {
 	type WeightInfo = ();
 }
 
+ord_parameter_types! {
+	pub const One: u64 = 1;
+}
+
 impl pallet_tee_identity_management::Config for Test {
 	type Event = Event;
+	type ManageOrigin = EnsureSignedBy<One, u64>;
 	type ChallengeCode = u32;
-	type UserShieldingKeyLength = ConstU32<384>;
+	type MaxUserShieldingKeyLength = ConstU32<1024>;
 	type MaxDidLength = ConstU32<128>;
 	type MaxMetadataLength = ConstU32<128>;
 	type MaxVerificationDelay = ConstU64<2>;
