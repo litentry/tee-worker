@@ -31,6 +31,7 @@ itp-types = { default-features = false, git = "https://github.com/integritee-net
 
 itp-ocall-api = {path = "../../core-primitives/ocall-api", default-features = false }
 itp-extrinsics-factory = {path = "../../core-primitives/extrinsics-factory", default-features = false}
+itp-utils = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "sdk-v0.9.0-polkadot-v0.9.26" }
 
 [features]
 default = ["std"]
@@ -44,6 +45,7 @@ std = [
     "thiserror",
     "url",
     "itp-types/std",
+    "itp-utils/std",
 ]
 sgx = [
     "http-sgx",

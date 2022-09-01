@@ -1424,6 +1424,7 @@ dependencies = [
  "itp-extrinsics-factory",
  "itp-ocall-api",
  "itp-types",
+ "itp-utils",
  "lazy_static",
  "log",
  "serde 1.0.143",

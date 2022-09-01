@@ -35,6 +35,7 @@ use itc_rest_client::{
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_types::OpaqueCall;
+use itp_utils::ToHexPrefixed;
 use log::*;
 use serde::{Deserialize, Serialize};
 use std::{string::String, time::Duration};
@@ -122,16 +123,17 @@ impl<T: EnclaveOnChainOCallApi, S: CreateExtrinsics> HttpsRestClient<T, S> {
 		let credit_score_module_id = 64;
 		let report_credit_score_method_id = 0;
 
-		let call = OpaqueCall::from_tuple(&(
-			[credit_score_module_id, report_credit_score_method_id],
-			request.account_id,
-		));
+		let call =
+			OpaqueCall::from_tuple(&([credit_score_module_id, report_credit_score_method_id],));
+
 		let calls = std::vec![call];
 
 		let tx = self
 			.create_extrinsics
 			.create_extrinsics(calls.as_slice(), None)
 			.map_err(|_| Error::FailedCreateExtrinsic)?;
+
+		tx.clone().iter().for_each(|v| log::warn!("call hash..{:?}", v.to_hex()));
 
 		let result =
 			self.ocall_api.send_to_parentchain(tx).map_err(|_| Error::FailedSendExtrinsic)?;
