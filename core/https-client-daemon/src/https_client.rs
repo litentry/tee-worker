@@ -133,8 +133,6 @@ impl<T: EnclaveOnChainOCallApi, S: CreateExtrinsics> HttpsRestClient<T, S> {
 			.create_extrinsics(calls.as_slice(), None)
 			.map_err(|_| Error::FailedCreateExtrinsic)?;
 
-		tx.clone().iter().for_each(|v| log::warn!("call hash..{:?}", v.to_hex()));
-
 		let result =
 			self.ocall_api.send_to_parentchain(tx).map_err(|_| Error::FailedSendExtrinsic)?;
 		debug!("https daemon send tx result as ( {:?},)", result);
