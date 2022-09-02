@@ -35,7 +35,6 @@ use itc_rest_client::{
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_types::OpaqueCall;
-use itp_utils::ToHexPrefixed;
 use log::*;
 use serde::{Deserialize, Serialize};
 use std::{string::String, time::Duration};
