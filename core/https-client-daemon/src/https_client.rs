@@ -120,8 +120,8 @@ impl<T: EnclaveOnChainOCallApi, S: CreateExtrinsics> HttpsRestClient<T, S> {
 		//       additionally, litentry-parachain doesn't have such module/method anyway
 		// let hardcode_score = 1234_u32;
 
-		let credit_score_module_id = 64;
-		let report_credit_score_method_id = 0;
+		let credit_score_module_id = 64u8;
+		let report_credit_score_method_id = 0u8;
 
 		let call =
 			OpaqueCall::from_tuple(&([credit_score_module_id, report_credit_score_method_id],));
