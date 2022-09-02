@@ -47,7 +47,7 @@ use http::{
 	header::{HeaderName, CONNECTION},
 	HeaderValue,
 };
-use itc_rest_client::sgx_reexport_prelude::http_req::response::Headers;
+use http_req::response::Headers;
 
 /// Https rest client. Handles the https requests and responses.
 pub struct HttpsRestClient<T: EnclaveOnChainOCallApi, S: CreateExtrinsics> {
