@@ -20,26 +20,40 @@
 # TEST_BALANCE_RUN is either "first" or "second"
 # if -m file is set, the mrenclave will be read from file
 
-while getopts ":m:p:P:t:" opt; do
+while getopts ":p:A:B:u:W:V:C:" opt; do
     case $opt in
-        t)
-            TEST=$OPTARG
-            ;;
-        m)
-            READMRENCLAVE=$OPTARG
-            ;;
         p)
             NPORT=$OPTARG
             ;;
-        P)
-            RPORT=$OPTARG
+        A)
+            WORKER1PORT=$OPTARG
+            ;;
+        B)
+            WORKER2PORT=$OPTARG
+            ;;
+        u)
+            NODEURL=$OPTARG
+            ;;
+        V)
+            WORKER1URL=$OPTARG
+            ;;
+        W)
+            WORKER2URL=$OPTARG
+            ;;
+        C)
+            CLIENT_BIN=$OPTARG
             ;;
     esac
 done
 
 # using default port if none given as arguments
 NPORT=${NPORT:-9944}
-RPORT=${RPORT:-2000}
+NODEURL=${NODEURL:-"ws://127.0.0.1"}
+
+WORKER1PORT=${WORKER1PORT:-2000}
+WORKER1URL=${WORKER1URL:-"wss://127.0.0.1"}
+
+CLIENT=${CLIENT_BIN:-"./../bin/integritee-cli"}
 
 echo "Using node-port ${NPORT}"
 echo "Using trusted-worker-port ${RPORT}"
@@ -48,8 +62,6 @@ echo ""
 AMOUNTSHIELD=50000000000
 AMOUNTTRANSFER=25000000000
 AMOUNTUNSHIELD=15000000000
-
-CLIENT="./../bin/integritee-cli -p ${NPORT} -P ${RPORT}"
 
 echo "* Query on-chain enclave registry:"
 ${CLIENT} list-workers
