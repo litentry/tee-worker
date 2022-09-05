@@ -59,9 +59,8 @@ echo "Using node-port ${NPORT}"
 echo "Using trusted-worker-port ${RPORT}"
 echo ""
 
-AMOUNTSHIELD=50000000000
-AMOUNTTRANSFER=25000000000
-AMOUNTUNSHIELD=15000000000
+CLIENT="$CLIENT_BIN -p $NPORT -P $WORKER1PORT -u $NODEURL -U $WORKER1URL"
+echo "CLIENT is $CLIENT"
 
 echo "* Query on-chain enclave registry:"
 ${CLIENT} list-workers
