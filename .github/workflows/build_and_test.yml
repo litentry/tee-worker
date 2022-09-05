@@ -168,7 +168,7 @@ jobs:
             demo_name: user-shielding-key
           - test: HTTPSTest
             mode: sidechain
-            demo_name: https_integration_test
+            demo_name: https_test
 
     steps:
       - uses: actions/checkout@v3

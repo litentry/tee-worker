@@ -10,7 +10,7 @@ services:
     networks:
       - integritee-test-network
     entrypoint: "dockerize -wait http://integritee-worker-2:4646/is_initialized -timeout 600s    
-      /usr/local/worker-cli/demo_https_integration_test.sh -p 9944 -P 2000 -t first -u ws://integritee-node 
+      /usr/local/worker-cli/demo_https_test.sh -p 9944 -P 2000 -t first -u ws://integritee-node 
       -V wss://integritee-worker-1 -A 2011 -W wss://integritee-worker-2 -B 2012 -C /usr/local/bin/integritee-cli 2>&1"
     restart: "no"
 networks:
