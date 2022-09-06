@@ -26,8 +26,9 @@ use crate::{
 	},
 	AccountData, AccountId, Getter, Index, ParentchainHeader, PublicGetter, ShardIdentifier, State,
 	StateTypeDiff, Stf, StfError, StfResult, TrustedCall, TrustedCallSigned, TrustedGetter,
-	ENCLAVE_ACCOUNT_KEY,
+	ENCLAVE_ACCOUNT_KEY, Arc,
 };
+use itp_node_api::metadata::pallet_teerex::TeerexCallIndexes;
 use codec::Encode;
 use ita_sgx_runtime::Runtime;
 use itp_sgx_externalities::SgxExternalitiesTrait;
@@ -37,6 +38,7 @@ use itp_utils::stringify::account_id_to_string;
 use its_state::SidechainSystemExt;
 use log::*;
 use sidechain_primitives::types::{BlockHash, BlockNumber as SidechainBlockNumber, Timestamp};
+use itp_node_api::metadata::provider::AccessNodeMetadata;
 use sp_io::hashing::blake2_256;
 use sp_runtime::MultiAddress;
 use std::{format, prelude::v1::*, vec};
@@ -152,12 +154,16 @@ impl Stf {
 		})
 	}
 
-	pub fn execute(
+	pub fn execute<NodeMetadataRepository>(
 		ext: &mut impl SgxExternalitiesTrait,
 		call: TrustedCallSigned,
 		calls: &mut Vec<OpaqueCall>,
-		unshield_funds_fn: [u8; 2],
-	) -> StfResult<()> {
+		node_metadata_repo: Arc<NodeMetadataRepository>,
+	) -> StfResult<()>
+	where
+		NodeMetadataRepository: AccessNodeMetadata,
+		NodeMetadataRepository::MetadataType: TeerexCallIndexes,
+	{
 		let call_hash = blake2_256(&call.encode());
 		ext.execute_with(|| {
 			let sender = call.call.account().clone();
@@ -216,7 +222,7 @@ impl Stf {
 
 					Self::unshield_funds(account_incognito, value)?;
 					calls.push(OpaqueCall::from_tuple(&(
-						unshield_funds_fn,
+						node_metadata_repo.get_from_metadata(|m| m.unshield_funds_call_indexes())??,
 						beneficiary,
 						value,
 						shard,

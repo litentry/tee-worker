@@ -697,7 +697,8 @@ fn test_call_link_eth() {
 
 	// when
 	let mut dummy_vec = vec![];
-	Stf::execute(&mut state, signed_call, &mut dummy_vec, [0u8, 1u8]).unwrap();
+	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
+	Stf::execute(&mut state, signed_call, &mut dummy_vec, repo).unwrap();
 
 	// let mut updated_state = state_handler.load_initialized(&shard).unwrap();
 
@@ -765,7 +766,8 @@ fn test_call_link_sub_sr25519() {
 	.sign(&sender.clone().into(), 0, &mrenclave, &shard);
 
 	let mut dummy_vec = vec![];
-	Stf::execute(&mut state, signed_call, &mut dummy_vec, [0u8, 1u8]).unwrap();
+	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
+	Stf::execute(&mut state, signed_call, &mut dummy_vec, repo).unwrap();
 }
 
 fn test_call_link_sub_ed25519() {
@@ -819,7 +821,8 @@ fn test_call_link_sub_ed25519() {
 	.sign(&sender.clone().into(), 0, &mrenclave, &shard);
 
 	let mut dummy_vec = vec![];
-	Stf::execute(&mut state, signed_call, &mut dummy_vec, [0u8, 1u8]).unwrap();
+	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
+	Stf::execute(&mut state, signed_call, &mut dummy_vec, repo).unwrap();
 }
 
 fn test_call_link_sub_ecdsa() {
@@ -874,7 +877,8 @@ fn test_call_link_sub_ecdsa() {
 	.sign(&sender.clone().into(), 0, &mrenclave, &shard);
 
 	let mut dummy_vec = vec![];
-	Stf::execute(&mut state, signed_call, &mut dummy_vec, [0u8, 1u8]).unwrap();
+	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
+	Stf::execute(&mut state, signed_call, &mut dummy_vec, repo).unwrap();
 }
 
 // helper functions

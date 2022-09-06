@@ -101,10 +101,6 @@ where
 			return Ok(ExecutedOperation::failed(top_or_hash))
 		}
 
-		let unshield_funds_fn = self
-			.node_metadata_repo
-			.get_from_metadata(|m| m.unshield_funds_call_indexes())??;
-
 		// Necessary because light client sync may not be up to date
 		// see issue #208
 		debug!("Update STF storage!");
@@ -119,7 +115,7 @@ where
 		debug!("execute STF, call with nonce {}", trusted_call.nonce);
 		let mut extrinsic_call_backs: Vec<OpaqueCall> = Vec::new();
 		if let Err(e) =
-			Stf::execute(state, trusted_call.clone(), &mut extrinsic_call_backs, unshield_funds_fn)
+			Stf::execute(state, trusted_call.clone(), &mut extrinsic_call_backs, self.node_metadata_repo.clone())
 		{
 			error!("Stf::execute failed: {:?}", e);
 			return Ok(ExecutedOperation::failed(top_or_hash))

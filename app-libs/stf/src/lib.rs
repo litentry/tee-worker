@@ -41,6 +41,9 @@ use litentry_primitives::{
 use sp_core::{crypto::AccountId32, ed25519, sr25519, Pair, H256};
 use sp_runtime::{traits::Verify, MultiSignature};
 use std::string::String;
+pub use std::sync::Arc;
+use itp_node_api_metadata::Error as MetadataError;
+use itp_node_api_metadata_provider::Error as MetadataProviderError;
 
 pub type Signature = MultiSignature;
 pub type AuthorityId = <Signature as Verify>::Signer;
@@ -70,6 +73,19 @@ pub enum StfError {
 	InvalidStorageDiff,
 	// litentry
 	LayerOneNumberUnavailable,
+	InvalidMetadata,
+}
+
+impl From<MetadataError> for StfError {
+    fn from(_e: MetadataError) -> Self {
+        StfError::InvalidMetadata
+    }
+}
+
+impl From<MetadataProviderError> for StfError {
+    fn from(_e: MetadataProviderError) -> Self {
+        StfError::InvalidMetadata
+    }
 }
 
 #[derive(Clone)]

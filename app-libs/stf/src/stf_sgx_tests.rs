@@ -20,7 +20,11 @@ use sp_core::{
 	ed25519::{Pair as Ed25519Pair, Signature as Ed25519Signature},
 	Pair,
 };
+use itp_node_api::metadata::{
+	metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository,
+};
 use std::vec::Vec;
+use std::sync::Arc;
 
 pub fn enclave_account_initialization_works() {
 	let enclave_account = AccountId::new([2u8; 32]);
@@ -50,7 +54,8 @@ pub fn shield_funds_increments_signer_account_nonce() {
 		Signature::Ed25519(Ed25519Signature([0u8; 64])),
 	);
 
-	Stf::execute(&mut state, shield_funds_call, &mut Vec::new(), [0u8, 1u8]).unwrap();
+	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
+	Stf::execute(&mut state, shield_funds_call, &mut Vec::new(), repo).unwrap();
 	assert_eq!(1, Stf::account_nonce(&mut state, &enclave_signer_account_id));
 }
 
