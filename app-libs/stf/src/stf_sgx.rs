@@ -29,6 +29,8 @@ use crate::{
 	ENCLAVE_ACCOUNT_KEY, Arc,
 };
 use itp_node_api::metadata::pallet_teerex::TeerexCallIndexes;
+use itp_node_api::metadata::pallet_imp::IMPCallIndexes;
+use itp_node_api::metadata::pallet_imp_mock::IMPMockCallIndexes;
 use codec::Encode;
 use ita_sgx_runtime::Runtime;
 use itp_sgx_externalities::SgxExternalitiesTrait;
@@ -162,7 +164,7 @@ impl Stf {
 	) -> StfResult<()>
 	where
 		NodeMetadataRepository: AccessNodeMetadata,
-		NodeMetadataRepository::MetadataType: TeerexCallIndexes,
+		NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPCallIndexes + IMPMockCallIndexes, // TODO: remove IMPMock later
 	{
 		let call_hash = blake2_256(&call.encode());
 		ext.execute_with(|| {

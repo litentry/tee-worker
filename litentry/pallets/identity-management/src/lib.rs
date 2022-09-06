@@ -104,6 +104,8 @@ pub mod pallet {
 		IdentityAlreadyExist,
 		/// the pair (litentry-account, did) doesn't exist
 		IdentityNotExist,
+		/// the identity was not linked before verification
+		IdentityNotLinked,
 		/// a verification reqeust comes too early
 		VerificationRequestTooEarly,
 		/// a verification reqeust comes too late
@@ -197,7 +199,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 			ensure!(!IDGraphs::<T>::contains_key(&who, &did), Error::<T>::IdentityAlreadyExist);
-			let context = IdentityContext { metadata, linking_request_block, is_verified: false };
+			let context = IdentityContext { metadata, linking_request_block: Some(linking_request_block), ..Default::default() };
 			IDGraphs::<T>::insert(&who, &did, context);
 			Self::deposit_event(Event::IdentityLinked { who, did });
 			Ok(())
@@ -226,18 +228,24 @@ pub mod pallet {
 			T::ManageOrigin::ensure_origin(origin)?;
 			IDGraphs::<T>::try_mutate(&who, &did, |context| -> DispatchResult {
 				let mut c = context.take().ok_or(Error::<T>::IdentityNotExist)?;
-				ensure!(
-					c.linking_request_block <= verification_request_block,
-					Error::<T>::VerificationRequestTooEarly
-				);
-				ensure!(
-					verification_request_block - c.linking_request_block
-						<= T::MaxVerificationDelay::get(),
-					Error::<T>::VerificationRequestTooLate
-				);
-				c.is_verified = true;
-				*context = Some(c);
-				Ok(())
+
+				if let Some(b) = c.linking_request_block {
+					ensure!(
+						b <= verification_request_block,
+						Error::<T>::VerificationRequestTooEarly
+					);
+					ensure!(
+						verification_request_block - b
+							<= T::MaxVerificationDelay::get(),
+						Error::<T>::VerificationRequestTooLate
+					);
+					c.is_verified = true;
+					c.verification_request_block = Some(verification_request_block);
+					*context = Some(c);
+					Ok(())
+				} else {
+					Err(Error::<T>::IdentityNotLinked.into())
+				}
 			})
 		}
 	}

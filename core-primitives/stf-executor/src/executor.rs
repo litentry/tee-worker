@@ -29,7 +29,7 @@ use ita_stf::{
 	stf_sgx::{shards_key_hash, storage_hashes_to_update_per_shard},
 	ParentchainHeader, ShardIdentifier, StateTypeDiff, Stf, TrustedGetterSigned, TrustedOperation,
 };
-use itp_node_api::metadata::{pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata};
+use itp_node_api::metadata::{pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata, pallet_imp::IMPCallIndexes, pallet_imp_mock::IMPMockCallIndexes};
 use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
@@ -55,7 +55,7 @@ where
 	StateHandler: HandleState<HashType = H256>,
 	StateHandler::StateT: SgxExternalitiesTrait + Encode,
 	NodeMetadataRepository: AccessNodeMetadata,
-	NodeMetadataRepository::MetadataType: TeerexCallIndexes,
+	NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPCallIndexes + IMPMockCallIndexes,
 {
 	pub fn new(
 		ocall_api: Arc<OCallApi>,
@@ -208,7 +208,7 @@ where
 	StateHandler: HandleState<HashType = H256>,
 	StateHandler::StateT: SgxExternalitiesTrait + Encode,
 	NodeMetadataRepository: AccessNodeMetadata,
-	NodeMetadataRepository::MetadataType: TeerexCallIndexes,
+	NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPCallIndexes + IMPMockCallIndexes,
 {
 	type Externalities = StateHandler::StateT;
 

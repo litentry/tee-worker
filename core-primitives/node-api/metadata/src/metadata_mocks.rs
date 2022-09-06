@@ -17,6 +17,7 @@
 
 use crate::{
 	error::Result, pallet_sidechain::SidechainCallIndexes, pallet_teerex::TeerexCallIndexes,
+	pallet_imp::IMPCallIndexes, pallet_imp_mock::IMPMockCallIndexes,
 };
 use codec::{Decode, Encode};
 
@@ -31,6 +32,20 @@ pub struct NodeMetadataMock {
 	unshield_funds: u8,
 	sidechain_module: u8,
 	proposed_sidechain_block: u8,
+	// litentry
+	// IMP
+	imp_module: u8,
+	imp_set_user_shielding_key: u8,
+	imp_link_identity: u8,
+	imp_unlink_identity: u8,
+	imp_verify_identity: u8,
+	// IMP mock
+	imp_mock_module: u8,
+	imp_mock_set_user_shielding_key: u8,
+	imp_mock_link_identity: u8,
+	imp_mock_unlink_identity: u8,
+	imp_mock_verify_identity: u8,
+
 	runtime_spec_version: u32,
 	runtime_transaction_version: u32,
 }
@@ -47,6 +62,19 @@ impl NodeMetadataMock {
 			unshield_funds: 5u8,
 			sidechain_module: 53u8,
 			proposed_sidechain_block: 0u8,
+			// litentry
+			imp_module: 64u8,
+			imp_set_user_shielding_key: 0u8,
+			imp_link_identity: 1u8,
+			imp_unlink_identity: 2u8,
+			imp_verify_identity: 3u8,
+
+			imp_mock_module: 100u8,
+			imp_mock_set_user_shielding_key: 0u8,
+			imp_mock_link_identity: 1u8,
+			imp_mock_unlink_identity: 2u8,
+			imp_mock_verify_identity: 3u8,
+
 			runtime_spec_version: 24,
 			runtime_transaction_version: 3,
 		}
@@ -83,4 +111,40 @@ impl SidechainCallIndexes for NodeMetadataMock {
 	fn confirm_proposed_sidechain_block_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.sidechain_module, self.proposed_sidechain_block])
 	}
+}
+
+impl IMPCallIndexes for NodeMetadataMock {
+	fn set_user_shielding_key_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.imp_module, self.imp_set_user_shielding_key])
+	}
+
+	fn link_identity_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.imp_module, self.imp_link_identity])
+	}
+
+	fn unlink_identity_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.imp_module, self.imp_unlink_identity])
+	}
+
+	fn verify_identity_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.imp_module, self.imp_verify_identity])
+	}	
+}
+
+impl IMPMockCallIndexes for NodeMetadataMock {
+	fn set_user_shielding_key_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.imp_mock_module, self.imp_mock_set_user_shielding_key])
+	}
+
+	fn link_identity_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.imp_mock_module, self.imp_mock_link_identity])
+	}
+
+	fn unlink_identity_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.imp_mock_module, self.imp_mock_unlink_identity])
+	}
+
+	fn verify_identity_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.imp_mock_module, self.imp_mock_verify_identity])
+	}	
 }
