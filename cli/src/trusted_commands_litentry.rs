@@ -36,7 +36,7 @@ use pallet_sgx_account_linker::{MultiSignature, NetworkType};
 use sp_application_crypto::Ss58Codec;
 use sp_core::{sr25519 as sr25519_core, Pair};
 
-pub(crate) fn set_shielding_key(cli: &Cli, trusted_args: &TrustedArgs, arg_who: &str, key: &str) {
+pub(crate) fn set_user_shielding_key(cli: &Cli, trusted_args: &TrustedArgs, arg_who: &str, key: &str) {
 	warn!("arg_who = {:?}, key = {:?}", arg_who, key);
 	let who = get_pair_from_str(trusted_args, arg_who);
 	let root = get_pair_from_str(trusted_args, "//Alice");
@@ -45,7 +45,7 @@ pub(crate) fn set_shielding_key(cli: &Cli, trusted_args: &TrustedArgs, arg_who: 
 
 	let (mrenclave, shard) = get_identifiers(trusted_args);
 	let nonce = get_layer_two_nonce!(root, cli, trusted_args);
-	let top: TrustedOperation = TrustedCall::set_shielding_key(
+	let top: TrustedOperation = TrustedCall::set_user_shielding_key(
 		root.public().into(),
 		who.public().into(),
 		key.as_bytes().to_vec().try_into().unwrap(),

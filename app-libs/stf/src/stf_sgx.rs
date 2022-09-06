@@ -237,9 +237,9 @@ impl Stf {
 					Ok(())
 				},
 				// litentry
-				TrustedCall::set_shielding_key(root, who, key) => {
+				TrustedCall::set_user_shielding_key(root, who, key) => {
 					ensure_root(root)?;
-					Self::set_shielding_key(who, key)
+					Self::set_user_shielding_key(who, key)
 				},
 				TrustedCall::link_eth(
 					litentry_account,
@@ -402,7 +402,7 @@ impl Stf {
 			TrustedCall::balance_unshield(_, _, _, _) => debug!("No storage updates needed..."),
 			TrustedCall::balance_shield(_, _, _) => debug!("No storage updates needed..."),
 			// litentry
-			TrustedCall::set_shielding_key(..) => debug!("No storage updates needed..."),
+			TrustedCall::set_user_shielding_key(..) => debug!("No storage updates needed..."),
 			TrustedCall::link_eth(..) => debug!("No storage updates needed..."),
 			TrustedCall::link_sub(..) => debug!("No storage updates needed..."),
 			TrustedCall::query_credit(..) => debug!("No storage updates needed..."),

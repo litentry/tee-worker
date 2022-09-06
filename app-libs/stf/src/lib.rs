@@ -209,7 +209,7 @@ pub enum TrustedCall {
 	balance_unshield(AccountId, AccountId, Balance, ShardIdentifier), // (AccountIncognito, BeneficiaryPublicAccount, Amount, Shard)
 	balance_shield(AccountId, AccountId, Balance), // (Root, AccountIncognito, Amount)
 	// litentry
-	set_shielding_key(AccountId, AccountId, UserShieldingKey), // (Root, AccountIncognito, Key)
+	set_user_shielding_key(AccountId, AccountId, UserShieldingKey), // (Root, AccountIncognito, Key)
 	link_eth(AccountId, LinkingAccountIndex, EthAddress, BlockNumber, EthSignature), // (LitentryAcc, EthAcc Index, EthAcc, ParentchainBlockNr, Signature)
 	link_sub(
 		AccountId,
@@ -230,7 +230,7 @@ impl TrustedCall {
 			TrustedCall::balance_unshield(account, _, _, _) => account,
 			TrustedCall::balance_shield(account, _, _) => account,
 			// litentry
-			TrustedCall::set_shielding_key(account, _, _) => account,
+			TrustedCall::set_user_shielding_key(account, _, _) => account,
 			TrustedCall::link_eth(account, _, _, _, _) => account,
 			TrustedCall::link_sub(account, _, _, _, _, _) => account,
 			TrustedCall::query_credit(account) => account,

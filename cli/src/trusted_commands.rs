@@ -179,7 +179,7 @@ pub enum TrustedCommands {
 	/// litentry
 	///
 	/// Set a shielding key for a given account
-	SetShieldingKey {
+	SetUserShieldingKey {
 		/// AccountId in ss58check format
 		account: String,
 
@@ -254,8 +254,8 @@ pub fn match_trusted_commands(cli: &Cli, trusted_args: &TrustedArgs) {
 			funding_account,
 		),
 		// Litentry
-		TrustedCommands::SetShieldingKey { account, key } =>
-			set_shielding_key(cli, trusted_args, account, key),
+		TrustedCommands::SetUserShieldingKey { account, key } =>
+			set_user_shielding_key(cli, trusted_args, account, key),
 		TrustedCommands::ShieldingKey { account } => shielding_key(cli, trusted_args, account),
 		TrustedCommands::LinkedEthAddresses { account } =>
 			linked_eth_addresses(cli, trusted_args, account),
