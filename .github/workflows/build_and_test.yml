@@ -166,6 +166,9 @@ jobs:
           - test: Litentry-user-shielding-key
             mode: sidechain
             demo_name: user-shielding-key
+          - test: HTTPSTest
+            mode: sidechain
+            demo_name: https-test
 
     steps:
       - uses: actions/checkout@v3
