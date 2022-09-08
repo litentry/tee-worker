@@ -30,7 +30,7 @@ pub struct IdentityContext<T: Config> {
 	// the block number (of parent chain) where the linking was intially requested
 	pub linking_request_block: Option<BlockNumberOf<T>>,
 	// the block number (of parent chain) where the verification was intially requested
-	pub verification_request_block: Option<BlockNumberOf<T>>,	
+	pub verification_request_block: Option<BlockNumberOf<T>>,
 	// if this did is verified
 	pub is_verified: bool,
 }
@@ -49,7 +49,15 @@ impl<T: Config> Default for IdentityContext<T> {
 }
 
 impl<T: Config> IdentityContext<T> {
-	pub fn new(linking_request_block: BlockNumberOf<T>, verification_request_block: BlockNumberOf<T>) -> Self {
-		Self { metadata: None, linking_request_block: Some(linking_request_block), verification_request_block: Some(verification_request_block), is_verified: false }
+	pub fn new(
+		linking_request_block: BlockNumberOf<T>,
+		verification_request_block: BlockNumberOf<T>,
+	) -> Self {
+		Self {
+			metadata: None,
+			linking_request_block: Some(linking_request_block),
+			verification_request_block: Some(verification_request_block),
+			is_verified: false,
+		}
 	}
 }

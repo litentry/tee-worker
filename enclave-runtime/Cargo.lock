@@ -1176,7 +1176,7 @@ dependencies = [
 [[package]]
 name = "http"
 version = "0.2.1"
-source = "git+https://github.com/integritee-network/http-sgx?branch=sgx-experimental#307b5421fb7a489a114bede0dc05c8d32b804f49"
+source = "git+https://github.com/integritee-network/http-sgx.git?branch=sgx-experimental#307b5421fb7a489a114bede0dc05c8d32b804f49"
 dependencies = [
  "bytes",
  "fnv",
@@ -1390,10 +1390,13 @@ dependencies = [
 name = "itc-https-client-daemon"
 version = "0.8.0"
 dependencies = [
+ "http",
+ "http_req",
  "itc-rest-client",
  "itp-extrinsics-factory",
  "itp-ocall-api",
  "itp-types",
+ "itp-utils",
  "lazy_static",
  "log",
  "serde 1.0.143",

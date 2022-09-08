@@ -16,15 +16,12 @@
 */
 
 use crate::{AccountId, Signature, Stf, TrustedCall, TrustedCallSigned};
+use itp_node_api::metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository};
 use sp_core::{
 	ed25519::{Pair as Ed25519Pair, Signature as Ed25519Signature},
 	Pair,
 };
-use itp_node_api::metadata::{
-	metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository,
-};
-use std::vec::Vec;
-use std::sync::Arc;
+use std::{sync::Arc, vec::Vec};
 
 pub fn enclave_account_initialization_works() {
 	let enclave_account = AccountId::new([2u8; 32]);

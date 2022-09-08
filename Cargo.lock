@@ -4167,10 +4167,15 @@ dependencies = [
 name = "itc-https-client-daemon"
 version = "0.8.0"
 dependencies = [
+ "http 0.2.1",
+ "http 0.2.8",
+ "http_req 0.8.1 (git+https://github.com/integritee-network/http_req?branch=master)",
+ "http_req 0.8.1 (git+https://github.com/integritee-network/http_req)",
  "itc-rest-client",
  "itp-extrinsics-factory",
  "itp-ocall-api",
  "itp-types",
+ "itp-utils",
  "lazy_static",
  "log 0.4.17",
  "serde 1.0.143",

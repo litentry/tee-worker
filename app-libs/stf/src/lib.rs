@@ -34,6 +34,8 @@ pub use my_node_runtime::{Balance, BlockNumber, Index};
 
 use codec::{Compact, Decode, Encode};
 use derive_more::Display;
+use itp_node_api_metadata::Error as MetadataError;
+use itp_node_api_metadata_provider::Error as MetadataProviderError;
 use litentry_primitives::{
 	eth::{EthAddress, EthSignature},
 	LinkingAccountIndex,
@@ -42,8 +44,6 @@ use sp_core::{crypto::AccountId32, ed25519, sr25519, Pair, H256};
 use sp_runtime::{traits::Verify, MultiSignature};
 use std::string::String;
 pub use std::sync::Arc;
-use itp_node_api_metadata::Error as MetadataError;
-use itp_node_api_metadata_provider::Error as MetadataProviderError;
 
 pub type Signature = MultiSignature;
 pub type AuthorityId = <Signature as Verify>::Signer;
@@ -77,15 +77,15 @@ pub enum StfError {
 }
 
 impl From<MetadataError> for StfError {
-    fn from(_e: MetadataError) -> Self {
-        StfError::InvalidMetadata
-    }
+	fn from(_e: MetadataError) -> Self {
+		StfError::InvalidMetadata
+	}
 }
 
 impl From<MetadataProviderError> for StfError {
-    fn from(_e: MetadataProviderError) -> Self {
-        StfError::InvalidMetadata
-    }
+	fn from(_e: MetadataProviderError) -> Self {
+		StfError::InvalidMetadata
+	}
 }
 
 #[derive(Clone)]

@@ -29,7 +29,10 @@ use ita_stf::{
 	stf_sgx::{shards_key_hash, storage_hashes_to_update_per_shard},
 	ParentchainHeader, ShardIdentifier, StateTypeDiff, Stf, TrustedGetterSigned, TrustedOperation,
 };
-use itp_node_api::metadata::{pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata, pallet_imp::IMPCallIndexes, pallet_imp_mock::IMPMockCallIndexes};
+use itp_node_api::metadata::{
+	pallet_imp::IMPCallIndexes, pallet_imp_mock::IMPMockCallIndexes,
+	pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata,
+};
 use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
@@ -114,9 +117,12 @@ where
 
 		debug!("execute STF, call with nonce {}", trusted_call.nonce);
 		let mut extrinsic_call_backs: Vec<OpaqueCall> = Vec::new();
-		if let Err(e) =
-			Stf::execute(state, trusted_call.clone(), &mut extrinsic_call_backs, self.node_metadata_repo.clone())
-		{
+		if let Err(e) = Stf::execute(
+			state,
+			trusted_call.clone(),
+			&mut extrinsic_call_backs,
+			self.node_metadata_repo.clone(),
+		) {
 			error!("Stf::execute failed: {:?}", e);
 			return Ok(ExecutedOperation::failed(top_or_hash))
 		}

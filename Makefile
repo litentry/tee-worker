@@ -151,7 +151,7 @@ Signed_RustEnclave_Name := bin/enclave.signed.so
 
 ######## Targets ########
 .PHONY: all
-all: $(Worker_Name) $(Client_Name) $(Signed_RustEnclave_Name)
+all: fmt $(Worker_Name) $(Client_Name) $(Signed_RustEnclave_Name)
 service: $(Worker_Name)
 client: $(Client_Name)
 githooks: .git/hooks/pre-commit
@@ -226,6 +226,12 @@ clean:
 	@cd enclave-runtime && cargo clean
 	@echo "cargo clean in root directory"
 	@cargo clean
+
+.PHONY: fmt
+fmt:
+	@echo "Cargo format all ..."
+	@cargo fmt --all
+	@cd enclave-runtime && cargo fmt --all
 
 .PHONY: pin-sgx
 pin-sgx:

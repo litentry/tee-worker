@@ -16,6 +16,12 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+use http_sgx as http;
+
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+use http_req_sgx as http_req;
+
 use crate::{
 	error::{Error, Result},
 	Request,
@@ -31,10 +37,16 @@ use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_types::OpaqueCall;
 use log::*;
 use serde::{Deserialize, Serialize};
-use std::{string::String, time::Duration, vec::Vec};
+use std::{string::String, time::Duration};
 use url::Url;
 
 const TIMEOUT: Duration = Duration::from_secs(3u64);
+
+use http::{
+	header::{HeaderName, CONNECTION},
+	HeaderValue,
+};
+use http_req::response::Headers;
 
 /// Https rest client. Handles the https requests and responses.
 pub struct HttpsRestClient<T: EnclaveOnChainOCallApi, S: CreateExtrinsics> {
@@ -47,7 +59,7 @@ pub struct HttpsRestClient<T: EnclaveOnChainOCallApi, S: CreateExtrinsics> {
 // TODO: restructure this
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ResponseBody {
-	pub args: Vec<String>,
+	// pub args: Vec<String>,
 	pub origin: String,
 	pub url: String,
 }
@@ -58,9 +70,34 @@ impl RestPath<String> for ResponseBody {
 	}
 }
 
+fn headers_connection_close() -> Headers {
+	let mut headers = Headers::new();
+	add_to_headers(&mut headers, CONNECTION, HeaderValue::from_str("close").unwrap());
+	headers
+}
+
+fn add_to_headers(headers: &mut Headers, key: HeaderName, value: HeaderValue) {
+	let header_value_str = value.to_str();
+
+	match header_value_str {
+		Ok(v) => {
+			headers.insert(key.as_str(), v);
+		},
+		Err(e) => {
+			error!("Failed to add header to request: {:?}", e);
+		},
+	}
+}
+
 impl<T: EnclaveOnChainOCallApi, S: CreateExtrinsics> HttpsRestClient<T, S> {
 	pub fn new(url: Url, ocall_api: T, create_extrinsics: S) -> Self {
-		let http_client = HttpClient::new(DefaultSend {}, true, Some(TIMEOUT), None, None);
+		let http_client = HttpClient::new(
+			DefaultSend {},
+			true,
+			Some(TIMEOUT),
+			Some(headers_connection_close()),
+			None,
+		);
 		let rest_client = RestClient::new(http_client, url.clone());
 		Self { url, client: rest_client, ocall_api, create_extrinsics }
 	}
@@ -80,16 +117,14 @@ impl<T: EnclaveOnChainOCallApi, S: CreateExtrinsics> HttpsRestClient<T, S> {
 
 		// TODO: rewrite this, potentially restructure/refactor
 		//       additionally, litentry-parachain doesn't have such module/method anyway
-		let hardcode_score = 1234_u32;
+		// let hardcode_score = 1234_u32;
 
-		let credit_score_module_id = 60;
-		let report_credit_score_method_id = 0;
+		let credit_score_module_id = 64u8;
+		let report_credit_score_method_id = 0u8;
 
-		let call = OpaqueCall::from_tuple(&(
-			[credit_score_module_id, report_credit_score_method_id],
-			request.account_id,
-			hardcode_score,
-		));
+		let call =
+			OpaqueCall::from_tuple(&([credit_score_module_id, report_credit_score_method_id],));
+
 		let calls = std::vec![call];
 
 		let tx = self

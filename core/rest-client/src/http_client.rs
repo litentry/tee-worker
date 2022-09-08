@@ -31,6 +31,7 @@ use http_req::{
 	response::{Headers, Response},
 	uri::Uri,
 };
+
 use log::*;
 use std::{
 	collections::HashMap,

@@ -16,8 +16,8 @@
 */
 
 use crate::{
-	error::Result, pallet_sidechain::SidechainCallIndexes, pallet_teerex::TeerexCallIndexes,
-	pallet_imp::IMPCallIndexes, pallet_imp_mock::IMPMockCallIndexes,
+	error::Result, pallet_imp::IMPCallIndexes, pallet_imp_mock::IMPMockCallIndexes,
+	pallet_sidechain::SidechainCallIndexes, pallet_teerex::TeerexCallIndexes,
 };
 use codec::{Decode, Encode};
 
@@ -128,7 +128,7 @@ impl IMPCallIndexes for NodeMetadataMock {
 
 	fn verify_identity_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.imp_module, self.imp_verify_identity])
-	}	
+	}
 }
 
 impl IMPMockCallIndexes for NodeMetadataMock {
@@ -146,5 +146,5 @@ impl IMPMockCallIndexes for NodeMetadataMock {
 
 	fn verify_identity_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.imp_mock_module, self.imp_mock_verify_identity])
-	}	
+	}
 }

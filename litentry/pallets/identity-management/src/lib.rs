@@ -199,7 +199,11 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 			ensure!(!IDGraphs::<T>::contains_key(&who, &did), Error::<T>::IdentityAlreadyExist);
-			let context = IdentityContext { metadata, linking_request_block: Some(linking_request_block), ..Default::default() };
+			let context = IdentityContext {
+				metadata,
+				linking_request_block: Some(linking_request_block),
+				..Default::default()
+			};
 			IDGraphs::<T>::insert(&who, &did, context);
 			Self::deposit_event(Event::IdentityLinked { who, did });
 			Ok(())
@@ -235,8 +239,7 @@ pub mod pallet {
 						Error::<T>::VerificationRequestTooEarly
 					);
 					ensure!(
-						verification_request_block - b
-							<= T::MaxVerificationDelay::get(),
+						verification_request_block - b <= T::MaxVerificationDelay::get(),
 						Error::<T>::VerificationRequestTooLate
 					);
 					c.is_verified = true;

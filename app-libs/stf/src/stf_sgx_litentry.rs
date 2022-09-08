@@ -130,33 +130,14 @@ impl Stf {
 	}
 
 	pub fn query_credit(account_id: AccountId) -> StfResult<()> {
-		debug!("query_credit({:x?}", account_id.encode(),);
+		info!("query_credit({:x?})", account_id.encode(),);
 
-		let server = "web3go.com";
+		let request_str = format!("{}", "https://httpbin.org/anything");
+		let request = itc_https_client_daemon::Request { account_id, request_str };
+		let sender = itc_https_client_daemon::daemon_sender::HttpRequestSender::new();
+		let result = sender.send_https_request(request);
+		info!("send https request, get result as {:?}", result);
 
-		// get the linked ethereum for query
-		match get_linked_ethereum_addresses(&account_id) {
-			Some(addresses) => {
-				if addresses.len() > 0 {
-					// get the first address to query
-					let address_str = hex_sgx::encode(addresses[0]);
-
-					debug!("send request for address {:?}", address_str.encode(),);
-
-					let request_str = format!("{}/{}", server, address_str);
-
-					let request = itc_https_client_daemon::Request { account_id, request_str };
-
-					let sender = itc_https_client_daemon::daemon_sender::HttpRequestSender::new();
-					let result = sender.send_https_request(request);
-					debug!("send https request result as {:?}", result);
-				} else {
-					debug!("no ethereum address linked");
-				}
-
-				Ok(())
-			},
-			None => Ok(()),
-		}
+		Ok(())
 	}
 }

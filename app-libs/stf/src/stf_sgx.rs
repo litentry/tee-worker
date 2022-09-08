@@ -24,15 +24,16 @@ use crate::{
 		ensure_root, get_account_info, get_linked_ethereum_addresses,
 		get_linked_substrate_addresses, get_shielding_key, increment_nonce, root, validate_nonce,
 	},
-	AccountData, AccountId, Getter, Index, ParentchainHeader, PublicGetter, ShardIdentifier, State,
-	StateTypeDiff, Stf, StfError, StfResult, TrustedCall, TrustedCallSigned, TrustedGetter,
-	ENCLAVE_ACCOUNT_KEY, Arc,
+	AccountData, AccountId, Arc, Getter, Index, ParentchainHeader, PublicGetter, ShardIdentifier,
+	State, StateTypeDiff, Stf, StfError, StfResult, TrustedCall, TrustedCallSigned, TrustedGetter,
+	ENCLAVE_ACCOUNT_KEY,
 };
-use itp_node_api::metadata::pallet_teerex::TeerexCallIndexes;
-use itp_node_api::metadata::pallet_imp::IMPCallIndexes;
-use itp_node_api::metadata::pallet_imp_mock::IMPMockCallIndexes;
 use codec::Encode;
 use ita_sgx_runtime::Runtime;
+use itp_node_api::metadata::{
+	pallet_imp::IMPCallIndexes, pallet_imp_mock::IMPMockCallIndexes,
+	pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata,
+};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_storage::storage_value_key;
 use itp_types::OpaqueCall;
@@ -40,7 +41,6 @@ use itp_utils::stringify::account_id_to_string;
 use its_state::SidechainSystemExt;
 use log::*;
 use sidechain_primitives::types::{BlockHash, BlockNumber as SidechainBlockNumber, Timestamp};
-use itp_node_api::metadata::provider::AccessNodeMetadata;
 use sp_io::hashing::blake2_256;
 use sp_runtime::MultiAddress;
 use std::{format, prelude::v1::*, vec};
@@ -164,7 +164,8 @@ impl Stf {
 	) -> StfResult<()>
 	where
 		NodeMetadataRepository: AccessNodeMetadata,
-		NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPCallIndexes + IMPMockCallIndexes, // TODO: remove IMPMock later
+		NodeMetadataRepository::MetadataType:
+			TeerexCallIndexes + IMPCallIndexes + IMPMockCallIndexes, // TODO: remove IMPMock later
 	{
 		let call_hash = blake2_256(&call.encode());
 		ext.execute_with(|| {
@@ -224,7 +225,8 @@ impl Stf {
 
 					Self::unshield_funds(account_incognito, value)?;
 					calls.push(OpaqueCall::from_tuple(&(
-						node_metadata_repo.get_from_metadata(|m| m.unshield_funds_call_indexes())??,
+						node_metadata_repo
+							.get_from_metadata(|m| m.unshield_funds_call_indexes())??,
 						beneficiary,
 						value,
 						shard,

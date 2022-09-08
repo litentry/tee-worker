@@ -45,7 +45,6 @@ class Worker:
 
     def init_clean(self):
         """ Purges all db files first and initializes the environment afterwards. """
-        mkdir_p(self.cwd)
         print('Copying source files to working directory')
         self.setup_cwd()
 
