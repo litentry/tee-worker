@@ -69,12 +69,9 @@ pub use pallet_timestamp::Call as TimestampCall;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
-pub use pallet_identity_management;
+pub use pallet_identity_management::{self, Call as IdentityManagementCall};
 /// litentry
-pub use pallet_sgx_account_linker;
-pub use pallet_sgx_account_linker::Call as SgxAccountLinkerCall;
-pub type UserShieldingKey = pallet_identity_management::UserShieldingKeyOf<Runtime>;
-pub use pallet_identity_management::Call as IdentityManagementCall;
+pub use pallet_sgx_account_linker::{self, Call as SgxAccountLinkerCall};
 
 /// The address format for describing accounts.
 pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
@@ -307,7 +304,6 @@ impl pallet_identity_management::Config for Runtime {
 	type Event = Event;
 	type ManageOrigin = EnsureRoot<AccountId>;
 	type ChallengeCode = u32;
-	type MaxUserShieldingKeyLength = ConstU32<1024>;
 	type MaxDidLength = ConstU32<128>;
 	type MaxMetadataLength = ConstU32<128>;
 	type MaxVerificationDelay = ConstU32<2>;
