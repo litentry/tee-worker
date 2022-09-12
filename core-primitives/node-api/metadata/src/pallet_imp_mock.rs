@@ -22,28 +22,51 @@ const IMPMOCK: &str = "IdentityManagemenMock";
 
 pub trait IMPMockCallIndexes {
 	fn set_user_shielding_key_call_indexes(&self) -> Result<[u8; 2]>;
-
 	fn link_identity_call_indexes(&self) -> Result<[u8; 2]>;
-
 	fn unlink_identity_call_indexes(&self) -> Result<[u8; 2]>;
-
 	fn verify_identity_call_indexes(&self) -> Result<[u8; 2]>;
+
+	fn user_shielding_key_set_call_indexes(&self) -> Result<[u8; 2]>;
+	fn challenge_code_generated_call_indexes(&self) -> Result<[u8; 2]>;
+	fn identity_linked_call_indexes(&self) -> Result<[u8; 2]>;
+	fn identity_unlinked_call_indexes(&self) -> Result<[u8; 2]>;
+	fn identity_verified_call_indexes(&self) -> Result<[u8; 2]>;
 }
 
 impl IMPMockCallIndexes for NodeMetadata {
 	fn set_user_shielding_key_call_indexes(&self) -> Result<[u8; 2]> {
-		self.call_indexes(IMPMOCK, "set_user_shielding_key")
+		self.call_indexes(IMP, "set_user_shielding_key")
 	}
 
 	fn link_identity_call_indexes(&self) -> Result<[u8; 2]> {
-		self.call_indexes(IMPMOCK, "link_identity")
+		self.call_indexes(IMP, "link_identity")
 	}
 
 	fn unlink_identity_call_indexes(&self) -> Result<[u8; 2]> {
-		self.call_indexes(IMPMOCK, "unlink_identity")
+		self.call_indexes(IMP, "unlink_identity")
 	}
 
 	fn verify_identity_call_indexes(&self) -> Result<[u8; 2]> {
-		self.call_indexes(IMPMOCK, "verify_identity")
+		self.call_indexes(IMP, "verify_identity")
+	}
+
+	fn user_shielding_key_set_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(IMP, "user_shielding_key_set")
+	}
+
+	fn challenge_code_generated_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(IMP, "challenge_code_generated")
+	}
+
+	fn identity_linked_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(IMP, "identity_linked")
+	}
+
+	fn identity_unlinked_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(IMP, "identity_unlinked")
+	}
+
+	fn identity_verified_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(IMP, "identity_verified")
 	}
 }

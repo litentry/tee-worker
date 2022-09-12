@@ -22,12 +22,15 @@ const IMP: &str = "IdentityManagement";
 
 pub trait IMPCallIndexes {
 	fn set_user_shielding_key_call_indexes(&self) -> Result<[u8; 2]>;
-
 	fn link_identity_call_indexes(&self) -> Result<[u8; 2]>;
-
 	fn unlink_identity_call_indexes(&self) -> Result<[u8; 2]>;
-
 	fn verify_identity_call_indexes(&self) -> Result<[u8; 2]>;
+
+	fn user_shielding_key_set_call_indexes(&self) -> Result<[u8; 2]>;
+	fn challenge_code_generated_call_indexes(&self) -> Result<[u8; 2]>;
+	fn identity_linked_call_indexes(&self) -> Result<[u8; 2]>;
+	fn identity_unlinked_call_indexes(&self) -> Result<[u8; 2]>;
+	fn identity_verified_call_indexes(&self) -> Result<[u8; 2]>;
 }
 
 impl IMPCallIndexes for NodeMetadata {
@@ -45,5 +48,25 @@ impl IMPCallIndexes for NodeMetadata {
 
 	fn verify_identity_call_indexes(&self) -> Result<[u8; 2]> {
 		self.call_indexes(IMP, "verify_identity")
+	}
+
+	fn user_shielding_key_set_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(IMP, "user_shielding_key_set")
+	}
+
+	fn challenge_code_generated_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(IMP, "challenge_code_generated")
+	}
+
+	fn identity_linked_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(IMP, "identity_linked")
+	}
+
+	fn identity_unlinked_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(IMP, "identity_unlinked")
+	}
+
+	fn identity_verified_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(IMP, "identity_verified")
 	}
 }
