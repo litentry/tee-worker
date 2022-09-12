@@ -15,9 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	helpers::{get_linked_ethereum_addresses, get_parentchain_number},
-	stf_sgx_primitives::types::*,
-	AccountId, StfError, StfResult,
+	helpers::get_parentchain_number, stf_sgx_primitives::types::*, AccountId, StfError, StfResult,
 };
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;

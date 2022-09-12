@@ -822,6 +822,7 @@ fn test_call_link_sub_ed25519() {
 	Stf::execute(&mut state, signed_call, &mut dummy_vec, [0u8, 1u8]).unwrap();
 }
 
+#[allow(dead_code)]
 fn test_call_link_sub_ecdsa() {
 	// init test environment
 	let (_, mut state, shard, mrenclave, _, _) = test_setup();

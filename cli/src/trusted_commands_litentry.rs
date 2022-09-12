@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::convert::TryInto;
-
 use crate::{
 	get_layer_two_nonce,
 	trusted_command_utils::{get_accountid_from_str, get_identifiers, get_pair_from_str},
@@ -63,7 +61,7 @@ pub(crate) fn shielding_key(cli: &Cli, trusted_args: &TrustedArgs, arg_who: &str
 		.into();
 	let key = perform_operation(cli, trusted_args, &top)
 		.and_then(|v| UserShieldingKeyType::decode(&mut v.as_slice()).ok());
-	println!("{:?}", key.unwrap());
+	println!("{:?}", hex::encode(&key.unwrap()));
 }
 
 pub(crate) fn linked_eth_addresses(cli: &Cli, trusted_args: &TrustedArgs, arg_who: &str) {
