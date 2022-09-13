@@ -18,9 +18,7 @@
 use codec::{Decode, Encode};
 use sp_std::vec::Vec;
 
-// TODO: is this the best place for it?
-//       putting it in ita-stf would cause cyclic dependencies
-//       alternatively we could put it into IMT pallet
+// TODO: import the const and struct from the parachain once the code is there
 //
 // we use 256-bit AES-GCM as user shielding key
 pub const USER_SHIELDING_KEY_LEN: usize = 32;
