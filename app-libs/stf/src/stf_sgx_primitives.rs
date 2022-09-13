@@ -43,11 +43,6 @@ pub mod types {
 	pub struct Stf;
 }
 
-/// the litentry primitives
-pub mod litentry {
-	pub use ita_sgx_runtime::UserShieldingKey;
-}
-
 use types::StateTypeDiff;
 
 /// Payload to be sent to peers for a state update.

@@ -38,10 +38,8 @@ pub mod identity_context;
 use frame_support::{pallet_prelude::*, traits::StorageVersion};
 use frame_system::pallet_prelude::*;
 use identity_context::IdentityContext;
+pub use litentry_primitives::UserShieldingKeyType;
 
-// TODO: maybe use sgx_crypto_helper::rsa3072::Rsa3072PubKey and implement traits for it
-
-pub type UserShieldingKeyOf<T> = BoundedVec<u8, <T as Config>::MaxUserShieldingKeyLength>;
 pub type ChallengeCodeOf<T> = <T as Config>::ChallengeCode;
 pub type DidOf<T> = BoundedVec<u8, <T as Config>::MaxDidLength>;
 pub(crate) type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
@@ -67,9 +65,6 @@ pub mod pallet {
 		type ManageOrigin: EnsureOrigin<Self::Origin>;
 		/// challenge code type
 		type ChallengeCode: Member + Parameter + Default + Copy + MaxEncodedLen;
-		/// maximum user shielding key length
-		#[pallet::constant]
-		type MaxUserShieldingKeyLength: Get<u32>;
 		/// maximum did length
 		#[pallet::constant]
 		type MaxDidLength: Get<u32>;
@@ -85,7 +80,7 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// user shielding key was set
-		UserShieldingKeySet { who: T::AccountId, key: UserShieldingKeyOf<T> },
+		UserShieldingKeySet { who: T::AccountId, key: UserShieldingKeyType },
 		/// challenge code was set
 		ChallengeCodeSet { who: T::AccountId, did: DidOf<T>, code: ChallengeCodeOf<T> },
 		/// challenge code was removed
@@ -116,7 +111,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn user_shielding_keys)]
 	pub type UserShieldingKeys<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::AccountId, UserShieldingKeyOf<T>, OptionQuery>;
+		StorageMap<_, Blake2_128Concat, T::AccountId, UserShieldingKeyType, OptionQuery>;
 
 	/// challenge code is per Litentry account + did
 	#[pallet::storage]
@@ -150,7 +145,7 @@ pub mod pallet {
 		pub fn set_user_shielding_key(
 			origin: OriginFor<T>,
 			who: T::AccountId,
-			key: UserShieldingKeyOf<T>,
+			key: UserShieldingKeyType,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 			// we don't care about the current key

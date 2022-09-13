@@ -41,7 +41,7 @@ echo "Using trusted-worker uri $WORKER1URL:$WORKER1PORT"
 echo ""
 
 ICGACCOUNTALICE=//AliceIncognito
-KEY="abcdefd/+23one"
+KEY="22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12"
 
 CLIENT="$CLIENT_BIN -p $NPORT -P $WORKER1PORT -u $NODEURL -U $WORKER1URL"
 echo "CLIENT is $CLIENT"
@@ -90,7 +90,7 @@ else
 fi
 
 # change KEY
-KEY="abcdefd/+23two"
+KEY="8378193a4ce64180814bd60591d1054a04dbc4da02afde453799cd6888ee0c6c"
 
 # indirect calls
 sleep 10

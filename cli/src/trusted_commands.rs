@@ -25,14 +25,16 @@ use crate::{
 };
 use codec::Decode;
 use hdrhistogram::Histogram;
-pub use ita_sgx_runtime::UserShieldingKey;
 use ita_stf::{Index, KeyPair, TrustedCall, TrustedGetter, TrustedOperation};
 use itc_rpc_client::direct_client::{DirectApi, DirectClient};
 use itp_types::{
 	TrustedOperationStatus,
 	TrustedOperationStatus::{InSidechainBlock, Submitted},
 };
-use litentry_primitives::{eth::EthAddress, LinkingAccountIndex};
+pub use litentry_primitives::{
+	eth::{EthAddress, EthSignature},
+	LinkingAccountIndex, UserShieldingKeyType,
+};
 use log::*;
 pub use my_node_runtime::{Balance, BlockNumber};
 use pallet_sgx_account_linker::LinkedSubAccount;
@@ -183,8 +185,8 @@ pub enum TrustedCommands {
 		/// AccountId in ss58check format
 		account: String,
 
-		/// Shielding key
-		key: String,
+		/// Shielding key in hex string
+		key_hex: String,
 	},
 
 	/// Get a shielding key for a given account
@@ -254,8 +256,8 @@ pub fn match_trusted_commands(cli: &Cli, trusted_args: &TrustedArgs) {
 			funding_account,
 		),
 		// Litentry
-		TrustedCommands::SetUserShieldingKey { account, key } =>
-			set_user_shielding_key(cli, trusted_args, account, key),
+		TrustedCommands::SetUserShieldingKey { account, key_hex } =>
+			set_user_shielding_key(cli, trusted_args, account, key_hex),
 		TrustedCommands::ShieldingKey { account } => shielding_key(cli, trusted_args, account),
 		TrustedCommands::LinkedEthAddresses { account } =>
 			linked_eth_addresses(cli, trusted_args, account),
