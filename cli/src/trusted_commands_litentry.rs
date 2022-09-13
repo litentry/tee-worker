@@ -61,7 +61,7 @@ pub(crate) fn shielding_key(cli: &Cli, trusted_args: &TrustedArgs, arg_who: &str
 		.into();
 	let key = perform_operation(cli, trusted_args, &top)
 		.and_then(|v| UserShieldingKeyType::decode(&mut v.as_slice()).ok());
-	println!("{:?}", hex::encode(&key.unwrap()));
+	println!("{}", hex::encode(&key.unwrap()));
 }
 
 pub(crate) fn linked_eth_addresses(cli: &Cli, trusted_args: &TrustedArgs, arg_who: &str) {
