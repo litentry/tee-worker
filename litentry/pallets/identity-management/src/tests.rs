@@ -16,14 +16,15 @@
 
 use crate::{
 	identity_context::IdentityContext, mock::*, BlockNumberOf, DidOf, Error, MetadataOf,
-	UserShieldingKeyOf,
+	UserShieldingKeyType,
 };
 use frame_support::{assert_noop, assert_ok};
+use litentry_primitives::USER_SHIELDING_KEY_LEN;
 
 #[test]
 fn set_user_shielding_key_works() {
 	new_test_ext().execute_with(|| {
-		let shielding_key: UserShieldingKeyOf<Test> = vec![0u8; 384].try_into().unwrap();
+		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
 		assert_eq!(IMT::user_shielding_keys(2), None);
 		assert_ok!(IMT::set_user_shielding_key(Origin::signed(1), 2, shielding_key.clone()));
 		assert_eq!(IMT::user_shielding_keys(2), Some(shielding_key.clone()));

@@ -6198,7 +6198,11 @@ checksum = "d4d2456c373231a208ad294c33dc5bff30051eafd954cd4caae83a712b12854d"
 
 [[package]]
 name = "litentry-primitives"
-version = "0.8.0"
+version = "0.1.0"
+dependencies = [
+ "parity-scale-codec 3.1.5",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.26)",
+]
 
 [[package]]
 name = "litmus-parachain-runtime"
@@ -7850,6 +7854,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex 0.4.3",
+ "litentry-primitives",
  "log 0.4.17",
  "pallet-balances",
  "parity-scale-codec 3.1.5",

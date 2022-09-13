@@ -15,9 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	helpers::{get_linked_ethereum_addresses, get_parentchain_number},
-	stf_sgx_primitives::{litentry::*, types::*},
-	AccountId, StfError, StfResult,
+	helpers::get_parentchain_number, stf_sgx_primitives::types::*, AccountId, StfError, StfResult,
 };
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
@@ -25,7 +23,7 @@ use codec::Encode;
 use ita_sgx_runtime::Runtime;
 use litentry_primitives::{
 	eth::{EthAddress, EthSignature},
-	LinkingAccountIndex,
+	LinkingAccountIndex, UserShieldingKeyType,
 };
 use log::*;
 
@@ -38,7 +36,7 @@ use itc_https_client_daemon::daemon_sender::SendHttpsRequest;
 use itp_utils::stringify::account_id_to_string;
 
 impl Stf {
-	pub fn set_shielding_key(who: AccountId, key: UserShieldingKey) -> StfResult<()> {
+	pub fn set_shielding_key(who: AccountId, key: UserShieldingKeyType) -> StfResult<()> {
 		debug!("who.str = {:?}, key = {:?}", account_id_to_string(&who), key.clone());
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_user_shielding_key { who, key }
 			.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())

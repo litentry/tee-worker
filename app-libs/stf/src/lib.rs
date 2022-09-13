@@ -26,7 +26,6 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use ita_sgx_runtime::UserShieldingKey;
 #[cfg(feature = "sgx")]
 pub use ita_sgx_runtime::{Balance, BlockNumber, Index};
 #[cfg(feature = "std")]
@@ -36,7 +35,7 @@ use codec::{Compact, Decode, Encode};
 use derive_more::Display;
 use litentry_primitives::{
 	eth::{EthAddress, EthSignature},
-	LinkingAccountIndex,
+	LinkingAccountIndex, UserShieldingKeyType,
 };
 use sp_core::{crypto::AccountId32, ed25519, sr25519, Pair, H256};
 use sp_runtime::{traits::Verify, MultiSignature};
@@ -193,7 +192,7 @@ pub enum TrustedCall {
 	balance_unshield(AccountId, AccountId, Balance, ShardIdentifier), // (AccountIncognito, BeneficiaryPublicAccount, Amount, Shard)
 	balance_shield(AccountId, AccountId, Balance), // (Root, AccountIncognito, Amount)
 	// litentry
-	set_shielding_key(AccountId, AccountId, UserShieldingKey), // (Root, AccountIncognito, Key)
+	set_shielding_key(AccountId, AccountId, UserShieldingKeyType), // (Root, AccountIncognito, Key)
 	link_eth(AccountId, LinkingAccountIndex, EthAddress, BlockNumber, EthSignature), // (LitentryAcc, EthAcc Index, EthAcc, ParentchainBlockNr, Signature)
 	link_sub(
 		AccountId,
