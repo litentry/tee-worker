@@ -17,13 +17,21 @@
 use crate::{
 	stf_sgx_primitives::types::*, AccountId, Index, StfError, StfResult, ENCLAVE_ACCOUNT_KEY, H256,
 };
+use aes_gcm::{
+	aead::{Aead, KeyInit, Payload},
+	Aes256Gcm,
+};
 use codec::{Decode, Encode};
 use itp_storage::{storage_double_map_key, storage_map_key, storage_value_key, StorageHasher};
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{eth::EthAddress, UserShieldingKeyType};
+use litentry_primitives::{
+	eth::EthAddress, AesOutput, UserShieldingKeyType, USER_SHIELDING_KEY_NONCE_LEN,
+};
 use log::*;
 use pallet_sgx_account_linker::LinkedSubAccount;
 use std::prelude::v1::*;
+
+use aes_gcm::{aead::OsRng, AeadCore};
 
 pub fn get_storage_value<V: Decode>(
 	storage_prefix: &'static str,
@@ -89,24 +97,6 @@ pub fn get_account_info(who: &AccountId) -> Option<AccountInfo> {
 		info!("Failed to get account info for account {}", account_id_to_string(who));
 	}
 	maybe_storage_map
-}
-
-/// Litentry
-pub fn get_shielding_key(who: &AccountId) -> Option<UserShieldingKeyType> {
-	get_storage_map(
-		"IdentityManagement",
-		"UserShieldingKeys",
-		who,
-		&StorageHasher::Blake2_128Concat,
-	)
-}
-
-pub fn get_linked_ethereum_addresses(who: &AccountId) -> Option<Vec<EthAddress>> {
-	get_storage_map("SgxAccountLinker", "EthereumLink", who, &StorageHasher::Blake2_128Concat)
-}
-
-pub fn get_linked_substrate_addresses(who: &AccountId) -> Option<Vec<LinkedSubAccount<AccountId>>> {
-	get_storage_map("SgxAccountLinker", "SubLink", who, &StorageHasher::Blake2_128Concat)
 }
 
 pub fn validate_nonce(who: &AccountId, nonce: Index) -> StfResult<()> {
@@ -212,4 +202,40 @@ pub fn ensure_root(account: AccountId) -> StfResult<()> {
 	} else {
 		Err(StfError::MissingPrivileges(account))
 	}
+}
+
+/// Litentry
+pub fn get_user_shielding_key(who: &AccountId) -> Option<UserShieldingKeyType> {
+	get_storage_map(
+		"IdentityManagement",
+		"UserShieldingKeys",
+		who,
+		&StorageHasher::Blake2_128Concat,
+	)
+}
+
+pub fn get_linked_ethereum_addresses(who: &AccountId) -> Option<Vec<EthAddress>> {
+	get_storage_map("SgxAccountLinker", "EthereumLink", who, &StorageHasher::Blake2_128Concat)
+}
+
+pub fn get_linked_substrate_addresses(who: &AccountId) -> Option<Vec<LinkedSubAccount<AccountId>>> {
+	get_storage_map("SgxAccountLinker", "SubLink", who, &StorageHasher::Blake2_128Concat)
+}
+
+pub fn aes_encrypt_default(key: &UserShieldingKeyType, data: &[u8]) -> AesOutput {
+	// it requires "std" but it shouldn't be a problem
+	let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
+	aes_encrypt(key, data, b"", nonce.into())
+}
+
+pub fn aes_encrypt(
+	key: &UserShieldingKeyType,
+	data: &[u8],
+	aad: &[u8],
+	nonce: [u8; USER_SHIELDING_KEY_NONCE_LEN],
+) -> AesOutput {
+	let cipher = Aes256Gcm::new(key.into());
+	let payload = Payload { msg: data, aad };
+	let ciphertext = cipher.encrypt(&nonce.into(), payload).unwrap();
+	AesOutput { ciphertext, aad: aad.to_vec(), nonce }
 }

@@ -47,6 +47,7 @@ litentry-primitives = { path = "../../litentry-primitives", default-features = f
 itc-https-client-daemon = { path = "../../core/https-client-daemon", default-features = false, features = ["sgx"], optional = true }
 hex-sgx = { package = "hex", git = "https://github.com/mesalock-linux/rust-hex-sgx", tag = "sgx_1.1.3", features = ["sgx_tstd"] }
 pallet-sgx-account-linker = { path = "../../litentry/pallets/account-linker", default-features = false }
+aes-gcm = { git = "https://github.com/RustCrypto/AEADs" }
 
 [dev-dependencies]
 sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }

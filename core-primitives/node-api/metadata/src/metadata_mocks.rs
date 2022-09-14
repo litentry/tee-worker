@@ -44,6 +44,7 @@ pub struct NodeMetadataMock {
 	imp_identity_linked: u8,
 	imp_identity_unlinked: u8,
 	imp_identity_verified: u8,
+	imp_some_error: u8,
 	// IMP mock
 	imp_mock_module: u8,
 	imp_mock_set_user_shielding_key: u8,
@@ -55,6 +56,7 @@ pub struct NodeMetadataMock {
 	imp_mock_identity_linked: u8,
 	imp_mock_identity_unlinked: u8,
 	imp_mock_identity_verified: u8,
+	imp_mock_some_error: u8,
 
 	runtime_spec_version: u32,
 	runtime_transaction_version: u32,
@@ -83,6 +85,7 @@ impl NodeMetadataMock {
 			imp_identity_linked: 6u8,
 			imp_identity_unlinked: 7u8,
 			imp_identity_verified: 8u8,
+			imp_some_error: 9u8,
 
 			imp_mock_module: 100u8,
 			imp_mock_set_user_shielding_key: 0u8,
@@ -94,6 +97,7 @@ impl NodeMetadataMock {
 			imp_mock_identity_linked: 6u8,
 			imp_mock_identity_unlinked: 7u8,
 			imp_mock_identity_verified: 8u8,
+			imp_mock_some_error: 9u8,
 
 			runtime_spec_version: 24,
 			runtime_transaction_version: 3,
@@ -169,6 +173,10 @@ impl IMPCallIndexes for NodeMetadataMock {
 	fn identity_verified_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.imp_module, self.imp_identity_verified])
 	}
+
+	fn some_error_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.imp_module, self.imp_some_error])
+	}
 }
 
 impl IMPMockCallIndexes for NodeMetadataMock {
@@ -206,5 +214,9 @@ impl IMPMockCallIndexes for NodeMetadataMock {
 
 	fn identity_verified_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.imp_mock_module, self.imp_mock_identity_verified])
+	}
+
+	fn some_error_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.imp_mock_module, self.imp_mock_some_error])
 	}
 }

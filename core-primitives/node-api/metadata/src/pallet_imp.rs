@@ -31,6 +31,7 @@ pub trait IMPCallIndexes {
 	fn identity_linked_call_indexes(&self) -> Result<[u8; 2]>;
 	fn identity_unlinked_call_indexes(&self) -> Result<[u8; 2]>;
 	fn identity_verified_call_indexes(&self) -> Result<[u8; 2]>;
+	fn some_error_call_indexes(&self) -> Result<[u8; 2]>;
 }
 
 impl IMPCallIndexes for NodeMetadata {
@@ -68,5 +69,9 @@ impl IMPCallIndexes for NodeMetadata {
 
 	fn identity_verified_call_indexes(&self) -> Result<[u8; 2]> {
 		self.call_indexes(IMP, "identity_verified")
+	}
+
+	fn some_error_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(IMP, "some_error")
 	}
 }
