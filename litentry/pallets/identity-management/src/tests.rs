@@ -52,7 +52,8 @@ fn link_identity_works() {
 			IMT::id_graphs(2, did).unwrap(),
 			IdentityContext {
 				metadata: Some(metadata),
-				linking_request_block: 1,
+				linking_request_block: Some(1),
+				verification_request_block: None,
 				is_verified: false,
 			}
 		);
@@ -80,7 +81,8 @@ fn unlink_identity_works() {
 			IMT::id_graphs(2, did.clone()).unwrap(),
 			IdentityContext {
 				metadata: Some(metadata),
-				linking_request_block: 1,
+				linking_request_block: Some(1),
+				verification_request_block: None,
 				is_verified: false,
 			}
 		);
@@ -107,7 +109,8 @@ fn verify_identity_works() {
 			IMT::id_graphs(2, did).unwrap(),
 			IdentityContext {
 				metadata: Some(metadata),
-				linking_request_block: 1,
+				linking_request_block: Some(1),
+				verification_request_block: Some(1),
 				is_verified: true,
 			}
 		);
@@ -138,7 +141,8 @@ fn verify_identity_fails_when_too_early() {
 			IMT::id_graphs(2, did).unwrap(),
 			IdentityContext {
 				metadata: Some(metadata),
-				linking_request_block: LINKNIG_REQUEST_BLOCK,
+				linking_request_block: Some(LINKNIG_REQUEST_BLOCK),
+				verification_request_block: None,
 				is_verified: false,
 			}
 		);
@@ -169,7 +173,8 @@ fn verify_identity_fails_when_too_late() {
 			IMT::id_graphs(2, did).unwrap(),
 			IdentityContext {
 				metadata: Some(metadata),
-				linking_request_block: LINKNIG_REQUEST_BLOCK,
+				linking_request_block: Some(LINKNIG_REQUEST_BLOCK),
+				verification_request_block: None,
 				is_verified: false,
 			}
 		);
