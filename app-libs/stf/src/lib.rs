@@ -73,6 +73,7 @@ pub enum StfError {
 	// litentry
 	LayerOneNumberUnavailable,
 	InvalidMetadata,
+	RuleSet1VerifyFail,
 }
 
 impl From<MetadataError> for StfError {
