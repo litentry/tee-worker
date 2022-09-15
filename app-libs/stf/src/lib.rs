@@ -33,6 +33,8 @@ pub use my_node_runtime::{Balance, BlockNumber, Index};
 
 use codec::{Compact, Decode, Encode};
 use derive_more::Display;
+use itp_node_api_metadata::Error as MetadataError;
+use itp_node_api_metadata_provider::Error as MetadataProviderError;
 use litentry_primitives::{
 	eth::{EthAddress, EthSignature},
 	LinkingAccountIndex, UserShieldingKeyType,
@@ -40,6 +42,7 @@ use litentry_primitives::{
 use sp_core::{crypto::AccountId32, ed25519, sr25519, Pair, H256};
 use sp_runtime::{traits::Verify, MultiSignature};
 use std::string::String;
+pub use std::sync::Arc;
 
 pub type Signature = MultiSignature;
 pub type AuthorityId = <Signature as Verify>::Signer;
@@ -69,6 +72,19 @@ pub enum StfError {
 	InvalidStorageDiff,
 	// litentry
 	LayerOneNumberUnavailable,
+	InvalidMetadata,
+}
+
+impl From<MetadataError> for StfError {
+	fn from(_e: MetadataError) -> Self {
+		StfError::InvalidMetadata
+	}
+}
+
+impl From<MetadataProviderError> for StfError {
+	fn from(_e: MetadataProviderError) -> Self {
+		StfError::InvalidMetadata
+	}
 }
 
 #[derive(Clone)]
@@ -192,7 +208,7 @@ pub enum TrustedCall {
 	balance_unshield(AccountId, AccountId, Balance, ShardIdentifier), // (AccountIncognito, BeneficiaryPublicAccount, Amount, Shard)
 	balance_shield(AccountId, AccountId, Balance), // (Root, AccountIncognito, Amount)
 	// litentry
-	set_shielding_key(AccountId, AccountId, UserShieldingKeyType), // (Root, AccountIncognito, Key)
+	set_user_shielding_key(AccountId, AccountId, UserShieldingKeyType), // (Root, AccountIncognito, Key)
 	link_eth(AccountId, LinkingAccountIndex, EthAddress, BlockNumber, EthSignature), // (LitentryAcc, EthAcc Index, EthAcc, ParentchainBlockNr, Signature)
 	link_sub(
 		AccountId,
@@ -213,7 +229,7 @@ impl TrustedCall {
 			TrustedCall::balance_unshield(account, _, _, _) => account,
 			TrustedCall::balance_shield(account, _, _) => account,
 			// litentry
-			TrustedCall::set_shielding_key(account, _, _) => account,
+			TrustedCall::set_user_shielding_key(account, _, _) => account,
 			TrustedCall::link_eth(account, _, _, _, _) => account,
 			TrustedCall::link_sub(account, _, _, _, _, _) => account,
 			TrustedCall::query_credit(account) => account,

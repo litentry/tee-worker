@@ -29,7 +29,10 @@ use ita_stf::{
 	stf_sgx::{shards_key_hash, storage_hashes_to_update_per_shard},
 	ParentchainHeader, ShardIdentifier, StateTypeDiff, Stf, TrustedGetterSigned, TrustedOperation,
 };
-use itp_node_api::metadata::{pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata};
+use itp_node_api::metadata::{
+	pallet_imp_mock::IMPMockCallIndexes, pallet_teerex::TeerexCallIndexes,
+	provider::AccessNodeMetadata,
+};
 use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
@@ -55,7 +58,7 @@ where
 	StateHandler: HandleState<HashType = H256>,
 	StateHandler::StateT: SgxExternalitiesTrait + Encode,
 	NodeMetadataRepository: AccessNodeMetadata,
-	NodeMetadataRepository::MetadataType: TeerexCallIndexes,
+	NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPMockCallIndexes,
 {
 	pub fn new(
 		ocall_api: Arc<OCallApi>,
@@ -101,10 +104,6 @@ where
 			return Ok(ExecutedOperation::failed(top_or_hash))
 		}
 
-		let unshield_funds_fn = self
-			.node_metadata_repo
-			.get_from_metadata(|m| m.unshield_funds_call_indexes())??;
-
 		// Necessary because light client sync may not be up to date
 		// see issue #208
 		debug!("Update STF storage!");
@@ -118,9 +117,12 @@ where
 
 		debug!("execute STF, call with nonce {}", trusted_call.nonce);
 		let mut extrinsic_call_backs: Vec<OpaqueCall> = Vec::new();
-		if let Err(e) =
-			Stf::execute(state, trusted_call.clone(), &mut extrinsic_call_backs, unshield_funds_fn)
-		{
+		if let Err(e) = Stf::execute(
+			state,
+			trusted_call.clone(),
+			&mut extrinsic_call_backs,
+			self.node_metadata_repo.clone(),
+		) {
 			error!("Stf::execute failed: {:?}", e);
 			return Ok(ExecutedOperation::failed(top_or_hash))
 		}
@@ -212,7 +214,7 @@ where
 	StateHandler: HandleState<HashType = H256>,
 	StateHandler::StateT: SgxExternalitiesTrait + Encode,
 	NodeMetadataRepository: AccessNodeMetadata,
-	NodeMetadataRepository::MetadataType: TeerexCallIndexes,
+	NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPMockCallIndexes,
 {
 	type Externalities = StateHandler::StateT;
 
