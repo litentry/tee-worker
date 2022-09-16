@@ -184,7 +184,7 @@ impl<
 		let request_did = str::from_utf8(request.did.as_slice())
 			.map_err(|_| Error::OtherError("did format error".to_string()))?;
 		if !payload.did.eq(request_did) {
-			return Err(Error::OtherError(format!("did is not the same ",)))
+			return Err(Error::OtherError("did is not the same".to_string()))
 		}
 
 		let target_hex = hex::encode(request.target.as_slice());
@@ -196,7 +196,7 @@ impl<
 		}
 
 		if !request.challenge_code.eq(&payload.code) {
-			return Err(Error::OtherError(format!("challenge code is not the same ",)))
+			return Err(Error::OtherError("challenge code is not the same".to_string()))
 		}
 
 		let enclave_account_id = self
