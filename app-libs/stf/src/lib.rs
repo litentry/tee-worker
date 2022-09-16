@@ -225,7 +225,7 @@ pub enum TrustedCall {
 	query_credit(AccountId),
 	link_identity(AccountId, AccountId, DID), // (Root, Account, DID)
 	set_challenge_code(AccountId, AccountId, DID, u32), // (Root, Account, Code)
-	prepare_verify_identity(AccountId, AccountId, Vec<u8>), // (Root, Account, tweetId)
+	prepare_verify_identity(AccountId, AccountId, DID, Vec<u8>), // (Root, Account, tweetId)
 	verify_identity(AccountId, AccountId, DID), // (Root/Sender, Account/Target, DID)
 }
 
@@ -243,7 +243,7 @@ impl TrustedCall {
 			TrustedCall::query_credit(account) => account,
 			TrustedCall::link_identity(account, _, _) => account,
 			TrustedCall::set_challenge_code(account, _, _, _) => account,
-			TrustedCall::prepare_verify_identity(account, _, _) => account,
+			TrustedCall::prepare_verify_identity(account, _, _, _) => account,
 			TrustedCall::verify_identity(account, _, _) => account,
 		}
 	}

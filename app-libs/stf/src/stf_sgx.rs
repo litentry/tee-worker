@@ -332,8 +332,8 @@ impl Stf {
 					Self::link_identity(root, account, did),
 				TrustedCall::set_challenge_code(root, account, did, challenge_code) =>
 					Self::set_challenge_code(root, account, did, challenge_code),
-				TrustedCall::prepare_verify_identity(root, account, tweet_id) =>
-					Self::prepare_verify_identity(root, account, tweet_id),
+				TrustedCall::prepare_verify_identity(root, account, did, tweet_id) =>
+					Self::prepare_verify_identity(root, account, did, tweet_id),
 				TrustedCall::verify_identity(root, account, did) =>
 					Self::verify_identity(root, account, did),
 			}?;

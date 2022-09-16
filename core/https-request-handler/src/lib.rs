@@ -32,6 +32,7 @@ use http_req_sgx as http_req;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub mod sgx_reexport_prelude {
 	pub use futures_sgx as futures;
+	pub use hex_sgx as hex;
 	pub use thiserror_sgx as thiserror;
 	pub use url_sgx as url;
 }
@@ -43,7 +44,8 @@ use codec::Encode;
 use futures::executor;
 use http::header::{HeaderName, AUTHORIZATION, CONNECTION};
 use http_req::{request::Method, response::Headers};
-use ita_stf::{AccountId, Hash, KeyPair, TrustedCall, TrustedOperation};
+use ita_stf::{helpers, AccountId, Hash, KeyPair, TrustedCall, TrustedOperation};
+use itc_https_client_daemon::Request;
 use itc_rest_client::{
 	error::Error as HttpError,
 	http_client::{DefaultSend, HttpClient},
@@ -52,10 +54,11 @@ use itc_rest_client::{
 };
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_stf_executor::traits::StfEnclaveSigning;
+use itp_storage::StorageHasher;
 use itp_top_pool_author::traits::AuthorApi;
 use litentry_primitives::DID;
 use serde::{Deserialize, Serialize};
-use sp_core::{sr25519, sr25519::Pair};
+use sp_core::{sr25519, sr25519::Pair, ByteArray};
 use std::{
 	boxed::Box,
 	format, str,
@@ -78,12 +81,13 @@ pub enum Error {
 	OtherError(String),
 }
 
-pub fn build_client(
-	base_url: Url,
-	headers: Headers,
-	// path: Vec<u8>,
-	// query: Option<Vec<(Vec<u8>, Vec<u8>)>>,
-) -> RestClient<HttpClient<DefaultSend>> {
+pub struct VerificationPayload {
+	pub owner: String,
+	pub code: u32,
+	pub did: String,
+}
+
+pub fn build_client(base_url: Url, headers: Headers) -> RestClient<HttpClient<DefaultSend>> {
 	let http_client = HttpClient::new(DefaultSend {}, true, Some(TIMEOUT), Some(headers), None);
 	RestClient::new(http_client, base_url.clone())
 }
@@ -134,10 +138,9 @@ pub struct TweetAuthor {
 pub trait RequestHandler {
 	fn send_request(
 		&self,
-		target: AccountId,
 		client: RestClient<HttpClient<DefaultSend>>,
+		request: Request,
 		path: String,
-		query: Option<Vec<(Vec<u8>, Vec<u8>)>>,
 	) -> Result<(), Error>;
 }
 
@@ -165,21 +168,43 @@ impl<
 
 	pub fn response_handler(
 		&self,
-		target: AccountId,
+		request: Request,
 		response: TwitterResponse,
 	) -> Result<(), Error> {
 		log::warn!("twitter:{:?}", response);
-		// TODO decrypt && verify the tweet
-		// Rsa3072Seal::unseal_from_static_file().unwrap().decrypt("XXX".as_bytes());
+		// TODO decrypt
+		self.shielding_key.decrypt("xxxxx".as_bytes());
 
-		let did = DID::try_from("did:twitter:web2:_:myTwitterHandle".as_bytes().to_vec())
+		// mock data
+		let payload = VerificationPayload {
+			owner: "d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d".to_string(), // alice public key
+			code: 1134,
+			did: "did:twitter:web2:_:myTwitterHandle".to_string(),
+		};
+		let request_did = str::from_utf8(request.did.as_slice())
 			.map_err(|_| Error::OtherError("did format error".to_string()))?;
+		if payload.did.eq(request_did) {
+			return Err(Error::OtherError(format!("did is not the same ",)))
+		}
+
+		let target_hex = hex::encode(request.target.as_slice());
+		if !payload.owner.eq_ignore_ascii_case(target_hex.as_str()) {
+			return Err(Error::OtherError(format!(
+				"owner is not the same as target:{:?}",
+				target_hex
+			)))
+		}
+
+		if request.challenge_code != payload.code {
+			return Err(Error::OtherError(format!("challenge code is not the same ",)))
+		}
 
 		let enclave_account_id = self
 			.enclave_signer
 			.get_enclave_account()
 			.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
-		let trusted_call = TrustedCall::verify_identity(enclave_account_id, target, did);
+		let trusted_call =
+			TrustedCall::verify_identity(enclave_account_id, request.target, request.did);
 		let signed_trusted_call = self
 			.enclave_signer
 			.sign_call_with_self(&trusted_call, &self.shard_identifier)
@@ -195,7 +220,6 @@ impl<
 		executor::block_on(top_submit_future).map_err(|e| {
 			Error::OtherError(format!("Error adding indirect trusted call to TOP pool: {:?}", e))
 		})?;
-		// self.author.submit_trusted_call(shard, encrypted_trusted_call);
 		Ok(())
 	}
 }
@@ -208,13 +232,12 @@ impl<
 {
 	fn send_request(
 		&self,
-		target: AccountId,
 		mut client: RestClient<HttpClient<DefaultSend>>,
+		request: Request,
 		path: String,
-		query: Option<Vec<(Vec<u8>, Vec<u8>)>>,
 	) -> Result<(), Error> {
 		let response: TwitterResponse;
-		if let Some(query) = query {
+		if let Some(ref query) = request.query {
 			let query: Vec<(&str, &str)> = query
 				.iter()
 				.map(|(key, value)| {
@@ -232,6 +255,6 @@ impl<
 				.get::<String, TwitterResponse>(path.to_string())
 				.map_err(|e| Error::RquestError(format!("{:?}", e)))?;
 		}
-		self.response_handler(target, response).clone()
+		self.response_handler(request, response).clone()
 	}
 }

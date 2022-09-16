@@ -30,11 +30,12 @@ use log::*;
 use ita_sgx_runtime::pallet_identity_management::DidOf;
 use pallet_sgx_account_linker::{MultiSignature, NetworkType};
 
+use crate::helpers;
+use itc_https_client_daemon::daemon_sender::SendHttpsRequest;
+use itp_storage::StorageHasher;
+use itp_utils::stringify::account_id_to_string;
 use std::{format, str, vec, vec::Vec};
 use support::traits::UnfilteredDispatchable;
-
-use itc_https_client_daemon::daemon_sender::SendHttpsRequest;
-use itp_utils::stringify::account_id_to_string;
 
 impl Stf {
 	// TODO: refactor the following two methods (is_web2_account & is_web3_account) later
@@ -241,10 +242,22 @@ impl Stf {
 	pub fn prepare_verify_identity(
 		sender: AccountId,
 		target: AccountId,
+		did: DID,
 		tweet_id: Vec<u8>,
 	) -> StfResult<()> {
+		let code: Option<u32> = helpers::get_storage_double_map(
+			"IdentityManagement",
+			"ChallengeCodes",
+			&target,
+			&StorageHasher::Blake2_128Concat,
+			&did,
+			&StorageHasher::Blake2_128Concat,
+		);
+		code.ok_or_else(|| StfError::Dispatch(format!("code not found")))?;
 		let request = itc_https_client_daemon::Request {
 			target,
+			did,
+			challenge_code: code.unwrap(),
 			query: Some(vec![
 				("ids".as_bytes().to_vec(), tweet_id),
 				("expansions".as_bytes().to_vec(), "author_id".as_bytes().to_vec()),

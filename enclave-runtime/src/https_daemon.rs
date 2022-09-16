@@ -24,7 +24,7 @@ use crate::{
 	ocall::OcallApi,
 	GLOBAL_STATE_HANDLER_COMPONENT,
 };
-use ita_stf::AccountId;
+use ita_stf::{helpers, AccountId};
 use itc_https_client_daemon::{daemon_sender, https_client::HttpsRestClient};
 use log::*;
 use sgx_types::sgx_status_t;
@@ -130,19 +130,15 @@ fn run_https_client_daemon_internal(url: &str) -> Result<()> {
 		author_api,
 	);
 
-	// let sender_public: AccountId = sender.public().into();
 	// TODO discord handler
 	loop {
 		let request = receiver.recv().map_err(|e| Error::Other(e.into()))?;
 		match request.handlerType {
 			RequestHandlerType::TWITTER => {
 				let client = build_twitter_client(twitter_authorization_token.clone());
-				if let Err(e) = twitter_handler.send_request(
-					request.target,
-					client,
-					"/2/tweets".to_string(),
-					request.query,
-				) {
+				if let Err(e) =
+					twitter_handler.send_request(client, request, "/2/tweets".to_string())
+				{
 					error!("Could not retrieve data from https server due to: {:?}", e);
 				}
 			},

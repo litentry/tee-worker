@@ -25,6 +25,7 @@ use crate::{
 };
 use codec::Decode;
 use ita_stf::{Index, KeyPair, TrustedCall, TrustedGetter, TrustedOperation};
+use litentry_primitives::DID;
 use log::*;
 use pallet_sgx_account_linker::{MultiSignature, NetworkType};
 use sp_application_crypto::Ss58Codec;
@@ -415,6 +416,7 @@ pub fn prepare_verify_identity(
 	cli: &Cli,
 	trusted_args: &TrustedArgs,
 	arg_who: &str,
+	arg_did: &str,
 	arg_tweet_id: &str,
 ) {
 	// get the litentry account
@@ -440,10 +442,17 @@ pub fn prepare_verify_identity(
 	debug!("who: {:?} got nonce: {:?}", arg_who, nonce);
 
 	let tweet_id = arg_tweet_id.as_bytes().to_vec();
+	let did = DID::try_from(arg_did.as_bytes().to_vec());
 	// compose the extrinsic
-	let top: TrustedOperation =
-		TrustedCall::prepare_verify_identity(get_accountid_from_str("//Alice"), account, tweet_id)
-			.sign(&KeyPair::Sr25519(account_pair), nonce, &mrenclave, &shard)
-			.into_trusted_operation(trusted_args.direct);
-	let _ = perform_operation(cli, trusted_args, &top);
+	if let Ok(did) = did {
+		let top: TrustedOperation = TrustedCall::prepare_verify_identity(
+			get_accountid_from_str("//Alice"),
+			account,
+			did,
+			tweet_id,
+		)
+		.sign(&KeyPair::Sr25519(account_pair), nonce, &mrenclave, &shard)
+		.into_trusted_operation(trusted_args.direct);
+		let _ = perform_operation(cli, trusted_args, &top);
+	}
 }

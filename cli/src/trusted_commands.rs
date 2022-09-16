@@ -240,6 +240,7 @@ pub enum TrustedCommands {
 
 	PrepareVerifyIdentity {
 		account: String,
+		did: String,
 		tweet_id: String,
 	},
 }
@@ -316,8 +317,8 @@ pub fn match_trusted_commands(cli: &Cli, trusted_args: &TrustedArgs) {
 			link_identity(cli, trusted_args, account, did),
 		TrustedCommands::SetChallengeCode { account, did, code } =>
 			set_challenge_code(cli, trusted_args, account, did, code.clone()),
-		TrustedCommands::PrepareVerifyIdentity { account, tweet_id } =>
-			prepare_verify_identity(cli, trusted_args, account, tweet_id),
+		TrustedCommands::PrepareVerifyIdentity { account, did, tweet_id } =>
+			prepare_verify_identity(cli, trusted_args, account, did, tweet_id),
 	}
 }
 
