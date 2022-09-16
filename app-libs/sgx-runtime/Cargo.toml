@@ -48,6 +48,7 @@ pallet-evm = { default-features = false, optional = true, git = "https://github.
 # Litentry
 pallet-sgx-account-linker = { path = "../../litentry/pallets/account-linker", default-features = false }
 pallet-identity-management = { path = "../../litentry/pallets/identity-management", default-features = false }
+litentry-primitives = { path = "../../litentry-primitives", default-features = false }
 
 [features]
 default = ["std"]

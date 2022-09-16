@@ -304,7 +304,7 @@ impl pallet_identity_management::Config for Runtime {
 	type Event = Event;
 	type ManageOrigin = EnsureRoot<AccountId>;
 	type ChallengeCode = u32;
-	type MaxDidLength = ConstU32<128>;
+	type MaxDidLength = litentry_primitives::MaxDidLength;
 	type MaxMetadataLength = ConstU32<128>;
 	type MaxVerificationDelay = ConstU32<2>;
 }
