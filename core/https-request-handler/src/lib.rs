@@ -195,7 +195,7 @@ impl<
 			)))
 		}
 
-		if request.challenge_code != payload.code {
+		if !request.challenge_code.eq(&payload.code) {
 			return Err(Error::OtherError(format!("challenge code is not the same ",)))
 		}
 
