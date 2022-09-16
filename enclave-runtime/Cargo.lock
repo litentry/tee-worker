@@ -1488,6 +1488,7 @@ dependencies = [
 name = "itc-https-request-handler"
 version = "0.1.0"
 dependencies = [
+ "futures 0.3.8",
  "http",
  "http_req",
  "ita-stf",

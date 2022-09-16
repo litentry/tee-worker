@@ -4268,6 +4268,8 @@ dependencies = [
 name = "itc-https-request-handler"
 version = "0.1.0"
 dependencies = [
+ "futures 0.3.23",
+ "futures 0.3.8",
  "http 0.2.1",
  "http 0.2.8",
  "http_req 0.8.1 (git+https://github.com/integritee-network/http_req?branch=master)",

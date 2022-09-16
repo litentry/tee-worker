@@ -31,6 +31,7 @@ use http_req_sgx as http_req;
 // re-export module to properly feature gate sgx and regular std environment
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub mod sgx_reexport_prelude {
+	pub use futures_sgx as futures;
 	pub use thiserror_sgx as thiserror;
 	pub use url_sgx as url;
 }
@@ -39,6 +40,7 @@ pub mod sgx_reexport_prelude {
 use crate::sgx_reexport_prelude::*;
 
 use codec::Encode;
+use futures::executor;
 use http::header::{HeaderName, AUTHORIZATION, CONNECTION};
 use http_req::{request::Method, response::Headers};
 use ita_stf::{AccountId, Hash, KeyPair, TrustedCall, TrustedOperation};
@@ -188,8 +190,11 @@ impl<
 			.encrypt(&trusted_operation.encode())
 			.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
 
-		// TODO should wait the extrinsic until it is already?
-		self.author.submit_top(encrypted_trusted_call, self.shard_identifier);
+		let top_submit_future =
+			async { self.author.submit_top(encrypted_trusted_call, self.shard_identifier).await };
+		executor::block_on(top_submit_future).map_err(|e| {
+			Error::OtherError(format!("Error adding indirect trusted call to TOP pool: {:?}", e))
+		})?;
 		// self.author.submit_trusted_call(shard, encrypted_trusted_call);
 		Ok(())
 	}

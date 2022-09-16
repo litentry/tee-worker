@@ -240,11 +240,11 @@ impl Stf {
 
 	pub fn prepare_verify_identity(
 		sender: AccountId,
-		account: AccountId,
+		target: AccountId,
 		tweet_id: Vec<u8>,
 	) -> StfResult<()> {
 		let request = itc_https_client_daemon::Request {
-			target: account,
+			target,
 			query: Some(vec![
 				("ids".as_bytes().to_vec(), tweet_id),
 				("expansions".as_bytes().to_vec(), "author_id".as_bytes().to_vec()),
