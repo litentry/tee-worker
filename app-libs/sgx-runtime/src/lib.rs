@@ -69,8 +69,8 @@ pub use pallet_timestamp::Call as TimestampCall;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
-pub use pallet_identity_management::{self, Call as IdentityManagementCall};
 /// litentry
+pub use pallet_identity_management::{self, Call as IdentityManagementCall};
 pub use pallet_sgx_account_linker::{self, Call as SgxAccountLinkerCall};
 
 /// The address format for describing accounts.

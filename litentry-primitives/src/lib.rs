@@ -36,9 +36,9 @@ pub type DID = BoundedVec<u8, ConstU32<128>>;
 // by default a postfix tag is used => last 16 bytes of ciphertext is MAC tag
 #[derive(Debug, Default, Clone, Eq, PartialEq, Encode, Decode)]
 pub struct AesOutput {
-	ciphertext: Vec<u8>,
-	aad: Vec<u8>,
-	nonce: [u8; USER_SHIELDING_KEY_NONCE_LEN], // IV
+	pub ciphertext: Vec<u8>,
+	pub aad: Vec<u8>,
+	pub nonce: [u8; USER_SHIELDING_KEY_NONCE_LEN], // IV
 }
 
 // deprecated - to be removed

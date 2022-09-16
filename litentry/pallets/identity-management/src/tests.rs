@@ -52,7 +52,8 @@ fn link_identity_works() {
 			IMT::id_graphs(2, did).unwrap(),
 			IdentityContext {
 				metadata: Some(metadata),
-				linking_request_block: 1,
+				linking_request_block: Some(1),
+				verification_request_block: None,
 				is_verified: false,
 			}
 		);
@@ -80,7 +81,8 @@ fn unlink_identity_works() {
 			IMT::id_graphs(2, did.clone()).unwrap(),
 			IdentityContext {
 				metadata: Some(metadata),
-				linking_request_block: 1,
+				linking_request_block: Some(1),
+				verification_request_block: None,
 				is_verified: false,
 			}
 		);
@@ -107,10 +109,43 @@ fn verify_identity_works() {
 			IMT::id_graphs(2, did).unwrap(),
 			IdentityContext {
 				metadata: Some(metadata),
-				linking_request_block: 1,
+				linking_request_block: Some(1),
+				verification_request_block: Some(1),
 				is_verified: true,
 			}
 		);
+	});
+}
+
+#[test]
+fn get_did_and_identity_context_works() {
+	new_test_ext().execute_with(|| {
+		let did3: DidOf<Test> =
+			"did:polkadot:web3:substrate:0x1234".as_bytes().to_vec().try_into().unwrap();
+		let metadata3: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
+		assert_ok!(IMT::link_identity(
+			Origin::signed(1),
+			2,
+			did3.clone(),
+			Some(metadata3.clone()),
+			3
+		));
+		assert_ok!(IMT::verify_identity(Origin::signed(1), 2, did3.clone(), 3));
+
+		let did2: DidOf<Test> =
+			"did:twitter:web2:_:myTwitterHandle".as_bytes().to_vec().try_into().unwrap();
+		let metadata2: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
+		assert_ok!(IMT::link_identity(
+			Origin::signed(1),
+			2,
+			did2.clone(),
+			Some(metadata2.clone()),
+			2
+		));
+		assert_ok!(IMT::verify_identity(Origin::signed(1), 2, did2.clone(), 2));
+
+		let did_contex = IMT::get_did_and_identity_context(&2);
+		assert_eq!(did_contex.len(), 2);
 	});
 }
 
@@ -138,7 +173,8 @@ fn verify_identity_fails_when_too_early() {
 			IMT::id_graphs(2, did).unwrap(),
 			IdentityContext {
 				metadata: Some(metadata),
-				linking_request_block: LINKNIG_REQUEST_BLOCK,
+				linking_request_block: Some(LINKNIG_REQUEST_BLOCK),
+				verification_request_block: None,
 				is_verified: false,
 			}
 		);
@@ -169,7 +205,8 @@ fn verify_identity_fails_when_too_late() {
 			IMT::id_graphs(2, did).unwrap(),
 			IdentityContext {
 				metadata: Some(metadata),
-				linking_request_block: LINKNIG_REQUEST_BLOCK,
+				linking_request_block: Some(LINKNIG_REQUEST_BLOCK),
+				verification_request_block: None,
 				is_verified: false,
 			}
 		);

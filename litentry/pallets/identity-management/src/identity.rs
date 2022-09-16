@@ -37,8 +37,6 @@ pub struct Web3ValidationData {
 pub struct Identity {
 	pub did: String,
 	pub metadata: Option<String>,
-	#[serde(default)]
-	pub need_verification: bool,
 	pub web2_validation_data: Option<Web2ValidationData>,
 	pub web3_validation_data: Option<Web3ValidationData>,
 }
@@ -53,7 +51,6 @@ mod tests {
 		{
 			"did": "did:polkadot:web3:substrate:0x1234",
 			"metadata": "0xabc",
-			"needVerification": true,
 			"web2ValidationData": {
                 "link": "www.litentry.com"
             },
@@ -66,7 +63,6 @@ mod tests {
 		"#,
 		)
 		.unwrap();
-		assert!(id.need_verification);
 		assert_eq!(id.metadata.unwrap(), String::from("0xabc"));
 		assert_eq!(id.web2_validation_data.unwrap().link, String::from("www.litentry.com"));
 	}
@@ -81,7 +77,6 @@ mod tests {
 		"#,
 		)
 		.unwrap();
-		assert!(!id.need_verification);
 		assert!(id.metadata.is_none());
 		assert!(id.web2_validation_data.is_none());
 		assert!(id.web3_validation_data.is_none());

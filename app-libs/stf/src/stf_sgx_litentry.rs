@@ -27,21 +27,80 @@ use litentry_primitives::{
 };
 use log::*;
 
+use ita_sgx_runtime::pallet_identity_management::DidOf;
 use pallet_sgx_account_linker::{MultiSignature, NetworkType};
+
+use std::{format, str, vec::Vec};
+use support::traits::UnfilteredDispatchable;
 
 use itc_https_client_daemon::daemon_sender::SendHttpsRequest;
 use itp_utils::stringify::account_id_to_string;
-use sp_runtime::{traits::ConstU32, BoundedVec};
-use std::{format, vec, vec::Vec};
-use support::traits::UnfilteredDispatchable;
 
 impl Stf {
-	pub fn set_shielding_key(who: AccountId, key: UserShieldingKeyType) -> StfResult<()> {
+	// TODO: refactor the following two methods (is_web2_account & is_web3_account) later
+	fn is_web2_account(did: DidOf<Runtime>) -> bool {
+		match str::from_utf8(&did) {
+			Ok(v) => {
+				let vstr: Vec<&str> = v.split(':').collect();
+				if vstr[3] == "web2" {
+					return true
+				}
+			},
+			Err(e) => {
+				error!("Invalid account bytes: {}", e);
+			},
+		};
+
+		false
+	}
+
+	fn is_web3_account(did: DidOf<Runtime>) -> bool {
+		match str::from_utf8(&did) {
+			Ok(v) => {
+				let vstr: Vec<&str> = v.split(':').collect();
+				if vstr[3] == "web3" {
+					return true
+				}
+			},
+			Err(e) => {
+				error!("Invalid account bytes: {}", e);
+			},
+		};
+
+		false
+	}
+
+	pub fn set_user_shielding_key(who: AccountId, key: UserShieldingKeyType) -> StfResult<()> {
 		debug!("who.str = {:?}, key = {:?}", account_id_to_string(&who), key.clone());
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_user_shielding_key { who, key }
 			.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
 			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
 		Ok(())
+	}
+
+	pub fn verify_ruleset1(who: AccountId) -> StfResult<()> {
+		let v_did_context =
+		ita_sgx_runtime::pallet_identity_management::Pallet::<Runtime>::get_did_and_identity_context(&who);
+
+		let mut web2_cnt = 0;
+		let mut web3_cnt = 0;
+
+		for did_ctx in &v_did_context {
+			if did_ctx.1.is_verified {
+				if Self::is_web2_account(did_ctx.0.clone()) {
+					web2_cnt = web2_cnt + 1;
+				} else if Self::is_web3_account(did_ctx.0.clone()) {
+					web3_cnt = web3_cnt + 1;
+				}
+			}
+		}
+
+		if web2_cnt > 0 && web3_cnt > 0 {
+			// TODO: generate_vc();
+			Ok(())
+		} else {
+			Err(StfError::RuleSet1VerifyFail)
+		}
 	}
 
 	pub fn link_eth(

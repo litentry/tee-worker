@@ -32,7 +32,7 @@ use sp_core::{sr25519 as sr25519_core, Pair};
 use sp_runtime::{traits::ConstU32, BoundedVec};
 use std::convert::TryFrom;
 
-pub(crate) fn set_shielding_key(
+pub(crate) fn set_user_shielding_key(
 	cli: &Cli,
 	trusted_args: &TrustedArgs,
 	arg_who: &str,
@@ -49,7 +49,7 @@ pub(crate) fn set_shielding_key(
 	let mut key = [0u8; 32];
 	let _ = hex::decode_to_slice(key_hex, &mut key).expect("decoding key failed");
 	let top: TrustedOperation =
-		TrustedCall::set_shielding_key(root.public().into(), who.public().into(), key)
+		TrustedCall::set_user_shielding_key(root.public().into(), who.public().into(), key)
 			.sign(&KeyPair::Sr25519(root), nonce, &mrenclave, &shard)
 			.into_trusted_operation(trusted_args.direct);
 	let _ = perform_operation(cli, trusted_args, &top);

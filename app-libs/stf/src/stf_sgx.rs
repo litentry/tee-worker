@@ -20,16 +20,21 @@ use crate::test_genesis::test_genesis_setup;
 
 use crate::{
 	helpers::{
-		account_data, account_nonce, enclave_signer_account, ensure_enclave_signer_account,
-		ensure_root, get_account_info, get_linked_ethereum_addresses,
-		get_linked_substrate_addresses, get_shielding_key, increment_nonce, root, validate_nonce,
+		account_data, account_nonce, aes_encrypt_default, enclave_signer_account,
+		ensure_enclave_signer_account, ensure_root, get_account_info,
+		get_linked_ethereum_addresses, get_linked_substrate_addresses, get_user_shielding_key,
+		increment_nonce, root, validate_nonce,
 	},
-	AccountData, AccountId, Getter, Index, ParentchainHeader, PublicGetter, ShardIdentifier, State,
-	StateTypeDiff, Stf, StfError, StfResult, TrustedCall, TrustedCallSigned, TrustedGetter,
+	AccountData, AccountId, Arc, Getter, Index, ParentchainHeader, PublicGetter, ShardIdentifier,
+	State, StateTypeDiff, Stf, StfError, StfResult, TrustedCall, TrustedCallSigned, TrustedGetter,
 	ENCLAVE_ACCOUNT_KEY,
 };
 use codec::Encode;
 use ita_sgx_runtime::Runtime;
+use itp_node_api::metadata::{
+	pallet_imp_mock::IMPMockCallIndexes, pallet_teerex::TeerexCallIndexes,
+	provider::AccessNodeMetadata,
+};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_storage::storage_value_key;
 use itp_types::OpaqueCall;
@@ -118,7 +123,7 @@ impl Stf {
 					},
 				// litentry
 				TrustedGetter::shielding_key(who) =>
-					if let Some(key) = get_shielding_key(&who) {
+					if let Some(key) = get_user_shielding_key(&who) {
 						Some(key.encode())
 					} else {
 						None
@@ -152,12 +157,16 @@ impl Stf {
 		})
 	}
 
-	pub fn execute(
+	pub fn execute<NodeMetadataRepository>(
 		ext: &mut impl SgxExternalitiesTrait,
 		call: TrustedCallSigned,
 		calls: &mut Vec<OpaqueCall>,
-		unshield_funds_fn: [u8; 2],
-	) -> StfResult<()> {
+		node_metadata_repo: Arc<NodeMetadataRepository>,
+	) -> StfResult<()>
+	where
+		NodeMetadataRepository: AccessNodeMetadata,
+		NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPMockCallIndexes, // TODO: switch to IMPCallIndexes
+	{
 		let call_hash = blake2_256(&call.encode());
 		ext.execute_with(|| {
 			let sender = call.call.account().clone();
@@ -216,7 +225,8 @@ impl Stf {
 
 					Self::unshield_funds(account_incognito, value)?;
 					calls.push(OpaqueCall::from_tuple(&(
-						unshield_funds_fn,
+						node_metadata_repo
+							.get_from_metadata(|m| m.unshield_funds_call_indexes())??,
 						beneficiary,
 						value,
 						shard,
@@ -231,9 +241,36 @@ impl Stf {
 					Ok(())
 				},
 				// litentry
-				TrustedCall::set_shielding_key(root, who, key) => {
+				TrustedCall::set_user_shielding_key(root, who, key) => {
 					ensure_root(root)?;
-					Self::set_shielding_key(who, key)
+					// TODO: switch to IMPCallIndexes
+					// TODO: we only checked if the extrinsic dispatch is successful,
+					//       is that enough? (i.e. is the state changed already?)
+					match Self::set_user_shielding_key(who.clone(), key) {
+						Ok(()) => {
+							debug!("set_user_shielding_key {} OK", account_id_to_string(&who));
+							calls.push(OpaqueCall::from_tuple(&(
+								node_metadata_repo.get_from_metadata(|m| {
+									m.user_shielding_key_set_call_indexes()
+								})??,
+								aes_encrypt_default(&key, &who.encode()),
+							)));
+						},
+						Err(err) => {
+							debug!(
+								"set_user_shielding_key {} error: {}",
+								account_id_to_string(&who),
+								err
+							);
+							calls.push(OpaqueCall::from_tuple(&(
+								node_metadata_repo
+									.get_from_metadata(|m| m.some_error_call_indexes())??,
+								"set_user_shielding_key".as_bytes(),
+								format!("{:?}", err).as_bytes(),
+							)));
+						},
+					}
+					Ok(())
 				},
 				TrustedCall::link_eth(
 					litentry_account,
@@ -404,7 +441,7 @@ impl Stf {
 			TrustedCall::balance_unshield(_, _, _, _) => debug!("No storage updates needed..."),
 			TrustedCall::balance_shield(_, _, _) => debug!("No storage updates needed..."),
 			// litentry
-			TrustedCall::set_shielding_key(..) => debug!("No storage updates needed..."),
+			TrustedCall::set_user_shielding_key(..) => debug!("No storage updates needed..."),
 			TrustedCall::link_eth(..) => debug!("No storage updates needed..."),
 			TrustedCall::link_sub(..) => debug!("No storage updates needed..."),
 			TrustedCall::query_credit(..) => debug!("No storage updates needed..."),

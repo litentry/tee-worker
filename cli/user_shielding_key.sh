@@ -73,7 +73,7 @@ echo ""
 # direct calls
 sleep 10
 echo "* Set $ICGACCOUNTALICE 's shielding key to $KEY"
-$CLIENT trusted --mrenclave $MRENCLAVE --direct set-shielding-key $ICGACCOUNTALICE "$KEY"
+$CLIENT trusted --mrenclave $MRENCLAVE --direct set-user-shielding-key $ICGACCOUNTALICE "$KEY"
 echo ""
 
 sleep 10
@@ -95,7 +95,7 @@ KEY="8378193a4ce64180814bd60591d1054a04dbc4da02afde453799cd6888ee0c6c"
 # indirect calls
 sleep 10
 echo "* Set $ICGACCOUNTALICE 's shielding key to $KEY"
-$CLIENT trusted --mrenclave $MRENCLAVE set-shielding-key $ICGACCOUNTALICE "$KEY"
+$CLIENT trusted --mrenclave $MRENCLAVE set-user-shielding-key $ICGACCOUNTALICE "$KEY"
 echo ""
 
 sleep 10
