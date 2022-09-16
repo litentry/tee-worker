@@ -37,13 +37,15 @@ pub mod identity_context;
 
 use frame_support::{pallet_prelude::*, traits::StorageVersion};
 use frame_system::pallet_prelude::*;
-use identity_context::IdentityContext;
+pub use identity_context::IdentityContext;
 pub use litentry_primitives::UserShieldingKeyType;
 
 pub type ChallengeCodeOf<T> = <T as Config>::ChallengeCode;
 pub type DidOf<T> = BoundedVec<u8, <T as Config>::MaxDidLength>;
 pub(crate) type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
 pub(crate) type MetadataOf<T> = BoundedVec<u8, <T as Config>::MaxMetadataLength>;
+
+use sp_std::vec::Vec;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -245,6 +247,18 @@ pub mod pallet {
 					Err(Error::<T>::IdentityNotLinked.into())
 				}
 			})
+		}
+	}
+
+	impl<T: Config> Pallet<T> {
+		pub fn get_user_shielding_key(who: &T::AccountId) -> Option<UserShieldingKeyType> {
+			Self::user_shielding_keys(who)
+		}
+
+		pub fn get_did_and_identity_context(
+			who: &T::AccountId,
+		) -> Vec<(DidOf<T>, IdentityContext<T>)> {
+			IDGraphs::iter_prefix(who).collect::<Vec<_>>()
 		}
 	}
 }
