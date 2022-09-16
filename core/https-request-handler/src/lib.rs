@@ -183,7 +183,7 @@ impl<
 		};
 		let request_did = str::from_utf8(request.did.as_slice())
 			.map_err(|_| Error::OtherError("did format error".to_string()))?;
-		if payload.did.eq(request_did) {
+		if !payload.did.eq(request_did) {
 			return Err(Error::OtherError(format!("did is not the same ",)))
 		}
 
