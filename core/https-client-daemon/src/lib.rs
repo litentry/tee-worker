@@ -31,16 +31,29 @@ pub mod sgx_reexport_prelude {
 	pub use url_sgx as url;
 }
 
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+use http_sgx as http;
+
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+use http_req_sgx as http_req;
+
 use itp_types::AccountId;
 pub mod daemon_sender;
 pub mod error;
 pub mod https_client;
-
 pub use error::Result;
-
-use std::string::String;
+use http_req::{request::Method, response::Headers};
+use itc_rest_client::Query;
+use std::{string::String, vec::Vec};
 
 pub struct Request {
-	pub account_id: AccountId,
-	pub request_str: String,
+	pub target: AccountId,
+	// pub base_url: Vec<u8>,
+	// pub path: Vec<u8>,
+	// pub method: Method,
+	// pub headers: Headers,
+	pub query: Option<Vec<(Vec<u8>, Vec<u8>)>>, // vec<(key, value)>
+	// pub body: Option<Vec<u8>>,
+	pub handlerType: litentry_primitives::RequestHandlerType,
+	// pub tweet_id: Vec<u8>,
 }

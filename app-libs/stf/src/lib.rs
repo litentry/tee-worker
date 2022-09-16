@@ -35,12 +35,14 @@ use codec::{Compact, Decode, Encode};
 use derive_more::Display;
 use litentry_primitives::{
 	eth::{EthAddress, EthSignature},
-	LinkingAccountIndex, UserShieldingKeyType,
+	LinkingAccountIndex, UserShieldingKeyType, DID,
 };
 use sp_core::{crypto::AccountId32, ed25519, sr25519, Pair, H256};
-use sp_runtime::{traits::Verify, MultiSignature};
-use std::string::String;
-
+use sp_runtime::{
+	traits::{ConstU32, Verify},
+	BoundedVec, MultiSignature,
+};
+use std::{string::String, vec::Vec};
 pub type Signature = MultiSignature;
 pub type AuthorityId = <Signature as Verify>::Signer;
 pub type AccountId = AccountId32;
@@ -203,6 +205,10 @@ pub enum TrustedCall {
 		pallet_sgx_account_linker::MultiSignature,
 	),
 	query_credit(AccountId),
+	link_identity(AccountId, AccountId, DID), // (Root, Account, DID)
+	set_challenge_code(AccountId, AccountId, DID, u32), // (Root, Account, Code)
+	prepare_verify_identity(AccountId, AccountId, Vec<u8>), // (Root, Account, tweetId)
+	verify_identity(AccountId, AccountId, DID), // (Root/Sender, Account/Target, DID)
 }
 
 impl TrustedCall {
@@ -217,6 +223,10 @@ impl TrustedCall {
 			TrustedCall::link_eth(account, _, _, _, _) => account,
 			TrustedCall::link_sub(account, _, _, _, _, _) => account,
 			TrustedCall::query_credit(account) => account,
+			TrustedCall::link_identity(account, _, _) => account,
+			TrustedCall::set_challenge_code(account, _, _, _) => account,
+			TrustedCall::prepare_verify_identity(account, _, _) => account,
+			TrustedCall::verify_identity(account, _, _) => account,
 		}
 	}
 

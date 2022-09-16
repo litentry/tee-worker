@@ -159,10 +159,12 @@ pub mod pallet {
 			did: DidOf<T>,
 			code: ChallengeCodeOf<T>,
 		) -> DispatchResult {
-			T::ManageOrigin::ensure_origin(origin)?;
+			// TODO uncomment
+			// T::ManageOrigin::ensure_origin(origin)?;
 			// we don't care if it has already associated with any challenge code
 			ChallengeCodes::<T>::insert(&who, &did, &code);
 			Self::deposit_event(Event::ChallengeCodeSet { who, did, code });
+			log::warn!("set_challenge_code");
 			Ok(())
 		}
 
@@ -190,11 +192,13 @@ pub mod pallet {
 			metadata: Option<MetadataOf<T>>,
 			linking_request_block: BlockNumberOf<T>,
 		) -> DispatchResult {
-			T::ManageOrigin::ensure_origin(origin)?;
+			// TODO uncomment
+			// T::ManageOrigin::ensure_origin(origin)?;
 			ensure!(!IDGraphs::<T>::contains_key(&who, &did), Error::<T>::IdentityAlreadyExist);
 			let context = IdentityContext { metadata, linking_request_block, is_verified: false };
 			IDGraphs::<T>::insert(&who, &did, context);
 			Self::deposit_event(Event::IdentityLinked { who, did });
+			log::warn!("link_identity");
 			Ok(())
 		}
 
@@ -218,7 +222,8 @@ pub mod pallet {
 			did: DidOf<T>,
 			verification_request_block: BlockNumberOf<T>,
 		) -> DispatchResult {
-			T::ManageOrigin::ensure_origin(origin)?;
+			// TODO uncomment
+			// T::ManageOrigin::ensure_origin(origin)?;
 			IDGraphs::<T>::try_mutate(&who, &did, |context| -> DispatchResult {
 				let mut c = context.take().ok_or(Error::<T>::IdentityNotExist)?;
 				ensure!(
@@ -232,6 +237,7 @@ pub mod pallet {
 				);
 				c.is_verified = true;
 				*context = Some(c);
+				log::warn!("verify_identity1");
 				Ok(())
 			})
 		}

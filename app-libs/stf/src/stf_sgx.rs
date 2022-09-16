@@ -291,6 +291,14 @@ impl Stf {
 
 					Self::query_credit(account)
 				},
+				TrustedCall::link_identity(root, account, did) =>
+					Self::link_identity(root, account, did),
+				TrustedCall::set_challenge_code(root, account, did, challenge_code) =>
+					Self::set_challenge_code(root, account, did, challenge_code),
+				TrustedCall::prepare_verify_identity(root, account, tweet_id) =>
+					Self::prepare_verify_identity(root, account, tweet_id),
+				TrustedCall::verify_identity(root, account, did) =>
+					Self::verify_identity(root, account, did),
 			}?;
 			increment_nonce(&sender);
 			Ok(())
@@ -400,6 +408,10 @@ impl Stf {
 			TrustedCall::link_eth(..) => debug!("No storage updates needed..."),
 			TrustedCall::link_sub(..) => debug!("No storage updates needed..."),
 			TrustedCall::query_credit(..) => debug!("No storage updates needed..."),
+			TrustedCall::link_identity(..) => debug!("No storage updates needed..."),
+			TrustedCall::set_challenge_code(..) => debug!("No storage updates needed..."),
+			TrustedCall::prepare_verify_identity(..) => debug!("No storage updates needed..."),
+			TrustedCall::verify_identity(..) => debug!("No storage updates needed..."),
 		};
 		key_hashes
 	}

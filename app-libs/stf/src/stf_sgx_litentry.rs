@@ -23,17 +23,17 @@ use codec::Encode;
 use ita_sgx_runtime::Runtime;
 use litentry_primitives::{
 	eth::{EthAddress, EthSignature},
-	LinkingAccountIndex, UserShieldingKeyType,
+	LinkingAccountIndex, RequestHandlerType, UserShieldingKeyType, DID,
 };
 use log::*;
 
 use pallet_sgx_account_linker::{MultiSignature, NetworkType};
 
-use std::format;
-use support::traits::UnfilteredDispatchable;
-
 use itc_https_client_daemon::daemon_sender::SendHttpsRequest;
 use itp_utils::stringify::account_id_to_string;
+use sp_runtime::{traits::ConstU32, BoundedVec};
+use std::{format, vec, vec::Vec};
+use support::traits::UnfilteredDispatchable;
 
 impl Stf {
 	pub fn set_shielding_key(who: AccountId, key: UserShieldingKeyType) -> StfResult<()> {
@@ -128,14 +128,96 @@ impl Stf {
 	}
 
 	pub fn query_credit(account_id: AccountId) -> StfResult<()> {
-		info!("query_credit({:x?})", account_id.encode(),);
-
-		let request_str = format!("{}", "https://httpbin.org/anything");
-		let request = itc_https_client_daemon::Request { account_id, request_str };
-		let sender = itc_https_client_daemon::daemon_sender::HttpRequestSender::new();
-		let result = sender.send_https_request(request);
-		info!("send https request, get result as {:?}", result);
+		// info!("query_credit({:x?})", account_id.encode(),);
+		// let tweet_id: Vec<u8> = "1569510747084050432".as_bytes().to_vec();
+		// // let request_str = format!("{}", "https://httpbin.org/anything");
+		// let request = itc_https_client_daemon::Request { tweet_id };
+		// let sender = itc_https_client_daemon::daemon_sender::HttpRequestSender::new();
+		// let result = sender.send_https_request(request);
+		// info!("send https request, get result as {:?}", result);
 
 		Ok(())
+	}
+
+	pub fn link_identity(
+		sender: AccountId,
+		account: AccountId,
+		did: BoundedVec<u8, ConstU32<128>>,
+	) -> StfResult<()> {
+		let origin = ita_sgx_runtime::Origin::signed(sender.clone());
+
+		match get_parentchain_number() {
+			Some(number) => {
+				ita_sgx_runtime::IdentityManagementCall::<Runtime>::link_identity {
+					who: account,
+					did,
+					metadata: None,
+					linking_request_block: number,
+				}
+				.dispatch_bypass_filter(origin)
+				.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+				Ok(())
+			},
+			None => {
+				error!("link_sub blocknumber l1 unavailable");
+				Err(StfError::LayerOneNumberUnavailable)
+			},
+		}
+	}
+
+	pub fn set_challenge_code(
+		sender: AccountId,
+		account: AccountId,
+		did: DID,
+		challenge_code: u32,
+	) -> StfResult<()> {
+		let origin = ita_sgx_runtime::Origin::signed(sender.clone());
+
+		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_challenge_code {
+			who: account,
+			did,
+			code: challenge_code,
+		}
+		.dispatch_bypass_filter(origin)
+		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+		Ok(())
+	}
+
+	pub fn prepare_verify_identity(
+		sender: AccountId,
+		account: AccountId,
+		tweet_id: Vec<u8>,
+	) -> StfResult<()> {
+		let request = itc_https_client_daemon::Request {
+			target: account,
+			query: Some(vec![
+				("ids".as_bytes().to_vec(), tweet_id),
+				("expansions".as_bytes().to_vec(), "author_id".as_bytes().to_vec()),
+			]),
+			handlerType: RequestHandlerType::TWITTER,
+		};
+		let http_sender = itc_https_client_daemon::daemon_sender::HttpRequestSender::new();
+		http_sender.send_https_request(request);
+		Ok(())
+	}
+
+	pub fn verify_identity(sender: AccountId, account: AccountId, did: DID) -> StfResult<()> {
+		let origin = ita_sgx_runtime::Origin::signed(sender);
+		match get_parentchain_number() {
+			Some(number) => {
+				ita_sgx_runtime::IdentityManagementCall::<Runtime>::verify_identity {
+					who: account,
+					did,
+					verification_request_block: number,
+				}
+				.dispatch_bypass_filter(origin)
+				.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+				Ok(())
+			},
+			None => {
+				error!("verify_identity blocknumber l1 unavailable");
+				Err(StfError::LayerOneNumberUnavailable)
+			},
+		}
 	}
 }

@@ -34,26 +34,39 @@ use itc_rest_client::{
 };
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_ocall_api::EnclaveOnChainOCallApi;
+use itp_sgx_crypto::ShieldingCryptoDecrypt;
+// use itp_top_pool_author::traits::AuthorApi;
 use itp_types::OpaqueCall;
 use log::*;
 use serde::{Deserialize, Serialize};
-use std::{string::String, time::Duration};
+use std::{
+	string::{String, ToString},
+	time::Duration,
+	vec::Vec,
+};
 use url::Url;
 
 const TIMEOUT: Duration = Duration::from_secs(3u64);
 
 use http::{
-	header::{HeaderName, CONNECTION},
+	header::{HeaderName, AUTHORIZATION, CONNECTION},
 	HeaderValue,
 };
 use http_req::response::Headers;
 
 /// Https rest client. Handles the https requests and responses.
-pub struct HttpsRestClient<T: EnclaveOnChainOCallApi, S: CreateExtrinsics> {
+pub struct HttpsRestClient<
+	T: EnclaveOnChainOCallApi,
+	S: CreateExtrinsics,
+	D: ShieldingCryptoDecrypt,
+	// A: AuthorApi<Hash, Hash>,
+> {
 	url: Url,
 	client: RestClient<HttpClient<DefaultSend>>,
 	ocall_api: T,
 	create_extrinsics: S,
+	shielding_key: D,
+	// author: A,
 }
 
 // TODO: restructure this
@@ -89,17 +102,33 @@ fn add_to_headers(headers: &mut Headers, key: HeaderName, value: HeaderValue) {
 	}
 }
 
-impl<T: EnclaveOnChainOCallApi, S: CreateExtrinsics> HttpsRestClient<T, S> {
-	pub fn new(url: Url, ocall_api: T, create_extrinsics: S) -> Self {
-		let http_client = HttpClient::new(
-			DefaultSend {},
-			true,
-			Some(TIMEOUT),
-			Some(headers_connection_close()),
-			None,
-		);
+impl<
+		T: EnclaveOnChainOCallApi,
+		S: CreateExtrinsics,
+		D: ShieldingCryptoDecrypt,
+		// A: AuthorApi<Hash, Hash>,
+	> HttpsRestClient<T, S, D>
+{
+	pub fn new(
+		url: Url,
+		authorization_token: Option<Vec<u8>>,
+		ocall_api: T,
+		create_extrinsics: S,
+		shielding_key: D,
+		// author: A,
+	) -> Self {
+		let mut headers = headers_connection_close();
+		//TODO load token from environment
+		if authorization_token.is_some() {
+			add_to_headers(
+				&mut headers,
+				AUTHORIZATION,
+				HeaderValue::from_bytes(authorization_token.unwrap().as_slice()).unwrap(),
+			);
+		}
+		let http_client = HttpClient::new(DefaultSend {}, true, Some(TIMEOUT), Some(headers), None);
 		let rest_client = RestClient::new(http_client, url.clone());
-		Self { url, client: rest_client, ocall_api, create_extrinsics }
+		Self { url, client: rest_client, ocall_api, create_extrinsics, shielding_key }
 	}
 
 	pub fn base_url(&self) -> &Url {
@@ -108,34 +137,45 @@ impl<T: EnclaveOnChainOCallApi, S: CreateExtrinsics> HttpsRestClient<T, S> {
 
 	/// Sends an https request to the specified server.
 	pub fn send(&mut self, request: Request) -> Result<()> {
-		let response = self
-			.client
-			.get::<String, ResponseBody>(request.request_str)
-			.map_err(|e| Error::Other(e.into()))?;
+		// let response = self
+		// 	.client
+		// 	.get_with::<String, TwitterResonse>(
+		// 		"/2/tweets".to_string(),
+		// 		&[
+		// 			("ids", std::str::from_utf8(request.tweet_id.as_slice()).unwrap()),
+		// 			("expansions", "author_id"),
+		// 		],
+		// 	)
+		// 	.map_err(|e| Error::Other(e.into()))?;
 
-		debug!("https get result as ( {:?},)", response);
+		// TODO decrypt the tweet
+		// Rsa3072Seal::unseal_from_static_file().unwrap().decrypt("XXX".as_bytes());
+
+		//TODO submit transaction to the sidechain (direct call)
+
+		// debug!("https get result as ( {:?},)", response);
 
 		// TODO: rewrite this, potentially restructure/refactor
 		//       additionally, litentry-parachain doesn't have such module/method anyway
+
 		// let hardcode_score = 1234_u32;
 
-		let credit_score_module_id = 64u8;
-		let report_credit_score_method_id = 0u8;
-
-		let call =
-			OpaqueCall::from_tuple(&([credit_score_module_id, report_credit_score_method_id],));
-
-		let calls = std::vec![call];
-
-		let tx = self
-			.create_extrinsics
-			.create_extrinsics(calls.as_slice(), None)
-			.map_err(|_| Error::FailedCreateExtrinsic)?;
-
-		let result =
-			self.ocall_api.send_to_parentchain(tx).map_err(|_| Error::FailedSendExtrinsic)?;
-		debug!("https daemon send tx result as ( {:?},)", result);
-
+		// let credit_score_module_id = 64u8;
+		// let report_credit_score_method_id = 0u8;
+		//
+		// let call =
+		// 	OpaqueCall::from_tuple(&([credit_score_module_id, report_credit_score_method_id],));
+		//
+		// let calls = std::vec![call];
+		//
+		// let tx = self
+		// 	.create_extrinsics
+		// 	.create_extrinsics(calls.as_slice(), None)
+		// 	.map_err(|_| Error::FailedCreateExtrinsic)?;
+		//
+		// let result =
+		// 	self.ocall_api.send_to_parentchain(tx).map_err(|_| Error::FailedSendExtrinsic)?;
+		// debug!("https daemon send tx result as ( {:?},)", result);
 		Ok(())
 	}
 }

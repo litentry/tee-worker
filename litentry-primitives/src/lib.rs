@@ -16,6 +16,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 use codec::{Decode, Encode};
+use sp_runtime::{traits::ConstU32, BoundedVec};
 use sp_std::vec::Vec;
 
 // TODO: import the const and struct from the parachain once the code is there
@@ -26,6 +27,8 @@ pub const USER_SHIELDING_KEY_NONCE_LEN: usize = 12;
 pub const USER_SHIELDING_KEY_TAG_LEN: usize = 16;
 
 pub type UserShieldingKeyType = [u8; USER_SHIELDING_KEY_LEN];
+
+pub type DID = BoundedVec<u8, ConstU32<128>>;
 
 // all-in-one struct containing the encrypted ciphertext with user's
 // shielding key and other metadata that is required for decryption
@@ -45,4 +48,9 @@ pub type LinkingAccountIndex = u32;
 pub mod eth {
 	pub type EthAddress = [u8; 20];
 	pub type EthSignature = [u8; 65];
+}
+
+pub enum RequestHandlerType {
+	TWITTER,
+	DISCORD,
 }

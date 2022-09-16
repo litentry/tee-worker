@@ -226,6 +226,22 @@ pub enum TrustedCommands {
 	QueryCredit {
 		account: String,
 	},
+
+	LinkIdentity {
+		account: String,
+		did: String,
+	},
+
+	SetChallengeCode {
+		account: String,
+		did: String,
+		code: u32,
+	},
+
+	PrepareVerifyIdentity {
+		account: String,
+		tweet_id: String,
+	},
 }
 
 pub fn match_trusted_commands(cli: &Cli, trusted_args: &TrustedArgs) {
@@ -296,6 +312,12 @@ pub fn match_trusted_commands(cli: &Cli, trusted_args: &TrustedArgs) {
 			signature,
 		),
 		TrustedCommands::QueryCredit { account } => query_credit(cli, trusted_args, account),
+		TrustedCommands::LinkIdentity { account, did } =>
+			link_identity(cli, trusted_args, account, did),
+		TrustedCommands::SetChallengeCode { account, did, code } =>
+			set_challenge_code(cli, trusted_args, account, did, code.clone()),
+		TrustedCommands::PrepareVerifyIdentity { account, tweet_id } =>
+			prepare_verify_identity(cli, trusted_args, account, tweet_id),
 	}
 }
 

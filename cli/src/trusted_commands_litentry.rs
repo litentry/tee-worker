@@ -29,6 +29,8 @@ use log::*;
 use pallet_sgx_account_linker::{MultiSignature, NetworkType};
 use sp_application_crypto::Ss58Codec;
 use sp_core::{sr25519 as sr25519_core, Pair};
+use sp_runtime::{traits::ConstU32, BoundedVec};
+use std::convert::TryFrom;
 
 pub(crate) fn set_shielding_key(
 	cli: &Cli,
@@ -326,5 +328,122 @@ pub(crate) fn query_credit(cli: &Cli, trusted_args: &TrustedArgs, arg_who: &str)
 	let top: TrustedOperation = TrustedCall::query_credit(account)
 		.sign(&KeyPair::Sr25519(account_pair), nonce, &mrenclave, &shard)
 		.into_trusted_operation(trusted_args.direct);
+	let _ = perform_operation(cli, trusted_args, &top);
+}
+
+pub fn link_identity(cli: &Cli, trusted_args: &TrustedArgs, arg_who: &str, arg_did: &str) {
+	// get the litentry account
+	let account_pair = get_pair_from_str(trusted_args, arg_who);
+	let account = get_accountid_from_str(arg_who);
+	let (mrenclave, shard) = get_identifiers(trusted_args);
+
+	let top: TrustedOperation = TrustedGetter::nonce(account_pair.public().into())
+		.sign(&KeyPair::Sr25519(account_pair.clone()))
+		.into();
+	let res = perform_operation(cli, trusted_args, &top);
+
+	let nonce: Index = if let Some(n) = res {
+		if let Ok(nonce) = Index::decode(&mut n.as_slice()) {
+			nonce
+		} else {
+			info!("could not decode value. maybe hasn't been set? {:x?}", n);
+			0
+		}
+	} else {
+		0
+	};
+	debug!("who: {:?} got nonce: {:?}", arg_who, nonce);
+
+	let encode_did: Vec<u8> = arg_did.as_bytes().to_vec();
+	let did = BoundedVec::<u8, ConstU32<128>>::try_from(encode_did);
+	if did.is_ok() {
+		// compose the extrinsic
+		let top: TrustedOperation =
+			TrustedCall::link_identity(get_accountid_from_str("//Alice"), account, did.unwrap())
+				.sign(&KeyPair::Sr25519(account_pair), nonce, &mrenclave, &shard)
+				.into_trusted_operation(trusted_args.direct);
+		let _ = perform_operation(cli, trusted_args, &top);
+	}
+}
+
+pub fn set_challenge_code(
+	cli: &Cli,
+	trusted_args: &TrustedArgs,
+	arg_who: &str,
+	arg_did: &str,
+	code: u32,
+) {
+	// get the litentry account
+	let account_pair = get_pair_from_str(trusted_args, arg_who);
+	let account = get_accountid_from_str(arg_who);
+	let (mrenclave, shard) = get_identifiers(trusted_args);
+
+	let top: TrustedOperation = TrustedGetter::nonce(account_pair.public().into())
+		.sign(&KeyPair::Sr25519(account_pair.clone()))
+		.into();
+	let res = perform_operation(cli, trusted_args, &top);
+
+	let nonce: Index = if let Some(n) = res {
+		if let Ok(nonce) = Index::decode(&mut n.as_slice()) {
+			nonce
+		} else {
+			info!("could not decode value. maybe hasn't been set? {:x?}", n);
+			0
+		}
+	} else {
+		0
+	};
+	debug!("who: {:?} got nonce: {:?}", arg_who, nonce);
+
+	let encode_did: Vec<u8> = arg_did.as_bytes().to_vec();
+	let did = BoundedVec::<u8, ConstU32<128>>::try_from(encode_did);
+	if did.is_ok() {
+		// compose the extrinsic
+		let top: TrustedOperation = TrustedCall::set_challenge_code(
+			get_accountid_from_str("//Alice"),
+			account,
+			did.unwrap(),
+			code,
+		)
+		.sign(&KeyPair::Sr25519(account_pair), nonce, &mrenclave, &shard)
+		.into_trusted_operation(trusted_args.direct);
+		let _ = perform_operation(cli, trusted_args, &top);
+	}
+}
+
+pub fn prepare_verify_identity(
+	cli: &Cli,
+	trusted_args: &TrustedArgs,
+	arg_who: &str,
+	arg_tweet_id: &str,
+) {
+	// get the litentry account
+	let account_pair = get_pair_from_str(trusted_args, arg_who);
+	let account = get_accountid_from_str(arg_who);
+	let (mrenclave, shard) = get_identifiers(trusted_args);
+
+	let top: TrustedOperation = TrustedGetter::nonce(account_pair.public().into())
+		.sign(&KeyPair::Sr25519(account_pair.clone()))
+		.into();
+	let res = perform_operation(cli, trusted_args, &top);
+
+	let nonce: Index = if let Some(n) = res {
+		if let Ok(nonce) = Index::decode(&mut n.as_slice()) {
+			nonce
+		} else {
+			info!("could not decode value. maybe hasn't been set? {:x?}", n);
+			0
+		}
+	} else {
+		0
+	};
+	debug!("who: {:?} got nonce: {:?}", arg_who, nonce);
+
+	let tweet_id = arg_tweet_id.as_bytes().to_vec();
+	// compose the extrinsic
+	let top: TrustedOperation =
+		TrustedCall::prepare_verify_identity(get_accountid_from_str("//Alice"), account, tweet_id)
+			.sign(&KeyPair::Sr25519(account_pair), nonce, &mrenclave, &shard)
+			.into_trusted_operation(trusted_args.direct);
 	let _ = perform_operation(cli, trusted_args, &top);
 }
