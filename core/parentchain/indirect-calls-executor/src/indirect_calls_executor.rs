@@ -27,7 +27,9 @@ use crate::{
 use codec::{Decode, Encode};
 use futures::executor;
 use ita_stf::{AccountId, TrustedCall, TrustedOperation};
-use itp_node_api::metadata::{pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata};
+use itp_node_api::metadata::{
+	pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata,
+};
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_top_pool_author::traits::AuthorApi;
@@ -38,6 +40,10 @@ use log::*;
 use sp_core::blake2_256;
 use sp_runtime::traits::{Block as ParentchainBlockTrait, Header};
 use std::{sync::Arc, vec::Vec};
+// litentry
+use pallet_imp::{
+	LinkIdentityFn, SetUserShieldingKeyFn, ShardIdentifier, UnlinkIdentityFn, VerifyIdentityFn,
+};
 
 /// Trait to execute the indirect calls found in the extrinsics of a block.
 pub trait ExecuteIndirectCalls {
@@ -50,6 +56,26 @@ pub trait ExecuteIndirectCalls {
 	) -> Result<OpaqueCall>
 	where
 		ParentchainBlock: ParentchainBlockTrait<Hash = H256>;
+}
+
+macro_rules! is_parentchain_function {
+	($name:ident) => {
+		fn is_$name_function(&self, function: &[u8; 2]) -> bool {
+			self.node_meta_data_provider
+				.get_from_metadata(|meta_data| {
+					let call = match meta_data.$name_call_indexes() {
+						Ok(c) => c,
+						Err(e) => {
+							error!("Failed to get the indexes for the $name call from the metadata: {:?}", e);
+							return false
+						},
+					};
+					function == &call
+				})
+				.unwrap_or(false)
+		}
+	};
+	(&self, function: &[u8; 2])
 }
 
 pub struct IndirectCallsExecutor<
@@ -73,7 +99,7 @@ where
 	StfEnclaveSigner: StfEnclaveSigning,
 	TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
 	NodeMetadataProvider: AccessNodeMetadata,
-	NodeMetadataProvider::MetadataType: TeerexCallIndexes,
+	NodeMetadataProvider::MetadataType: TeerexCallIndexes + IMPCallIndexes,
 {
 	pub fn new(
 		shielding_key_repo: Arc<ShieldingKeyRepository>,
@@ -139,35 +165,13 @@ where
 		Ok(OpaqueCall::from_tuple(&(call, block_hash, root)))
 	}
 
-	fn is_shield_funds_function(&self, function: &[u8; 2]) -> bool {
-		self.node_meta_data_provider
-			.get_from_metadata(|meta_data| {
-				let call = match meta_data.shield_funds_call_indexes() {
-					Ok(c) => c,
-					Err(e) => {
-						error!("Failed to get the indexes for the shield_funds call from the metadata: {:?}", e);
-						return false
-					},
-				};
-				function == &call
-			})
-			.unwrap_or(false)
-	}
+	is_parentchain_function!(shield_funds);
+	is_parentchain_function!(call_worker);
 
-	fn is_call_worker_function(&self, function: &[u8; 2]) -> bool {
-		self.node_meta_data_provider
-			.get_from_metadata(|meta_data| {
-				let call = match meta_data.call_worker_call_indexes() {
-					Ok(c) => c,
-					Err(e) => {
-						error!("Failed to get the indexes for the call_worker call from the metadata: {:?}", e);
-						return false
-					},
-				};
-				function == &call
-			})
-			.unwrap_or(false)
-	}
+	is_parentchain_function!(set_user_shielding_key);
+	is_parentchain_function!(link_identity);
+	is_parentchain_function!(unlink_identity);
+	is_parentchain_function!(verify_identity);
 }
 
 impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
