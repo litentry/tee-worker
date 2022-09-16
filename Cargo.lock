@@ -4249,13 +4249,47 @@ dependencies = [
  "itc-rest-client",
  "itp-extrinsics-factory",
  "itp-ocall-api",
+ "itp-sgx-crypto",
  "itp-types",
  "itp-utils",
  "lazy_static",
+ "litentry-primitives",
  "log 0.4.17",
  "serde 1.0.144",
  "serde_json 1.0.83",
  "sgx_tstd",
+ "thiserror 1.0.32",
+ "thiserror 1.0.9",
+ "url 2.1.1",
+ "url 2.2.2",
+]
+
+[[package]]
+name = "itc-https-request-handler"
+version = "0.1.0"
+dependencies = [
+ "http 0.2.1",
+ "http 0.2.8",
+ "http_req 0.8.1 (git+https://github.com/integritee-network/http_req?branch=master)",
+ "http_req 0.8.1 (git+https://github.com/integritee-network/http_req)",
+ "ita-stf",
+ "itc-https-client-daemon",
+ "itc-rest-client",
+ "itp-extrinsics-factory",
+ "itp-ocall-api",
+ "itp-sgx-crypto",
+ "itp-stf-executor",
+ "itp-top-pool-author",
+ "itp-types",
+ "itp-utils",
+ "lazy_static",
+ "litentry-primitives",
+ "log 0.4.17",
+ "parity-scale-codec 3.1.5",
+ "serde 1.0.144",
+ "serde_json 1.0.83",
+ "sgx_tstd",
+ "sp-core",
  "thiserror 1.0.32",
  "thiserror 1.0.9",
  "url 2.1.1",
@@ -6279,6 +6313,7 @@ name = "litentry-primitives"
 version = "0.1.0"
 dependencies = [
  "parity-scale-codec 3.1.5",
+ "sp-runtime",
  "sp-std 4.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.26)",
 ]
 

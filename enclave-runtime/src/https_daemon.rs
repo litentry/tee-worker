@@ -24,13 +24,16 @@ use crate::{
 	ocall::OcallApi,
 	GLOBAL_STATE_HANDLER_COMPONENT,
 };
-use alloc::string::{String, ToString};
 use ita_stf::AccountId;
 use itc_https_client_daemon::{daemon_sender, https_client::HttpsRestClient};
 use log::*;
 use sgx_types::sgx_status_t;
 use sp_core::sr25519;
-use std::{sync::Arc, vec::Vec};
+use std::{
+	string::{String, ToString},
+	sync::Arc,
+	vec::Vec,
+};
 use url::Url;
 
 use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, LightClientState};

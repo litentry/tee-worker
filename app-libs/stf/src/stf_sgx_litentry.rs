@@ -30,7 +30,7 @@ use log::*;
 use ita_sgx_runtime::pallet_identity_management::DidOf;
 use pallet_sgx_account_linker::{MultiSignature, NetworkType};
 
-use std::{format, str, vec::Vec};
+use std::{format, str, vec, vec::Vec};
 use support::traits::UnfilteredDispatchable;
 
 use itc_https_client_daemon::daemon_sender::SendHttpsRequest;
@@ -198,11 +198,7 @@ impl Stf {
 		Ok(())
 	}
 
-	pub fn link_identity(
-		sender: AccountId,
-		account: AccountId,
-		did: BoundedVec<u8, ConstU32<128>>,
-	) -> StfResult<()> {
+	pub fn link_identity(sender: AccountId, account: AccountId, did: DID) -> StfResult<()> {
 		let origin = ita_sgx_runtime::Origin::signed(sender.clone());
 
 		match get_parentchain_number() {

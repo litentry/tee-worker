@@ -44,10 +44,8 @@ use sp_runtime::{
 	traits::{ConstU32, Verify},
 	BoundedVec, MultiSignature,
 };
-use std::{string::String, vec::Vec};
-use sp_runtime::{traits::Verify, MultiSignature};
-use std::string::String;
 pub use std::sync::Arc;
+use std::{string::String, vec::Vec};
 
 pub type Signature = MultiSignature;
 pub type AuthorityId = <Signature as Verify>::Signer;
