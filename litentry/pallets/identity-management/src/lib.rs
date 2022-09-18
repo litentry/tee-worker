@@ -42,8 +42,8 @@ pub use litentry_primitives::UserShieldingKeyType;
 
 pub type ChallengeCodeOf<T> = <T as Config>::ChallengeCode;
 pub type DidOf<T> = BoundedVec<u8, <T as Config>::MaxDidLength>;
-pub(crate) type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
-pub(crate) type MetadataOf<T> = BoundedVec<u8, <T as Config>::MaxMetadataLength>;
+pub type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
+pub type MetadataOf<T> = BoundedVec<u8, <T as Config>::MaxMetadataLength>;
 
 use sp_std::vec::Vec;
 

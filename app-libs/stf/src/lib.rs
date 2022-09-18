@@ -33,6 +33,10 @@ pub use my_node_runtime::{Balance, BlockNumber, Index};
 
 use codec::{Compact, Decode, Encode};
 use derive_more::Display;
+use ita_sgx_runtime::{
+	pallet_identity_management::{DidOf, MetadataOf},
+	Runtime,
+};
 use itp_node_api_metadata::Error as MetadataError;
 use itp_node_api_metadata_provider::Error as MetadataProviderError;
 use litentry_primitives::{
@@ -210,6 +214,8 @@ pub enum TrustedCall {
 	balance_shield(AccountId, AccountId, Balance), // (Root, AccountIncognito, Amount)
 	// litentry
 	set_user_shielding_key(AccountId, AccountId, UserShieldingKeyType), // (Root, Account, Key)
+	link_identity(AccountId, AccountId, DidOf<Runtime>, Option<MetadataOf<Runtime>>), // (Root, Account, did, metadata)
+
 	link_eth(AccountId, LinkingAccountIndex, EthAddress, BlockNumber, EthSignature), // (LitentryAcc, EthAcc Index, EthAcc, ParentchainBlockNr, Signature)
 	link_sub(
 		AccountId,
@@ -231,6 +237,7 @@ impl TrustedCall {
 			TrustedCall::balance_shield(account, _, _) => account,
 			// litentry
 			TrustedCall::set_user_shielding_key(account, _, _) => account,
+			TrustedCall::link_identity(account, _, _, _) => account,
 			TrustedCall::link_eth(account, _, _, _, _) => account,
 			TrustedCall::link_sub(account, _, _, _, _, _) => account,
 			TrustedCall::query_credit(account) => account,

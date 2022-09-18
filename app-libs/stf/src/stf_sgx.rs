@@ -32,8 +32,7 @@ use crate::{
 use codec::Encode;
 use ita_sgx_runtime::Runtime;
 use itp_node_api::metadata::{
-	pallet_imp_mock::IMPMockCallIndexes, pallet_teerex::TeerexCallIndexes,
-	provider::AccessNodeMetadata,
+	pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata,
 };
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_storage::storage_value_key;
@@ -165,7 +164,7 @@ impl Stf {
 	) -> StfResult<()>
 	where
 		NodeMetadataRepository: AccessNodeMetadata,
-		NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPMockCallIndexes, // TODO: switch to IMPCallIndexes
+		NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPCallIndexes,
 	{
 		let call_hash = blake2_256(&call.encode());
 		ext.execute_with(|| {
@@ -243,12 +242,15 @@ impl Stf {
 				// litentry
 				TrustedCall::set_user_shielding_key(root, who, key) => {
 					ensure_root(root)?;
-					// TODO: switch to IMPCallIndexes
+					debug!(
+						"set_user_shielding_key, who: {}, key: {:?}",
+						account_id_to_string(&who),
+						key.clone()
+					);
 					// TODO: we only checked if the extrinsic dispatch is successful,
 					//       is that enough? (i.e. is the state changed already?)
 					match Self::set_user_shielding_key(who.clone(), key) {
 						Ok(()) => {
-							debug!("set_user_shielding_key {} OK", account_id_to_string(&who));
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo.get_from_metadata(|m| {
 									m.user_shielding_key_set_call_indexes()
@@ -257,15 +259,51 @@ impl Stf {
 							)));
 						},
 						Err(err) => {
-							debug!(
-								"set_user_shielding_key {} error: {}",
-								account_id_to_string(&who),
-								err
-							);
+							debug!("set_user_shielding_key error: {}", err);
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
 									.get_from_metadata(|m| m.some_error_call_indexes())??,
 								"set_user_shielding_key".as_bytes(),
+								format!("{:?}", err).as_bytes(),
+							)));
+						},
+					}
+					Ok(())
+				},
+				TrustedCall::link_identity(root, who, did, metadata) => {
+					ensure_root(root)?;
+					debug!(
+						"link_identity, who: {}, did: {:?}, metadata: {:?}",
+						account_id_to_string(&who),
+						did.clone(),
+						metadata.clone()
+					);
+					// set link
+					match Self::link_identity(who.clone(), did.clone(), metadata) {
+						Ok(()) => {
+							debug!("link_identity {} OK", account_id_to_string(&who));
+							if let Some(key) = get_user_shielding_key(&who) {
+								calls.push(OpaqueCall::from_tuple(&(
+									node_metadata_repo
+										.get_from_metadata(|m| m.link_identity_call_indexes())??,
+									aes_encrypt_default(&key, &who.encode()),
+									aes_encrypt_default(&key, &did),
+								)));
+							} else {
+								calls.push(OpaqueCall::from_tuple(&(
+									node_metadata_repo
+										.get_from_metadata(|m| m.some_error_call_indexes())??,
+									"get_user_shielding_key".as_bytes(),
+									"error".as_bytes(),
+								)));
+							}
+						},
+						Err(err) => {
+							debug!("link_identity {} error: {}", account_id_to_string(&who), err);
+							calls.push(OpaqueCall::from_tuple(&(
+								node_metadata_repo
+									.get_from_metadata(|m| m.some_error_call_indexes())??,
+								"link_identity".as_bytes(),
 								format!("{:?}", err).as_bytes(),
 							)));
 						},
@@ -434,6 +472,7 @@ impl Stf {
 			TrustedCall::balance_shield(_, _, _) => debug!("No storage updates needed..."),
 			// litentry
 			TrustedCall::set_user_shielding_key(..) => debug!("No storage updates needed..."),
+			TrustedCall::link_identity(..) => debug!("No storage updates needed..."),
 			TrustedCall::link_eth(..) => debug!("No storage updates needed..."),
 			TrustedCall::link_sub(..) => debug!("No storage updates needed..."),
 			TrustedCall::query_credit(..) => debug!("No storage updates needed..."),

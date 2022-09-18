@@ -43,7 +43,7 @@ substrate-api-client = { git = "https://github.com/scs/substrate-api-client", br
 
 # litentry
 # TODO: change it to tee-dev branch
-pallet-imp = { git = "https://github.com/litentry/litentry-parachain", package = "pallet-identity-management", branch = "830-discard-call-worker", default-features = false }
+# pallet-imp = { git = "https://github.com/litentry/litentry-parachain", package = "pallet-identity-management", branch = "830-discard-call-worker", default-features = false }
 
 [dev-dependencies]
 env_logger = "0.9.0"

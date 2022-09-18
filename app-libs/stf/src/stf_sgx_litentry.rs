@@ -20,14 +20,13 @@ use crate::{
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 use codec::Encode;
-use ita_sgx_runtime::Runtime;
 use litentry_primitives::{
 	eth::{EthAddress, EthSignature},
 	LinkingAccountIndex, UserShieldingKeyType,
 };
 use log::*;
 
-use ita_sgx_runtime::pallet_identity_management::DidOf;
+use crate::{DidOf, MetadataOf, Runtime};
 use pallet_sgx_account_linker::{MultiSignature, NetworkType};
 
 use std::{format, str, vec::Vec};
@@ -38,6 +37,8 @@ use itp_utils::stringify::account_id_to_string;
 
 impl Stf {
 	// TODO: refactor the following two methods (is_web2_account & is_web3_account) later
+	// TODO: - this should go to helpers
+	//       - which one is better, a raw string, or a struct?
 	fn is_web2_account(did: DidOf<Runtime>) -> bool {
 		match str::from_utf8(&did) {
 			Ok(v) => {
@@ -75,6 +76,14 @@ impl Stf {
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_user_shielding_key { who, key }
 			.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
 			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+		Ok(())
+	}
+
+	pub fn link_identity(
+		who: AccountId,
+		did: DidOf<Runtime>,
+		metadta: Option<MetadataOf<Runtime>>,
+	) -> StfResult<()> {
 		Ok(())
 	}
 

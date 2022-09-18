@@ -19,6 +19,7 @@
 use crate::sgx_reexport_prelude::*;
 
 use sgx_types::sgx_status_t;
+use sp_runtime::traits::LookupError;
 use std::{boxed::Box, format};
 
 pub type Result<T> = core::result::Result<T, Error>;
@@ -38,6 +39,8 @@ pub enum Error {
 	Crypto(itp_sgx_crypto::Error),
 	#[error(transparent)]
 	Other(#[from] Box<dyn std::error::Error + Sync + Send + 'static>),
+	#[error("AccountId lookup error")]
+	AccountIdLookup,
 }
 
 impl From<sgx_status_t> for Error {
@@ -61,5 +64,11 @@ impl From<codec::Error> for Error {
 impl From<itp_node_api::metadata::Error> for Error {
 	fn from(e: itp_node_api::metadata::Error) -> Self {
 		Self::NodeMetadata(e)
+	}
+}
+
+impl From<LookupError> for Error {
+	fn from(_: LookupError) -> Self {
+		Self::AccountIdLookup
 	}
 }

@@ -38,12 +38,21 @@ use itp_types::{
 };
 use log::*;
 use sp_core::blake2_256;
-use sp_runtime::traits::{Block as ParentchainBlockTrait, Header};
+use sp_runtime::traits::{AccountIdLookup, Block as ParentchainBlockTrait, Header, StaticLookup};
 use std::{sync::Arc, vec::Vec};
+
 // litentry
-use pallet_imp::{
-	LinkIdentityFn, SetUserShieldingKeyFn, ShardIdentifier, UnlinkIdentityFn, VerifyIdentityFn,
-};
+// use pallet_imp::{
+// 	LinkIdentityFn, SetUserShieldingKeyFn, ShardIdentifier, UnlinkIdentityFn, UserShieldingKeyType,
+// 	VerifyIdentityFn,
+// };
+
+// TODO: import from pallet_imp
+pub type UserShieldingKeyType = [u8; 32];
+pub type SetUserShieldingKeyFn = ([u8; 2], ShardIdentifier, Vec<u8>);
+pub type LinkIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>);
+pub type UnlinkIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>);
+pub type VerifyIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>, Vec<u8>);
 
 /// Trait to execute the indirect calls found in the extrinsics of a block.
 pub trait ExecuteIndirectCalls {
@@ -58,15 +67,16 @@ pub trait ExecuteIndirectCalls {
 		ParentchainBlock: ParentchainBlockTrait<Hash = H256>;
 }
 
+// Seems macro can't be pre-/suffix'ed, `concat_ident` doesn'tw work either
 macro_rules! is_parentchain_function {
-	($name:ident) => {
-		fn is_$name_function(&self, function: &[u8; 2]) -> bool {
+	($fn_name:ident, $call_index_name:ident) => {
+		fn $fn_name(&self, function: &[u8; 2]) -> bool {
 			self.node_meta_data_provider
 				.get_from_metadata(|meta_data| {
-					let call = match meta_data.$name_call_indexes() {
+					let call = match meta_data.$call_index_name() {
 						Ok(c) => c,
 						Err(e) => {
-							error!("Failed to get the indexes for the $name call from the metadata: {:?}", e);
+							error!("Failed to get the indexes for the $call_index_name call from the metadata: {:?}", e);
 							return false
 						},
 					};
@@ -75,7 +85,6 @@ macro_rules! is_parentchain_function {
 				.unwrap_or(false)
 		}
 	};
-	(&self, function: &[u8; 2])
 }
 
 pub struct IndirectCallsExecutor<
@@ -165,13 +174,16 @@ where
 		Ok(OpaqueCall::from_tuple(&(call, block_hash, root)))
 	}
 
-	is_parentchain_function!(shield_funds);
-	is_parentchain_function!(call_worker);
+	is_parentchain_function!(is_shield_funds_function, shield_funds_call_indexes);
+	is_parentchain_function!(is_call_worker_function, call_worker_call_indexes);
 
-	is_parentchain_function!(set_user_shielding_key);
-	is_parentchain_function!(link_identity);
-	is_parentchain_function!(unlink_identity);
-	is_parentchain_function!(verify_identity);
+	is_parentchain_function!(
+		is_set_user_shielding_key_function,
+		set_user_shielding_key_call_indexes
+	);
+	is_parentchain_function!(is_link_identity_funciton, link_identity_call_indexes);
+	is_parentchain_function!(is_unlink_identity_funciton, unlink_identity_call_indexes);
+	is_parentchain_function!(is_verify_identity_funciton, verify_identity_call_indexes);
 }
 
 impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
@@ -188,7 +200,7 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 	StfEnclaveSigner: StfEnclaveSigning,
 	TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
 	NodeMetadataProvider: AccessNodeMetadata,
-	NodeMetadataProvider::MetadataType: TeerexCallIndexes,
+	NodeMetadataProvider::MetadataType: TeerexCallIndexes + IMPCallIndexes,
 {
 	fn execute_indirect_calls_in_extrinsics<ParentchainBlock>(
 		&self,
@@ -235,6 +247,71 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 					self.submit_trusted_call(shard, cypher_text);
 				}
 			}
+
+			// litentry
+			// Found SetUserShieldingKey extrinsic
+			if let Ok(xt) = ParentchainUncheckedExtrinsic::<SetUserShieldingKeyFn>::decode(
+				&mut encoded_xt_opaque.as_slice(),
+			) {
+				if self.is_set_user_shielding_key_function(&xt.function.0) {
+					let (_, shard, encrypted_key) = xt.function;
+					let shielding_key = self.shielding_key_repo.retrieve_key()?;
+					let decryted_key = shielding_key.decrypt(&encrypted_key)?;
+
+					let key = UserShieldingKeyType::decode(&mut decryted_key.as_slice())?;
+
+					if let Some((multiaddress_account, _, _)) = xt.signature {
+						let account = AccountIdLookup::lookup(multiaddress_account)?;
+						let enclave_account_id = self.stf_enclave_signer.get_enclave_account()?;
+						let trusted_call =
+							TrustedCall::set_user_shielding_key(enclave_account_id, account, key);
+						let signed_trusted_call =
+							self.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;
+						let trusted_operation =
+							TrustedOperation::indirect_call(signed_trusted_call);
+
+						let encrypted_trusted_call =
+							shielding_key.encrypt(&trusted_operation.encode())?;
+						self.submit_trusted_call(shard, encrypted_trusted_call);
+					}
+				}
+			}
+
+			// // Found LinkIdentityFn extrinsic
+			// if let Ok(xt) = ParentchainUncheckedExtrinsic::<LinkIdentityFn>::decode(
+			// 	&mut encoded_xt_opaque.as_slice(),
+			// ) {
+			// 	if self.is_link_identity_funciton(&xt.function.0) {
+			// 		let (_, request) = xt.function;
+			// 		let (shard, cypher_text) = (request.shard, request.cyphertext);
+			// 		debug!("Found trusted call extrinsic, submitting it to the top pool");
+			// 		self.submit_trusted_call(shard, cypher_text);
+			// 	}
+			// }
+
+			// // Found UnlinkIdentityFn extrinsic
+			// if let Ok(xt) = ParentchainUncheckedExtrinsic::<UnlinkIdentityFn>::decode(
+			// 	&mut encoded_xt_opaque.as_slice(),
+			// ) {
+			// 	if self.is_unlink_identity_funciton(&xt.function.0) {
+			// 		let (_, request) = xt.function;
+			// 		let (shard, cypher_text) = (request.shard, request.cyphertext);
+			// 		debug!("Found trusted call extrinsic, submitting it to the top pool");
+			// 		self.submit_trusted_call(shard, cypher_text);
+			// 	}
+			// }
+
+			// // Found VerifyIdentityFn extrinsic
+			// if let Ok(xt) = ParentchainUncheckedExtrinsic::<VerifyIdentityFn>::decode(
+			// 	&mut encoded_xt_opaque.as_slice(),
+			// ) {
+			// 	if self.is_verify_identity_funciton(&xt.function.0) {
+			// 		let (_, request) = xt.function;
+			// 		let (shard, cypher_text) = (request.shard, request.cyphertext);
+			// 		debug!("Found trusted call extrinsic, submitting it to the top pool");
+			// 		self.submit_trusted_call(shard, cypher_text);
+			// 	}
+			// }
 		}
 
 		// Include a processed parentchain block confirmation for each block.
