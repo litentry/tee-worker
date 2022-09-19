@@ -22,11 +22,8 @@ use aes_gcm::{
 use codec::{Decode, Encode};
 use itp_storage::{storage_double_map_key, storage_map_key, storage_value_key, StorageHasher};
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{
-	eth::EthAddress, AesOutput, UserShieldingKeyType, USER_SHIELDING_KEY_NONCE_LEN,
-};
+use litentry_primitives::{AesOutput, UserShieldingKeyType, USER_SHIELDING_KEY_NONCE_LEN};
 use log::*;
-use pallet_sgx_account_linker::LinkedSubAccount;
 use std::prelude::v1::*;
 
 use aes_gcm::{aead::OsRng, AeadCore};
@@ -107,7 +104,8 @@ pub fn ensure_enclave_signer_account(account: &AccountId) -> StfResult<()> {
 	}
 }
 
-/// Litentry
+// Litentry
+// TODO: maybe directly access the pallet
 pub fn get_user_shielding_key(who: &AccountId) -> Option<UserShieldingKeyType> {
 	get_storage_map(
 		"IdentityManagement",
@@ -115,14 +113,6 @@ pub fn get_user_shielding_key(who: &AccountId) -> Option<UserShieldingKeyType> {
 		who,
 		&StorageHasher::Blake2_128Concat,
 	)
-}
-
-pub fn get_linked_ethereum_addresses(who: &AccountId) -> Option<Vec<EthAddress>> {
-	get_storage_map("SgxAccountLinker", "EthereumLink", who, &StorageHasher::Blake2_128Concat)
-}
-
-pub fn get_linked_substrate_addresses(who: &AccountId) -> Option<Vec<LinkedSubAccount<AccountId>>> {
-	get_storage_map("SgxAccountLinker", "SubLink", who, &StorageHasher::Blake2_128Concat)
 }
 
 pub fn aes_encrypt_default(key: &UserShieldingKeyType, data: &[u8]) -> AesOutput {

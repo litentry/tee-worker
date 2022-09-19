@@ -773,7 +773,6 @@ dependencies = [
  "log",
  "multibase",
  "num-bigint",
- "pallet-sgx-account-linker",
  "parity-scale-codec",
  "primitive-types",
  "retain_mut",
@@ -1602,7 +1601,6 @@ dependencies = [
  "litentry-primitives",
  "log",
  "pallet-balances",
- "pallet-sgx-account-linker",
  "parity-scale-codec",
  "rlp",
  "sgx_tstd",
@@ -2929,23 +2927,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-sgx-account-linker"
-version = "0.1.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "log",
- "parity-scale-codec",
- "ripemd160",
- "scale-info",
- "sha2 0.9.9",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std 4.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.28)",
-]
-
-[[package]]
 name = "pallet-sudo"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.28#34a0621761c4a333cb2074ff720f7acbfb92dbb8"
@@ -3410,17 +3391,6 @@ dependencies = [
  "sgx_tstd",
  "spin",
  "untrusted",
-]
-
-[[package]]
-name = "ripemd160"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2eca4ecc81b7f313189bf73ce724400a07da2a6dac19588b03c8bd76a2dcc251"
-dependencies = [
- "block-buffer 0.9.0",
- "digest 0.9.0",
- "opaque-debug 0.3.0",
 ]
 
 [[package]]

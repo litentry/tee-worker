@@ -55,7 +55,6 @@ ita-sgx-runtime = { path = "../app-libs/sgx-runtime" }
 
 # litentry
 litentry-primitives = { path = "../litentry-primitives" }
-pallet-sgx-account-linker = { path = "../litentry/pallets/account-linker", default-features = false }
 
 [features]
 default = []
