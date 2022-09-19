@@ -32,9 +32,6 @@ pub mod sgx_reexport_prelude {
 }
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
-use http_sgx as http;
-
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
 use http_req_sgx as http_req;
 
 use itp_types::AccountId;
@@ -42,10 +39,7 @@ pub mod daemon_sender;
 pub mod error;
 pub mod https_client;
 pub use error::Result;
-use http_req::{request::Method, response::Headers};
-use itc_rest_client::Query;
 use litentry_primitives::{VerificationType, DID};
-use std::{string::String, vec::Vec};
 
 pub struct Request {
 	pub target: AccountId,

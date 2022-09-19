@@ -42,9 +42,9 @@ use crate::sgx_reexport_prelude::*;
 
 use codec::Encode;
 use futures::executor;
-use http::header::{HeaderName, AUTHORIZATION, CONNECTION};
-use http_req::{request::Method, response::Headers};
-use ita_stf::{helpers, AccountId, Hash, KeyPair, TrustedCall, TrustedOperation};
+use http::header::{AUTHORIZATION, CONNECTION};
+use http_req::response::Headers;
+use ita_stf::{Hash, TrustedCall, TrustedOperation};
 use itc_https_client_daemon::Request;
 use itc_rest_client::{
 	error::Error as HttpError,
@@ -54,11 +54,10 @@ use itc_rest_client::{
 };
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_stf_executor::traits::StfEnclaveSigning;
-use itp_storage::StorageHasher;
 use itp_top_pool_author::traits::AuthorApi;
-use litentry_primitives::{VerificationType, DID};
+use litentry_primitives::VerificationType;
 use serde::{Deserialize, Serialize};
-use sp_core::{sr25519, sr25519::Pair, ByteArray};
+use sp_core::ByteArray;
 use std::{
 	boxed::Box,
 	fmt::Debug,

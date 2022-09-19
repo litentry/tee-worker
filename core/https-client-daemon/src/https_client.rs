@@ -22,28 +22,19 @@ use http_sgx as http;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use http_req_sgx as http_req;
 
-use crate::{
-	error::{Error, Result},
-	Request,
-};
+use crate::{error::Result, Request};
 use itc_rest_client::{
 	error::Error as HttpError,
 	http_client::{DefaultSend, HttpClient},
 	rest_client::RestClient,
-	RestGet, RestPath,
+	RestPath,
 };
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
-// use itp_top_pool_author::traits::AuthorApi;
-use itp_types::OpaqueCall;
 use log::*;
 use serde::{Deserialize, Serialize};
-use std::{
-	string::{String, ToString},
-	time::Duration,
-	vec::Vec,
-};
+use std::{string::String, time::Duration, vec::Vec};
 use url::Url;
 
 const TIMEOUT: Duration = Duration::from_secs(3u64);

@@ -334,7 +334,7 @@ impl Stf {
 				TrustedCall::set_challenge_code(root, account, did, challenge_code) =>
 					Self::set_challenge_code(root, account, did, challenge_code),
 				TrustedCall::prepare_verify_identity(root, account, did, tweet_id) =>
-					// TODO support other verification_type
+				// TODO support other verification_type
 					Self::prepare_verify_identity(
 						root,
 						account,

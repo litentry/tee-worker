@@ -34,7 +34,7 @@ use crate::helpers;
 use itc_https_client_daemon::daemon_sender::SendHttpsRequest;
 use itp_storage::StorageHasher;
 use itp_utils::stringify::account_id_to_string;
-use std::{format, str, vec, vec::Vec};
+use std::{format, str, vec::Vec};
 use support::traits::UnfilteredDispatchable;
 
 impl Stf {
@@ -240,7 +240,7 @@ impl Stf {
 	}
 
 	pub fn prepare_verify_identity(
-		sender: AccountId,
+		_sender: AccountId,
 		target: AccountId,
 		did: DID,
 		verification_type: VerificationType,

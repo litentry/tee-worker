@@ -21,27 +21,20 @@ use crate::{
 		GLOBAL_PARENTCHAIN_BLOCK_VALIDATOR_ACCESS_COMPONENT,
 		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
 	},
-	ocall::OcallApi,
 	GLOBAL_STATE_HANDLER_COMPONENT,
 };
-use ita_stf::{helpers, AccountId};
-use itc_https_client_daemon::{daemon_sender, https_client::HttpsRestClient};
+use itc_https_client_daemon::daemon_sender;
 use log::*;
-use sgx_crypto_helper::rsa3072::Rsa3072KeyPair;
 use sgx_types::sgx_status_t;
-use sp_core::sr25519;
 use std::{
 	string::{String, ToString},
 	sync::Arc,
-	vec::Vec,
 };
-use url::Url;
 
 use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, LightClientState};
 
 use crate::global_components::{
-	EnclaveOCallApi, EnclaveShieldingKeyRepository, EnclaveStateHandler, EnclaveStfEnclaveSigner,
-	EnclaveTopPoolAuthor, GLOBAL_OCALL_API_COMPONENT, GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
+	EnclaveStfEnclaveSigner, GLOBAL_OCALL_API_COMPONENT, GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 };
 use itc_https_request_handler::{
 	build_twitter_client, CommonHandler, RequestHandler, TwitterResponse, VerificationContext,
@@ -49,10 +42,8 @@ use itc_https_request_handler::{
 use itp_component_container::ComponentGetter;
 use itp_extrinsics_factory::ExtrinsicsFactory;
 use itp_nonce_cache::GLOBAL_NONCE_CACHE;
-use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_sgx_crypto::{Ed25519Seal, Rsa3072Seal};
 use itp_sgx_io::StaticSealedIO;
-use itp_stf_executor::enclave_signer::StfEnclaveSigner;
 use itp_stf_state_handler::query_shard_state::QueryShardState;
 use litentry_primitives::VerificationType;
 
@@ -89,7 +80,7 @@ fn run_https_client_daemon_internal(url: &str) -> Result<()> {
 	let authority = Ed25519Seal::unseal_from_static_file()?;
 	let node_metadata_repository = GLOBAL_NODE_METADATA_REPOSITORY_COMPONENT.get()?;
 
-	let extrinsics_factory = ExtrinsicsFactory::new(
+	let _extrinsics_factory = ExtrinsicsFactory::new(
 		genesis_hash,
 		authority,
 		GLOBAL_NONCE_CACHE.clone(),
