@@ -1559,7 +1559,6 @@ dependencies = [
  "pallet-identity-management",
  "pallet-parentchain",
  "pallet-randomness-collective-flip",
- "pallet-sgx-account-linker",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",

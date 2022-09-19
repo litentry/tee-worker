@@ -46,7 +46,6 @@ pallet-parentchain = { default-features = false, git = "https://github.com/integ
 pallet-evm = { default-features = false, optional = true, git = "https://github.com/integritee-network/frontier.git", branch = "polkadot-v0.9.28" }
 
 # Litentry
-pallet-sgx-account-linker = { path = "../../litentry/pallets/account-linker", default-features = false }
 pallet-identity-management = { path = "../../litentry/pallets/identity-management", default-features = false }
 
 [features]
@@ -86,7 +85,6 @@ std = [
     "pallet-transaction-payment/std",
     "pallet-transaction-payment-rpc-runtime-api/std",
     "pallet-parentchain/std",
-    "pallet-sgx-account-linker/std",
     "pallet-identity-management/std",
     "sp-api/std",
     "sp-block-builder/std",
