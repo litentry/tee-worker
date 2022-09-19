@@ -194,15 +194,15 @@ jobs:
           - test: Benchmark
             flavor_id: sidechain
             demo_name: sidechain-benchmark
+          - test: EVM
+            flavor_id: sidechain-evm
+            demo_name: demo-smart-contract
           - test: Litentry-user-shielding-key
             flavor_id: sidechain
             demo_name: user-shielding-key
           - test: HTTPSTest
             flavor_id: sidechain
             demo_name: https-test
-          - test: EVM
-            flavor_id: sidechain-evm
-            demo_name: demo-smart-contract
 
     steps:
       - uses: actions/checkout@v3
