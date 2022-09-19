@@ -44,13 +44,12 @@ pub mod https_client;
 pub use error::Result;
 use http_req::{request::Method, response::Headers};
 use itc_rest_client::Query;
-use litentry_primitives::DID;
+use litentry_primitives::{VerificationType, DID};
 use std::{string::String, vec::Vec};
 
 pub struct Request {
 	pub target: AccountId,
 	pub did: DID,
 	pub challenge_code: u32,
-	pub query: Option<Vec<(Vec<u8>, Vec<u8>)>>, // vec<(key, value)>
-	pub handlerType: litentry_primitives::RequestHandlerType,
+	pub verification_type: VerificationType,
 }

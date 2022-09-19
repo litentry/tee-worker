@@ -23,7 +23,7 @@ use codec::Encode;
 use ita_sgx_runtime::Runtime;
 use litentry_primitives::{
 	eth::{EthAddress, EthSignature},
-	LinkingAccountIndex, RequestHandlerType, UserShieldingKeyType, DID,
+	LinkingAccountIndex, UserShieldingKeyType, VerificationType, DID,
 };
 use log::*;
 
@@ -243,7 +243,7 @@ impl Stf {
 		sender: AccountId,
 		target: AccountId,
 		did: DID,
-		tweet_id: Vec<u8>,
+		verification_type: VerificationType,
 	) -> StfResult<()> {
 		let code: Option<u32> = helpers::get_storage_double_map(
 			"IdentityManagement",
@@ -253,16 +253,13 @@ impl Stf {
 			&did,
 			&StorageHasher::Blake2_128Concat,
 		);
+		//TODO change error type
 		code.ok_or_else(|| StfError::Dispatch(format!("code not found")))?;
 		let request = itc_https_client_daemon::Request {
 			target,
 			did,
 			challenge_code: code.unwrap(),
-			query: Some(vec![
-				("ids".as_bytes().to_vec(), tweet_id),
-				("expansions".as_bytes().to_vec(), "author_id".as_bytes().to_vec()),
-			]),
-			handlerType: RequestHandlerType::TWITTER,
+			verification_type,
 		};
 		let http_sender = itc_https_client_daemon::daemon_sender::HttpRequestSender::new();
 		http_sender.send_https_request(request);

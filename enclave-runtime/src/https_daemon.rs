@@ -27,6 +27,7 @@ use crate::{
 use ita_stf::{helpers, AccountId};
 use itc_https_client_daemon::{daemon_sender, https_client::HttpsRestClient};
 use log::*;
+use sgx_crypto_helper::rsa3072::Rsa3072KeyPair;
 use sgx_types::sgx_status_t;
 use sp_core::sr25519;
 use std::{
@@ -39,17 +40,21 @@ use url::Url;
 use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, LightClientState};
 
 use crate::global_components::{
-	EnclaveStfEnclaveSigner, GLOBAL_OCALL_API_COMPONENT, GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
+	EnclaveOCallApi, EnclaveShieldingKeyRepository, EnclaveStateHandler, EnclaveStfEnclaveSigner,
+	EnclaveTopPoolAuthor, GLOBAL_OCALL_API_COMPONENT, GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 };
-use itc_https_request_handler::{build_twitter_client, RequestHandler, TwitterRequestHandler};
+use itc_https_request_handler::{
+	build_twitter_client, CommonHandler, RequestHandler, TwitterResponse, VerificationContext,
+};
 use itp_component_container::ComponentGetter;
 use itp_extrinsics_factory::ExtrinsicsFactory;
 use itp_nonce_cache::GLOBAL_NONCE_CACHE;
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_sgx_crypto::{Ed25519Seal, Rsa3072Seal};
 use itp_sgx_io::StaticSealedIO;
+use itp_stf_executor::enclave_signer::StfEnclaveSigner;
 use itp_stf_state_handler::query_shard_state::QueryShardState;
-use litentry_primitives::RequestHandlerType;
+use litentry_primitives::VerificationType;
 
 const HTTPS_ADDRESS: &str = "https://api.coingecko.com";
 
@@ -123,28 +128,31 @@ fn run_https_client_daemon_internal(url: &str) -> Result<()> {
 	// 	// author_api,
 	// );
 
-	let twitter_handler = TwitterRequestHandler::new(
+	let verification_context = VerificationContext::new(
 		default_shard_identifier,
 		shielding_key,
 		stf_enclave_signer,
 		author_api,
 	);
-
-	// TODO discord handler
+	let handler = CommonHandler {};
 	loop {
 		let request = receiver.recv().map_err(|e| Error::Other(e.into()))?;
-		match request.handlerType {
-			RequestHandlerType::TWITTER => {
+		if let Err(e) = match &request.verification_type {
+			VerificationType::TWITTER(_) => {
 				let client = build_twitter_client(twitter_authorization_token.clone());
-				if let Err(e) =
-					twitter_handler.send_request(client, request, "/2/tweets".to_string())
-				{
-					error!("Could not retrieve data from https server due to: {:?}", e);
-				}
+				handler.send_request::<TwitterResponse>(
+					&verification_context,
+					client,
+					request,
+					"/2/tweets".to_string(),
+				)
 			},
-			RequestHandlerType::DISCORD => {
-				todo!()
+			VerificationType::DISCORD(_, _, _) => {
+				// todo!()
+				Ok(())
 			},
+		} {
+			error!("Could not retrieve data from https server due to: {:?}", e);
 		}
 	}
 }

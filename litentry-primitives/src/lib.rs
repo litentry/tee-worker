@@ -50,7 +50,7 @@ pub mod eth {
 	pub type EthSignature = [u8; 65];
 }
 
-pub enum RequestHandlerType {
-	TWITTER,
-	DISCORD,
+pub enum VerificationType {
+	TWITTER(Vec<u8>),                   //tweet_id
+	DISCORD(Vec<u8>, Vec<u8>, Vec<u8>), //channel_id , message_id, guild_id
 }

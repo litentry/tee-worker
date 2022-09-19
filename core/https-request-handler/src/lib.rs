@@ -56,11 +56,12 @@ use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_storage::StorageHasher;
 use itp_top_pool_author::traits::AuthorApi;
-use litentry_primitives::DID;
+use litentry_primitives::{VerificationType, DID};
 use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, sr25519::Pair, ByteArray};
 use std::{
 	boxed::Box,
+	fmt::Debug,
 	format, str,
 	string::{String, ToString},
 	sync::Arc,
@@ -87,6 +88,33 @@ pub struct VerificationPayload {
 	pub did: String,
 }
 
+pub struct VerificationContext<
+	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
+	A: AuthorApi<Hash, Hash>,
+	S: StfEnclaveSigning,
+> {
+	shielding_key: K,
+	shard_identifier: sp_core::H256,
+	enclave_signer: Arc<S>,
+	author: Arc<A>,
+}
+
+impl<
+		K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
+		A: AuthorApi<Hash, Hash>,
+		S: StfEnclaveSigning,
+	> VerificationContext<K, A, S>
+{
+	pub fn new(
+		shard_identifier: sp_core::H256,
+		shielding_key: K,
+		enclave_signer: Arc<S>,
+		author: Arc<A>,
+	) -> Self {
+		Self { shard_identifier, shielding_key, enclave_signer, author }
+	}
+}
+
 pub fn build_client(base_url: Url, headers: Headers) -> RestClient<HttpClient<DefaultSend>> {
 	let http_client = HttpClient::new(DefaultSend {}, true, Some(TIMEOUT), Some(headers), None);
 	RestClient::new(http_client, base_url.clone())
@@ -104,6 +132,10 @@ pub fn build_twitter_client(
 	build_client(base_url, headers)
 }
 
+pub trait DecryptionVerificationPayload<K: ShieldingCryptoDecrypt> {
+	fn decrypt_ciphertext(&self, key: K) -> Result<VerificationPayload, ()>;
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TwitterResponse {
 	pub data: Vec<Tweet>,
@@ -113,6 +145,23 @@ pub struct TwitterResponse {
 impl RestPath<String> for TwitterResponse {
 	fn get_path(path: String) -> core::result::Result<String, HttpError> {
 		Ok(path)
+	}
+}
+
+impl<K: ShieldingCryptoDecrypt> DecryptionVerificationPayload<K> for TwitterResponse {
+	fn decrypt_ciphertext(&self, key: K) -> Result<VerificationPayload, ()> {
+		// TODO decrypt
+		if self.data.len() > 0 {
+			key.decrypt(self.data.get(0).unwrap().text.as_bytes());
+		}
+
+		// mock data
+		let payload = VerificationPayload {
+			owner: "d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d".to_string(), // alice public key
+			code: 1134,
+			did: "did:twitter:web2:_:myTwitterHandle".to_string(),
+		};
+		Ok(payload)
 	}
 }
 
@@ -135,52 +184,51 @@ pub struct TweetAuthor {
 	pub username: String,
 }
 
-pub trait RequestHandler {
-	fn send_request(
+pub trait RequestHandler<
+	K: ShieldingCryptoEncrypt + ShieldingCryptoDecrypt + Clone,
+	A: AuthorApi<Hash, Hash>,
+	S: StfEnclaveSigning,
+>
+{
+	fn send_request<
+		R: DecryptionVerificationPayload<K> + Debug + serde::de::DeserializeOwned + RestPath<String>,
+	>(
 		&self,
-		client: RestClient<HttpClient<DefaultSend>>,
+		verification_context: &VerificationContext<K, A, S>,
+		mut client: RestClient<HttpClient<DefaultSend>>,
 		request: Request,
 		path: String,
-	) -> Result<(), Error>;
-}
+	) -> Result<(), Error> {
+		let query: Vec<(&str, &str)> = match request.verification_type {
+			VerificationType::TWITTER(ref tweet_id) => {
+				vec![
+					("ids", str::from_utf8(tweet_id.as_slice()).unwrap()),
+					("expansions", "author_id"),
+				]
+			},
+			VerificationType::DISCORD(_, _, _) => {
+				//todo
+				vec![]
+			},
+		};
+		let response: R = client
+			.get_with::<String, R>(path.to_string(), query.as_slice())
+			.map_err(|e| Error::RquestError(format!("{:?}", e)))?;
+		log::warn!("response:{:?}", response);
 
-pub struct TwitterRequestHandler<K, A, S> {
-	shard_identifier: sp_core::H256,
-	shielding_key: K,
-	enclave_signer: Arc<S>,
-	author: Arc<A>,
-}
-
-impl<
-		K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt,
-		A: AuthorApi<Hash, Hash>,
-		S: StfEnclaveSigning,
-	> TwitterRequestHandler<K, A, S>
-{
-	pub fn new(
-		shard_identifier: sp_core::H256,
-		shielding_key: K,
-		enclave_signer: Arc<S>,
-		author: Arc<A>,
-	) -> Self {
-		Self { shard_identifier, shielding_key, enclave_signer, author }
+		let payload = response.decrypt_ciphertext(verification_context.shielding_key.clone());
+		if let Ok(payload) = payload {
+			return self.response_handler(&verification_context, request, payload).clone()
+		}
+		return Err(Error::OtherError("decrypt payload error".to_string()))
 	}
 
-	pub fn response_handler(
+	fn response_handler(
 		&self,
+		verification_context: &VerificationContext<K, A, S>,
 		request: Request,
-		response: TwitterResponse,
+		payload: VerificationPayload,
 	) -> Result<(), Error> {
-		log::warn!("twitter:{:?}", response);
-		// TODO decrypt
-		self.shielding_key.decrypt("xxxxx".as_bytes());
-
-		// mock data
-		let payload = VerificationPayload {
-			owner: "d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d".to_string(), // alice public key
-			code: 1134,
-			did: "did:twitter:web2:_:myTwitterHandle".to_string(),
-		};
 		let request_did = str::from_utf8(request.did.as_slice())
 			.map_err(|_| Error::OtherError("did format error".to_string()))?;
 		if !payload.did.eq(request_did) {
@@ -199,24 +247,28 @@ impl<
 			return Err(Error::OtherError("challenge code is not the same".to_string()))
 		}
 
-		let enclave_account_id = self
+		let enclave_account_id = verification_context
 			.enclave_signer
 			.get_enclave_account()
 			.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
 		let trusted_call =
 			TrustedCall::verify_identity(enclave_account_id, request.target, request.did);
-		let signed_trusted_call = self
+		let signed_trusted_call = verification_context
 			.enclave_signer
-			.sign_call_with_self(&trusted_call, &self.shard_identifier)
+			.sign_call_with_self(&trusted_call, &verification_context.shard_identifier)
 			.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
 		let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
-		let encrypted_trusted_call = self
+		let encrypted_trusted_call = verification_context
 			.shielding_key
 			.encrypt(&trusted_operation.encode())
 			.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
 
-		let top_submit_future =
-			async { self.author.submit_top(encrypted_trusted_call, self.shard_identifier).await };
+		let top_submit_future = async {
+			verification_context
+				.author
+				.submit_top(encrypted_trusted_call, verification_context.shard_identifier.clone())
+				.await
+		};
 		executor::block_on(top_submit_future).map_err(|e| {
 			Error::OtherError(format!("Error adding indirect trusted call to TOP pool: {:?}", e))
 		})?;
@@ -224,37 +276,12 @@ impl<
 	}
 }
 
+pub struct CommonHandler {}
+
 impl<
-		K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt,
 		A: AuthorApi<Hash, Hash>,
 		S: StfEnclaveSigning,
-	> RequestHandler for TwitterRequestHandler<K, A, S>
+		K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
+	> RequestHandler<K, A, S> for CommonHandler
 {
-	fn send_request(
-		&self,
-		mut client: RestClient<HttpClient<DefaultSend>>,
-		request: Request,
-		path: String,
-	) -> Result<(), Error> {
-		let response: TwitterResponse;
-		if let Some(ref query) = request.query {
-			let query: Vec<(&str, &str)> = query
-				.iter()
-				.map(|(key, value)| {
-					(
-						str::from_utf8(key.as_slice()).unwrap(),
-						str::from_utf8(value.as_slice()).unwrap(),
-					)
-				})
-				.collect();
-			response = client
-				.get_with::<String, TwitterResponse>(path.to_string(), query.as_slice())
-				.map_err(|e| Error::RquestError(format!("{:?}", e)))?;
-		} else {
-			response = client
-				.get::<String, TwitterResponse>(path.to_string())
-				.map_err(|e| Error::RquestError(format!("{:?}", e)))?;
-		}
-		self.response_handler(request, response).clone()
-	}
 }

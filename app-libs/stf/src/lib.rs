@@ -40,10 +40,7 @@ use litentry_primitives::{
 	LinkingAccountIndex, UserShieldingKeyType, DID,
 };
 use sp_core::{crypto::AccountId32, ed25519, sr25519, Pair, H256};
-use sp_runtime::{
-	traits::{ConstU32, Verify},
-	BoundedVec, MultiSignature,
-};
+use sp_runtime::{traits::Verify, MultiSignature};
 pub use std::sync::Arc;
 use std::{string::String, vec::Vec};
 

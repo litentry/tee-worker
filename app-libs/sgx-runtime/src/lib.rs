@@ -306,7 +306,7 @@ impl pallet_identity_management::Config for Runtime {
 	type ChallengeCode = u32;
 	type MaxDidLength = litentry_primitives::MaxDidLength;
 	type MaxMetadataLength = ConstU32<128>;
-	type MaxVerificationDelay = ConstU32<2>;
+	type MaxVerificationDelay = ConstU32<20>;
 }
 
 // The plain sgx-runtime without the `evm-pallet`
