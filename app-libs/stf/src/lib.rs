@@ -41,10 +41,7 @@ use codec::{Compact, Decode, Encode};
 use derive_more::Display;
 use itp_node_api_metadata::Error as MetadataError;
 use itp_node_api_metadata_provider::Error as MetadataProviderError;
-use litentry_primitives::{
-	eth::{EthAddress, EthSignature},
-	LinkingAccountIndex, UserShieldingKeyType,
-};
+use litentry_primitives::UserShieldingKeyType;
 use sp_core::{crypto::AccountId32, ed25519, sr25519, Pair, H256};
 use sp_runtime::{traits::Verify, MultiSignature};
 use std::string::String;
@@ -259,15 +256,6 @@ pub enum TrustedCall {
 	),
 	// litentry
 	set_user_shielding_key(AccountId, AccountId, UserShieldingKeyType), // (Root, AccountIncognito, Key)
-	link_eth(AccountId, LinkingAccountIndex, EthAddress, BlockNumber, EthSignature), // (LitentryAcc, EthAcc Index, EthAcc, ParentchainBlockNr, Signature)
-	link_sub(
-		AccountId,
-		LinkingAccountIndex,
-		pallet_sgx_account_linker::NetworkType,
-		AccountId,
-		BlockNumber,
-		pallet_sgx_account_linker::MultiSignature,
-	),
 	query_credit(AccountId),
 }
 
@@ -288,8 +276,6 @@ impl TrustedCall {
 			TrustedCall::evm_create2(sender_account, ..) => sender_account,
 			// litentry
 			TrustedCall::set_user_shielding_key(account, _, _) => account,
-			TrustedCall::link_eth(account, _, _, _, _) => account,
-			TrustedCall::link_sub(account, _, _, _, _, _) => account,
 			TrustedCall::query_credit(account) => account,
 		}
 	}
@@ -323,9 +309,7 @@ pub enum TrustedGetter {
 	#[cfg(feature = "evm")]
 	evm_account_storages(AccountId, H160, H256),
 	// litentry
-	shielding_key(AccountId),
-	linked_ethereum_addresses(AccountId),
-	linked_substrate_addresses(AccountId),
+	user_shielding_key(AccountId),
 }
 
 impl TrustedGetter {
@@ -341,9 +325,7 @@ impl TrustedGetter {
 			#[cfg(feature = "evm")]
 			TrustedGetter::evm_account_storages(sender_account, ..) => sender_account,
 			// litentry
-			TrustedGetter::shielding_key(account) => account,
-			TrustedGetter::linked_ethereum_addresses(account) => account,
-			TrustedGetter::linked_substrate_addresses(account) => account,
+			TrustedGetter::user_shielding_key(account) => account,
 		}
 	}
 

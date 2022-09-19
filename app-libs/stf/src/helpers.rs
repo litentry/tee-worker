@@ -107,14 +107,6 @@ pub fn ensure_enclave_signer_account(account: &AccountId) -> StfResult<()> {
 	}
 }
 
-pub fn ensure_root(account: AccountId) -> StfResult<()> {
-	if root() == account {
-		Ok(())
-	} else {
-		Err(StfError::MissingPrivileges(account))
-	}
-}
-
 /// Litentry
 pub fn get_user_shielding_key(who: &AccountId) -> Option<UserShieldingKeyType> {
 	get_storage_map(

@@ -40,9 +40,6 @@ mod trusted_command_utils;
 mod trusted_commands;
 mod trusted_operation;
 
-// litentry
-mod trusted_commands_litentry;
-
 use crate::commands::Commands;
 use clap::Parser;
 

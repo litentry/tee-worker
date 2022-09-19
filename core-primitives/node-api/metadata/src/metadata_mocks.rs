@@ -97,7 +97,7 @@ impl NodeMetadataMock {
 			imp_mock_identity_unlinked: 7u8,
 			imp_mock_identity_verified: 8u8,
 			imp_mock_some_error: 9u8,
-			
+
 			imported_sidechain_block: 0u8,
 			runtime_spec_version: 25,
 			runtime_transaction_version: 4,

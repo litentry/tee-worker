@@ -17,8 +17,9 @@
 
 use crate::{
 	trusted_base_cli::commands::{
-		balance::BalanceCommand, set_balance::SetBalanceCommand, transfer::TransferCommand,
-		unshield_funds::UnshieldFundsCommand,
+		balance::BalanceCommand, query_credit::QueryCreditCommand, set_balance::SetBalanceCommand,
+		set_user_shielding_key::SetUserShieldingKeyCommand, transfer::TransferCommand,
+		unshield_funds::UnshieldFundsCommand, user_shielding_key::UserShiledingKeyCommand,
 	},
 	trusted_command_utils::get_keystore_path,
 	trusted_commands::TrustedArgs,
@@ -50,6 +51,16 @@ pub enum TrustedBaseCli {
 
 	/// Transfer funds from an incognito account to an parentchain account
 	UnshieldFunds(UnshieldFundsCommand),
+
+	// litentry's commands below
+	/// set the user's shielding key
+	SetUserShieldingKey(SetUserShieldingKeyCommand),
+
+	/// query a user's shielding key
+	UserShieldingKey(UserShiledingKeyCommand),
+
+	/// query a user's credit score -- TODO: to be removed/refactored
+	QueryCredit(QueryCreditCommand),
 }
 
 impl TrustedBaseCli {
@@ -61,6 +72,9 @@ impl TrustedBaseCli {
 			TrustedBaseCli::SetBalance(cmd) => cmd.run(cli, trusted_args),
 			TrustedBaseCli::Balance(cmd) => cmd.run(cli, trusted_args),
 			TrustedBaseCli::UnshieldFunds(cmd) => cmd.run(cli, trusted_args),
+			TrustedBaseCli::SetUserShieldingKey(cmd) => cmd.run(cli, trusted_args),
+			TrustedBaseCli::UserShieldingKey(cmd) => cmd.run(cli, trusted_args),
+			TrustedBaseCli::QueryCredit(cmd) => cmd.run(cli, trusted_args),
 		}
 	}
 }

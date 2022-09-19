@@ -20,10 +20,8 @@ use crate::test_genesis::test_genesis_setup;
 
 use crate::{
 	helpers::{
-		account_data, account_nonce, aes_encrypt_default, enclave_signer_account,
-		ensure_enclave_signer_account, ensure_root, get_account_info,
-		get_linked_ethereum_addresses, get_linked_substrate_addresses, get_user_shielding_key,
-		increment_nonce, root, validate_nonce,
+		aes_encrypt_default, enclave_signer_account, ensure_enclave_signer_account,
+		get_user_shielding_key,
 	},
 	AccountData, AccountId, Arc, Getter, Index, ParentchainHeader, PublicGetter, ShardIdentifier,
 	State, StateTypeDiff, Stf, StfError, StfResult, TrustedCall, TrustedCallSigned, TrustedGetter,
@@ -154,31 +152,9 @@ impl Stf {
 						None
 					},
 				// litentry
-				TrustedGetter::shielding_key(who) =>
+				TrustedGetter::user_shielding_key(who) =>
 					if let Some(key) = get_user_shielding_key(&who) {
 						Some(key.encode())
-					} else {
-						None
-					},
-				TrustedGetter::linked_ethereum_addresses(who) =>
-					if let Some(addresses) = get_linked_ethereum_addresses(&who) {
-						debug!(
-							"Linked ethereum addresses for {:x?} is {:?}",
-							who.encode(),
-							addresses
-						);
-						Some(addresses.encode())
-					} else {
-						None
-					},
-				TrustedGetter::linked_substrate_addresses(who) =>
-					if let Some(addresses) = get_linked_substrate_addresses(&who) {
-						debug!(
-							"Linked substrate addresses for {:x?} is {:?}",
-							who.encode(),
-							addresses
-						);
-						Some(addresses.encode())
 					} else {
 						None
 					},
@@ -272,7 +248,7 @@ impl Stf {
 				},
 				// litentry
 				TrustedCall::set_user_shielding_key(root, who, key) => {
-					ensure_root(root)?;
+					ensure!(is_root(&root), StfError::MissingPrivileges(root));
 					// TODO: switch to IMPCallIndexes
 					// TODO: we only checked if the extrinsic dispatch is successful,
 					//       is that enough? (i.e. is the state changed already?)
@@ -301,57 +277,6 @@ impl Stf {
 						},
 					}
 					Ok(())
-				},
-				TrustedCall::link_eth(
-					litentry_account,
-					account_index,
-					eth_address,
-					parent_chain_block_number,
-					signature,
-				) => {
-					debug!(
-						"link_eth({:x?}, {}, {:?}, {}, {:?})",
-						litentry_account.encode(),
-						account_index,
-						eth_address,
-						parent_chain_block_number,
-						signature,
-					);
-
-					Self::link_eth(
-						litentry_account,
-						account_index,
-						eth_address,
-						parent_chain_block_number,
-						signature,
-					)
-				},
-				TrustedCall::link_sub(
-					account,
-					index,
-					network_type,
-					linked_account,
-					expiring_block_number,
-					sig,
-				) => {
-					debug!(
-						"link_sub({:x?}, {}, {:?}, {:x?}, {}, {:?})",
-						account.encode(),
-						index,
-						network_type,
-						linked_account,
-						expiring_block_number,
-						sig,
-					);
-
-					Self::link_sub(
-						account,
-						index,
-						network_type,
-						linked_account,
-						expiring_block_number,
-						sig,
-					)
 				},
 				TrustedCall::query_credit(account) => {
 					debug!("query_credit({:x?}", account.encode(),);
@@ -563,8 +488,6 @@ impl Stf {
 			TrustedCall::balance_shield(_, _, _) => debug!("No storage updates needed..."),
 			// litentry
 			TrustedCall::set_user_shielding_key(..) => debug!("No storage updates needed..."),
-			TrustedCall::link_eth(..) => debug!("No storage updates needed..."),
-			TrustedCall::link_sub(..) => debug!("No storage updates needed..."),
 			TrustedCall::query_credit(..) => debug!("No storage updates needed..."),
 			#[cfg(feature = "evm")]
 			_ => debug!("No storage updates needed..."),
