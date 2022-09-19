@@ -36,11 +36,11 @@ use derive_more::From;
 use itp_time_utils::{duration_difference, duration_now};
 use itp_types::OpaqueCall;
 use its_consensus_common::{Error as ConsensusError, Proposer};
-use log::*;
-use sidechain_primitives::traits::{
+use its_primitives::traits::{
 	Block as SidechainBlockTrait, Header as HeaderTrait, ShardIdentifierFor,
 	SignedBlock as SignedSidechainBlockTrait,
 };
+use log::*;
 pub use slots::*;
 use sp_runtime::traits::{Block as ParentchainBlockTrait, Header as ParentchainHeaderTrait};
 use std::{fmt::Debug, time::Duration, vec::Vec};
@@ -170,7 +170,7 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 	/// Trigger the import of the given parentchain block.
 	///
 	/// Returns the header of the latest imported block. In case no block was imported with this trigger,
-	/// the `current_latest_imported_header` is returned.
+	/// None is returned.
 	fn import_parentchain_blocks_until(
 		&self,
 		last_imported_parentchain_header: &<ParentchainBlock::Header as ParentchainHeaderTrait>::Hash,
@@ -245,13 +245,17 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 		let _claim = self.claim_slot(&latest_parentchain_header, slot, &epoch_data)?;
 
 		// Import the peeked parentchain header(s).
-		if let Err(e) = self.import_parentchain_blocks_until(&latest_parentchain_header.hash()) {
-			warn!(
-				target: logging_target,
-				"Failed to import and retrieve parentchain block header: {:?}", e
-			);
-			return None
-		};
+		let last_imported_header =
+			match self.import_parentchain_blocks_until(&latest_parentchain_header.hash()) {
+				Ok(h) => h,
+				Err(e) => {
+					warn!(
+						target: logging_target,
+						"Failed to import and retrieve parentchain block header: {:?}", e
+					);
+					return None
+				},
+			};
 
 		let proposer = match self.proposer(latest_parentchain_header.clone(), shard) {
 			Ok(p) => p,
@@ -276,6 +280,14 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 			);
 
 			return None
+		}
+
+		if last_imported_header.is_some() {
+			println!(
+				"Syncing Parentchain block number {:?} at Sidechain block number  {:?} ",
+				latest_parentchain_header.number(),
+				proposing.block.block().header().block_number()
+			);
 		}
 
 		info!("Proposing sidechain block (number: {}, hash: {}) based on parentchain block (number: {:?}, hash: {:?})",

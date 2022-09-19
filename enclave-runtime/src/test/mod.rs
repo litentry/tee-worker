@@ -17,6 +17,9 @@
 */
 
 pub mod cert_tests;
+pub mod direct_rpc_tests;
+#[cfg(feature = "evm")]
+pub mod evm_pallet_tests;
 pub mod fixtures;
 pub mod ipfs_tests;
 pub mod mocks;

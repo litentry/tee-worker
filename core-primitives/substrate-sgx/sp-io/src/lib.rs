@@ -80,7 +80,17 @@ pub use itp_sgx_externalities::{
 	with_externalities, SgxExternalities, SgxExternalitiesTrait, SgxExternalitiesType,
 };
 
-pub use sp_externalities::MultiRemovalResults;
+pub struct MultiRemovalResults {
+	/// A continuation cursor which, if `Some` must be provided to the subsequent removal call.
+	/// If `None` then all removals are complete and no further calls are needed.
+	pub maybe_cursor: Option<Vec<u8>>,
+	/// The number of items removed from the backend database.
+	pub backend: u32,
+	/// The number of unique keys removed, taking into account both the backend and the overlay.
+	pub unique: u32,
+	/// The number of iterations (each requiring a storage seek/read) which were done.
+	pub loops: u32,
+}
 
 /// Error verifying ECDSA signature
 #[derive(Encode, Decode)]
@@ -150,7 +160,8 @@ pub mod storage {
 
 	pub fn set(key: &[u8], value: &[u8]) {
 		debug!("set_storage('{}', {:x?})", encode_hex(key), value);
-		with_externalities(|ext| ext.insert(key.to_vec(), value.to_vec()));
+		with_externalities(|ext| ext.insert(key.to_vec(), value.to_vec()))
+			.expect("`set` cannot be called outside of an Externalities-provided environment.");
 	}
 
 	pub fn clear(key: &[u8]) {
@@ -940,5 +951,13 @@ mod tests {
 		ext.insert(CODE.to_vec(), code.clone());
 
 		assert_eq!(ext.get(CODE).unwrap(), &code);
+	}
+
+	#[test]
+	#[should_panic(
+		expected = "`set` cannot be called outside of an Externalities-provided environment."
+	)]
+	fn storage_set_without_externalities_panics() {
+		storage::set(b"hello", b"world");
 	}
 }

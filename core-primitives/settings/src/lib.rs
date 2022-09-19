@@ -75,8 +75,6 @@ pub mod files {
 pub mod worker {
 	// the maximum size of any extrinsic that the enclave will ever generate in B
 	pub const EXTRINSIC_MAX_SIZE: usize = 4196;
-	// the maximum size of a value that will be queried from the state in B
-	pub const STATE_VALUE_MAX_SIZE: usize = 1024;
 	// the maximum size of the header
 	pub const HEADER_MAX_SIZE: usize = 200;
 	// maximum size of shielding key
@@ -101,14 +99,7 @@ pub mod sidechain {
 }
 
 /// Settings concerning the enclave
-pub mod enclave {
-	use core::time::Duration;
-
-	pub static MAX_TRUSTED_OPS_EXEC_DURATION: Duration = Duration::from_millis(600);
-
-	pub static MAX_TRUSTED_GETTERS_EXEC_DURATION: Duration = Duration::from_millis(150);
-	pub static TRUSTED_GETTERS_SLOT_DURATION: Duration = Duration::from_millis(400);
-}
+pub mod enclave {}
 
 /// Settings for the Teeracle
 #[cfg(feature = "teeracle")]

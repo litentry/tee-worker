@@ -1,8 +1,8 @@
 [package]
 name = "its-consensus-slots"
-version = "0.8.0"
+version = "0.9.0"
 authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2018"
+edition = "2021"
 
 
 [dependencies]
@@ -11,10 +11,10 @@ codec = { package = "parity-scale-codec", version = "3.0.0", default-features = 
 derive_more = "0.99.16"
 lazy_static = { version = "1.1.0", features = ["spin_no_std"] }
 
-# scs / integritee
-itp-types = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "sdk-v0.9.0-polkadot-v0.9.26" }
-sidechain-block-verification = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "sdk-v0.9.0-polkadot-v0.9.26"}
-sidechain-primitives = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "sdk-v0.9.0-polkadot-v0.9.26" }
+# local deps
+itp-types = { path = "../../../core-primitives/types", default-features = false }
+its-block-verification = { path = "../../block-verification", default-features = false}
+its-primitives = { path = "../../primitives", default-features = false }
 
 # only for slot-stream
 futures = { version = "0.3", optional = true }
@@ -24,8 +24,8 @@ futures-timer = { version = "3.0", optional = true }
 sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true, features = ["untrusted_time"] }
 
 # substrate deps
-sp-consensus-slots = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
+sp-consensus-slots = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
 
 # local deps
 itp-settings = { path = "../../../core-primitives/settings" }
@@ -34,9 +34,9 @@ itp-time-utils = { path = "../../../core-primitives/time-utils", default-feature
 its-consensus-common = { path = "../common", default-features = false }
 
 [dev-dependencies]
-parentchain-test = { git = "https://github.com/integritee-network/pallets.git", branch = "sdk-v0.9.0-polkadot-v0.9.26" }
-sidechain-test = { git = "https://github.com/integritee-network/pallets.git", branch = "sdk-v0.9.0-polkadot-v0.9.26" }
-sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
+itc-parentchain-test = { path = "../../../core/parentchain/test" }
+its-test = { path = "../../test" }
+sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
 tokio = "*"
 
 
@@ -55,9 +55,9 @@ std = [
     "itp-sgx-io/std",
     "itp-time-utils/std",
     "itp-types/std",
+    "its-primitives/std",
+    "its-block-verification/std",
     "its-consensus-common/std",
-    "sidechain-block-verification/std",
-    "sidechain-primitives/std",
 ]
 sgx = [
     "itp-sgx-io/sgx",

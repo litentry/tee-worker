@@ -1,15 +1,16 @@
 [package]
 name = "ita-stf"
-version = "0.8.0"
+version = "0.9.0"
 authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 # crates.io
 codec = { version = "3.0.0", default-features = false, features = ["derive"], package = "parity-scale-codec" }
 derive_more = { version = "0.99.5" }
 log = { version = "0.4", default-features = false }
-rand = { version = "0.8", default-features = false }
+rlp = { version = "0.5", default-features = false }
+sha3 = { version = "0.10", default-features = false }
 
 # sgx deps
 sgx_tstd = { branch = "master", features = ["untrusted_fs","net","backtrace"], git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
@@ -20,28 +21,27 @@ ita-sgx-runtime = { optional = true, default-features = false, path = "../sgx-ru
 itp-hashing = { path = "../../core-primitives/hashing" }
 itp-sgx-externalities = { default-features = false, path = "../../core-primitives/substrate-sgx/externalities" }
 itp-storage = { default-features = false, path = "../../core-primitives/storage" }
+itp-types = { default-features = false, path = "../../core-primitives/types" }
+itp-utils = { default-features = false, path = "../../core-primitives/utils" }
+its-primitives = { default-features = false, path = "../../sidechain/primitives" }
 its-state = { default-features = false, optional = true, path = "../../sidechain/state" }
 itp-node-api-metadata = { path = "../../core-primitives/node-api/metadata", default-features = false }
 itp-node-api-metadata-provider = { path = "../../core-primitives/node-api/metadata-provider", default-features = false }
 sp-io = { optional = true, default-features = false, features = ["disable_oom", "disable_panic_handler", "disable_allocator"], path = "../../core-primitives/substrate-sgx/sp-io" }
 
 # Substrate dependencies
-sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
-balances = { package = "pallet-balances", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
-system = { package = "frame-system", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
-support = { package = "frame-support", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
-sp-application-crypto = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
-sc-keystore = { optional = true, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
+sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
+balances = { package = "pallet-balances", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
+system = { package = "frame-system", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
+support = { package = "frame-support", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
+sp-application-crypto = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
+sc-keystore = { optional = true, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
 
 # scs / integritee
 my-node-runtime = { package = "litmus-parachain-runtime", git = "https://github.com/litentry/litentry-parachain.git", branch = "tee-dev", optional = true }
-substrate-api-client = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.26", optional = true }
-substrate-client-keystore = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.26", optional = true }
-sidechain-primitives = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "sdk-v0.9.0-polkadot-v0.9.26" }
-itp-types = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "sdk-v0.9.0-polkadot-v0.9.26" }
-itp-utils = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "sdk-v0.9.0-polkadot-v0.9.26" }
+substrate-api-client = { optional = true, git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.28" }
+substrate-client-keystore = { optional = true, git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.28" }
 
 # litentry
 litentry-primitives = { path = "../../litentry-primitives", default-features = false }
@@ -51,10 +51,15 @@ pallet-sgx-account-linker = { path = "../../litentry/pallets/account-linker", de
 aes-gcm = { git = "https://github.com/RustCrypto/AEADs" }
 
 [dev-dependencies]
-sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
+sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
 
 [features]
 default = ["std"]
+evm = [ "ita-sgx-runtime/evm" ]
+evm_std = [
+    "evm",
+    "ita-sgx-runtime/evm_std"
+]
 sgx = [
     "sgx_tstd",
     "ita-sgx-runtime",
@@ -69,11 +74,13 @@ std = [
     # crates.io
     "codec/std",
     "log/std",
+    "rlp/std",
     # local
     "itp-sgx-externalities/std",
     "itp-storage/std",
     "itp-types/std",
     "itp-utils/std",
+    "its-primitives/std",
     "its-state/std",
     # substrate
     "sp-core/std",
@@ -85,7 +92,6 @@ std = [
     "sc-keystore",
     # scs/integritee
     "my-node-runtime",
-    "sidechain-primitives/std",
     "sp-io/std",
     "substrate-api-client/std",
     "substrate-client-keystore",

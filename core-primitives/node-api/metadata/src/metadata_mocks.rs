@@ -31,7 +31,6 @@ pub struct NodeMetadataMock {
 	shield_funds: u8,
 	unshield_funds: u8,
 	sidechain_module: u8,
-	proposed_sidechain_block: u8,
 	// litentry
 	// IMP
 	imp_module: u8,
@@ -58,6 +57,7 @@ pub struct NodeMetadataMock {
 	imp_mock_identity_verified: u8,
 	imp_mock_some_error: u8,
 
+	imported_sidechain_block: u8,
 	runtime_spec_version: u32,
 	runtime_transaction_version: u32,
 }
@@ -73,7 +73,6 @@ impl NodeMetadataMock {
 			shield_funds: 4u8,
 			unshield_funds: 5u8,
 			sidechain_module: 53u8,
-			proposed_sidechain_block: 0u8,
 			// litentry
 			imp_module: 64u8,
 			imp_set_user_shielding_key: 0u8,
@@ -98,9 +97,10 @@ impl NodeMetadataMock {
 			imp_mock_identity_unlinked: 7u8,
 			imp_mock_identity_verified: 8u8,
 			imp_mock_some_error: 9u8,
-
-			runtime_spec_version: 24,
-			runtime_transaction_version: 3,
+			
+			imported_sidechain_block: 0u8,
+			runtime_spec_version: 25,
+			runtime_transaction_version: 4,
 		}
 	}
 }
@@ -132,8 +132,8 @@ impl TeerexCallIndexes for NodeMetadataMock {
 }
 
 impl SidechainCallIndexes for NodeMetadataMock {
-	fn confirm_proposed_sidechain_block_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.sidechain_module, self.proposed_sidechain_block])
+	fn confirm_imported_sidechain_block_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.sidechain_module, self.imported_sidechain_block])
 	}
 }
 

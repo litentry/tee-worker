@@ -15,8 +15,8 @@
 
 */
 
-use crate::{helpers::get_account_info, StfError};
-use ita_sgx_runtime::{Balance, Runtime};
+use crate::StfError;
+use ita_sgx_runtime::{Balance, Runtime, System};
 use itp_sgx_externalities::{SgxExternalities, SgxExternalitiesTrait};
 use itp_storage::storage_value_key;
 use log::*;
@@ -25,6 +25,12 @@ use sp_core::{crypto::AccountId32, ed25519, Pair};
 use sp_runtime::MultiAddress;
 use std::{format, vec, vec::Vec};
 use support::traits::UnfilteredDispatchable;
+
+#[cfg(feature = "evm")]
+use ita_sgx_runtime::{AddressMapping, HashedAddressMapping};
+
+#[cfg(feature = "evm")]
+use crate::evm_helpers::get_evm_account;
 
 type Seed = [u8; 32];
 
@@ -57,7 +63,7 @@ pub fn test_genesis_setup(state: &mut SgxExternalities) {
 	set_sudo_account(state, &ALICE_ENCODED);
 	trace!("Set new sudo account: {:?}", &ALICE_ENCODED);
 
-	let endowees: Vec<(AccountId32, Balance, Balance)> = vec![
+	let mut endowees: Vec<(AccountId32, Balance, Balance)> = vec![
 		(endowed_account().public().into(), ENDOWED_ACC_FUNDS, ENDOWED_ACC_FUNDS),
 		(
 			second_endowed_account().public().into(),
@@ -67,8 +73,22 @@ pub fn test_genesis_setup(state: &mut SgxExternalities) {
 		(ALICE_ENCODED.into(), ALICE_FUNDS, ALICE_FUNDS),
 	];
 
+	append_funded_alice_evm_account(&mut endowees);
+
 	endow(state, endowees);
 }
+
+#[cfg(feature = "evm")]
+fn append_funded_alice_evm_account(endowees: &mut Vec<(AccountId32, Balance, Balance)>) {
+	let alice_evm = get_evm_account(&ALICE_ENCODED.into());
+	let alice_evm_substrate_version = HashedAddressMapping::into_account_id(alice_evm);
+	let mut other: Vec<(AccountId32, Balance, Balance)> =
+		vec![(alice_evm_substrate_version, ALICE_FUNDS, ALICE_FUNDS)];
+	endowees.append(other.as_mut());
+}
+
+#[cfg(not(feature = "evm"))]
+fn append_funded_alice_evm_account(_: &mut Vec<(AccountId32, Balance, Balance)>) {}
 
 fn set_sudo_account(state: &mut SgxExternalities, account_encoded: &[u8]) {
 	state.execute_with(|| {
@@ -76,7 +96,7 @@ fn set_sudo_account(state: &mut SgxExternalities, account_encoded: &[u8]) {
 	})
 }
 
-fn endow(
+pub fn endow(
 	state: &mut SgxExternalities,
 	endowees: impl IntoIterator<Item = (AccountId32, Balance, Balance)>,
 ) {
@@ -94,11 +114,8 @@ fn endow(
 			.unwrap();
 
 			let print_public: [u8; 32] = account.clone().into();
-			if let Some(info) = get_account_info(&print_public.into()) {
-				debug!("{:?} balance is {}", print_public, info.data.free);
-			} else {
-				debug!("{:?} balance is zero", print_public);
-			}
+			let account_info = System::account(&&print_public.into());
+			debug!("{:?} balance is {}", print_public, account_info.data.free);
 		}
 	});
 }

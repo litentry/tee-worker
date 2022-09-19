@@ -1,5 +1,5 @@
 [workspace]
-resolver = "2"
+
 members = [
     "app-libs/exchange-oracle",
     "app-libs/sgx-runtime",
@@ -39,7 +39,9 @@ members = [
     "core-primitives/sgx/io",
     "core-primitives/stf-executor",
     "core-primitives/stf-state-handler",
+    "core-primitives/stf-state-observer",
     "core-primitives/storage",
+    "core-primitives/substrate-sgx/environmental",
     "core-primitives/substrate-sgx/externalities",
     "core-primitives/substrate-sgx/sp-io",
     "core-primitives/teerex-storage",
@@ -47,16 +49,19 @@ members = [
     "core-primitives/time-utils",
     "core-primitives/top-pool",
     "core-primitives/top-pool-author",
+    "core-primitives/types",
+    "core-primitives/utils",
     "service",
     "sidechain/block-composer",
+    "sidechain/block-verification",
     "sidechain/consensus/aura",
     "sidechain/consensus/common",
     "sidechain/consensus/slots",
     "sidechain/peer-fetch",
+    "sidechain/primitives",
     "sidechain/rpc-handler",
     "sidechain/sidechain-crate",
     "sidechain/state",
-    "sidechain/top-pool-executor",
     "sidechain/validateer-fetch",
 ]
 
