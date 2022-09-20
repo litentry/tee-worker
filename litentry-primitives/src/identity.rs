@@ -16,13 +16,19 @@
 
 use sp_std::fmt;
 
-use codec::{Decode, Encode};
+#[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
+
+use codec::{Decode, Encode};
 use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::{traits::ConstU32, BoundedVec, MultiSignature};
 use sp_std::vec::Vec;
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub type MaxStringLength = ConstU32<64>;
+pub type IdentityString = BoundedVec<u8, MaxStringLength>;
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum SubstrateNetwork {
 	Polkadot,
 	Kusama,
@@ -30,40 +36,46 @@ pub enum SubstrateNetwork {
 	Litmus,
 }
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum EvmNetwork {
 	Ethereum,
 	BSC,
 }
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum Web3Network {
 	Substrate(SubstrateNetwork),
 	Evm(EvmNetwork),
 }
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum Web2Network {
 	Twitter,
 	Discord,
 	Github,
 }
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum IdentityWebType {
 	Web2(Web2Network),
 	Web3(Web3Network),
 }
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum IdentityHandle {
 	Address32([u8; 32]),
 	/// Its a 20 byte representation.
 	Address20([u8; 20]),
-	String(Vec<u8>),
+	String(IdentityString),
 }
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct Identity {
 	pub web_type: IdentityWebType,
 	pub handle: IdentityHandle,
@@ -82,8 +94,8 @@ impl Identity {
 			IdentityWebType::Web2(web2) =>
 				format!("did:{:?}:web2:_:", web2).to_ascii_lowercase().as_bytes().to_vec(),
 		};
-		let mut suffix = match &self.handle {
-			IdentityHandle::String(inner) => inner.clone(),
+		let mut suffix: Vec<u8> = match &self.handle {
+			IdentityHandle::String(inner) => inner.to_vec(),
 			IdentityHandle::Address32(inner) =>
 				format!("0x{}", HexDisplay::from(inner)).as_bytes().to_vec(),
 			IdentityHandle::Address20(inner) =>
@@ -97,7 +109,8 @@ impl Identity {
 #[cfg(test)]
 mod tests {
 	use crate::{
-		Identity, IdentityHandle, IdentityWebType, SubstrateNetwork, Web2Network, Web3Network,
+		Identity, IdentityHandle, IdentityString, IdentityWebType, SubstrateNetwork, Web2Network,
+		Web3Network,
 	};
 	use sp_core::Pair;
 	use std::string;
@@ -112,7 +125,9 @@ mod tests {
 		};
 		let twitter_identity = Identity {
 			web_type: IdentityWebType::Web2(Web2Network::Twitter),
-			handle: IdentityHandle::String("litentry".as_bytes().to_vec()),
+			handle: IdentityHandle::String(
+				IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
+			),
 		};
 		assert_eq!(
 			"did:polkadot:web3:substrate:0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
