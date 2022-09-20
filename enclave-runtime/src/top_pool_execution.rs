@@ -18,13 +18,12 @@
 use crate::{
 	error::Result,
 	global_components::{
-		GLOBAL_EXTRINSICS_FACTORY_COMPONENT, GLOBAL_PARENTCHAIN_BLOCK_VALIDATOR_ACCESS_COMPONENT,
+		GLOBAL_EXTRINSICS_FACTORY_COMPONENT, GLOBAL_OCALL_API_COMPONENT,
+		GLOBAL_PARENTCHAIN_BLOCK_VALIDATOR_ACCESS_COMPONENT,
 		GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT, GLOBAL_SIDECHAIN_IMPORT_QUEUE_WORKER_COMPONENT,
 		GLOBAL_STATE_HANDLER_COMPONENT, GLOBAL_STF_EXECUTOR_COMPONENT,
-		GLOBAL_TOP_POOL_OPERATION_HANDLER_COMPONENT,
-		GLOBAL_TRIGGERED_PARENTCHAIN_IMPORT_DISPATCHER_COMPONENT,
+		GLOBAL_TOP_POOL_AUTHOR_COMPONENT, GLOBAL_TRIGGERED_PARENTCHAIN_IMPORT_DISPATCHER_COMPONENT,
 	},
-	ocall::OcallApi,
 	sync::{EnclaveLock, EnclaveStateRWLock},
 };
 use codec::Encode;
@@ -42,74 +41,27 @@ use itp_settings::sidechain::SLOT_DURATION;
 use itp_sgx_crypto::Ed25519Seal;
 use itp_sgx_io::StaticSealedIO;
 use itp_stf_state_handler::query_shard_state::QueryShardState;
-use itp_time_utils::{duration_now, remaining_time};
+use itp_time_utils::duration_now;
 use itp_types::{Block, OpaqueCall, H256};
-use its_sidechain::{
-	aura::{proposer_factory::ProposerFactory, Aura, SlotClaimStrategy},
-	consensus_common::{Environment, Error as ConsensusError, ProcessBlockImportQueue},
-	slots::{sgx::LastSlotSeal, yield_next_slot, PerShardSlotWorkerScheduler, SlotInfo},
-	top_pool_executor::TopPoolGetterOperator,
-	validateer_fetch::ValidateerFetch,
-};
-use log::*;
-use sgx_types::sgx_status_t;
-use sidechain_primitives::{
+use its_primitives::{
 	traits::{
 		Block as SidechainBlockTrait, Header as HeaderTrait, ShardIdentifierFor, SignedBlock,
 	},
 	types::block::SignedBlock as SignedSidechainBlock,
 };
+use its_sidechain::{
+	aura::{proposer_factory::ProposerFactory, Aura, SlotClaimStrategy},
+	consensus_common::{Environment, Error as ConsensusError, ProcessBlockImportQueue},
+	slots::{sgx::LastSlotSeal, yield_next_slot, PerShardSlotWorkerScheduler, SlotInfo},
+	validateer_fetch::ValidateerFetch,
+};
+use log::*;
+use sgx_types::sgx_status_t;
 use sp_core::Pair;
 use sp_runtime::{
 	generic::SignedBlock as SignedParentchainBlock, traits::Block as BlockTrait, MultiSignature,
 };
 use std::{sync::Arc, time::Instant, vec::Vec};
-
-#[no_mangle]
-pub unsafe extern "C" fn execute_trusted_getters() -> sgx_status_t {
-	if let Err(e) = execute_top_pool_trusted_getters_on_all_shards() {
-		return e.into()
-	}
-
-	sgx_status_t::SGX_SUCCESS
-}
-
-/// Internal [`execute_trusted_getters`] function to be able to use the `?` operator.
-///
-/// Executes trusted getters for a scheduled amount of time (defined by settings).
-fn execute_top_pool_trusted_getters_on_all_shards() -> Result<()> {
-	use itp_settings::enclave::MAX_TRUSTED_GETTERS_EXEC_DURATION;
-
-	let top_pool_executor = GLOBAL_TOP_POOL_OPERATION_HANDLER_COMPONENT.get()?;
-	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
-	let shards = state_handler.list_shards()?;
-
-	let mut remaining_shards = shards.len() as u32;
-	let ends_at = duration_now() + MAX_TRUSTED_GETTERS_EXEC_DURATION;
-
-	// Execute trusted getters for each shard. Each shard gets equal amount of time to execute
-	// getters.
-	for shard in shards.into_iter() {
-		let shard_exec_time = match remaining_time(ends_at)
-			.and_then(|r| r.checked_div(remaining_shards))
-		{
-			Some(t) => t,
-			None => {
-				info!("[Enclave] Could not execute trusted operations for all shards. Remaining number of shards: {}.", remaining_shards);
-				break
-			},
-		};
-
-		match top_pool_executor.execute_trusted_getters_on_shard(&shard, shard_exec_time) {
-			Ok(()) => {},
-			Err(e) => error!("Error in trusted getter execution for shard {:?}: {:?}", shard, e),
-		}
-
-		remaining_shards -= 1;
-	}
-
-	Ok(())
-}
 
 #[no_mangle]
 pub unsafe extern "C" fn execute_trusted_calls() -> sgx_status_t {
@@ -128,7 +80,7 @@ pub unsafe extern "C" fn execute_trusted_calls() -> sgx_status_t {
 ///
 /// *   Import all pending parentchain blocks.
 /// *   Sends sidechain `confirm_block` xt's with the produced sidechain blocks.
-/// *   Gossip produced sidechain blocks to peer validateers.
+/// *   Broadcast produced sidechain blocks to peer validateers.
 fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 	let start_time = Instant::now();
 
@@ -168,7 +120,7 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 
 	let stf_executor = GLOBAL_STF_EXECUTOR_COMPONENT.get()?;
 
-	let top_pool_executor = GLOBAL_TOP_POOL_OPERATION_HANDLER_COMPONENT.get()?;
+	let top_pool_author = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
 
 	let block_composer = GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT.get()?;
 
@@ -176,7 +128,7 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 
-	let ocall_api = OcallApi {};
+	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 
 	let authority = Ed25519Seal::unseal_from_static_file()?;
 
@@ -198,7 +150,7 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 
 			let shards = state_handler.list_shards()?;
 			let env = ProposerFactory::<Block, _, _, _>::new(
-				top_pool_executor,
+				top_pool_author,
 				stf_executor,
 				block_composer,
 			);
@@ -220,7 +172,7 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 			send_blocks_and_extrinsics::<Block, _, _, _, _>(
 				blocks,
 				opaque_calls,
-				&ocall_api,
+				ocall_api,
 				validator_access.as_ref(),
 				extrinsics_factory.as_ref(),
 			)?
@@ -246,7 +198,7 @@ pub(crate) fn exec_aura_on_slot<
 >(
 	slot: SlotInfo<ParentchainBlock>,
 	authority: Authority,
-	ocall_api: OCallApi,
+	ocall_api: Arc<OCallApi>,
 	block_import_trigger: Arc<BlockImportTrigger>,
 	proposer_environment: PEnvironment,
 	shards: Vec<ShardIdentifierFor<SignedSidechainBlock>>,
@@ -271,7 +223,7 @@ where
 
 	let mut aura = Aura::<_, ParentchainBlock, SignedSidechainBlock, PEnvironment, _, _>::new(
 		authority,
-		ocall_api,
+		ocall_api.as_ref().clone(),
 		block_import_trigger,
 		proposer_environment,
 	)
@@ -288,7 +240,7 @@ where
 	Ok((blocks, opaque_calls))
 }
 
-/// Gossips sidechain blocks to fellow peers and sends opaque calls as extrinsic to the parentchain.
+/// Broadcasts sidechain blocks to fellow peers and sends opaque calls as extrinsic to the parentchain.
 pub(crate) fn send_blocks_and_extrinsics<
 	ParentchainBlock,
 	SignedSidechainBlock,
@@ -298,7 +250,7 @@ pub(crate) fn send_blocks_and_extrinsics<
 >(
 	blocks: Vec<SignedSidechainBlock>,
 	opaque_calls: Vec<OpaqueCall>,
-	ocall_api: &OCallApi,
+	ocall_api: Arc<OCallApi>,
 	validator_access: &ValidatorAccessor,
 	extrinsics_factory: &ExtrinsicsFactory,
 ) -> Result<()>

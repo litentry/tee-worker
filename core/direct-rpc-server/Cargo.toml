@@ -1,9 +1,8 @@
 [package]
 name = "itc-direct-rpc-server"
-version = "0.8.0"
+version = "0.9.0"
 authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2018"
-resolver = "2"
+edition = "2021"
 
 [dependencies]
 # sgx dependencies
@@ -14,15 +13,13 @@ sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sd
 codec  = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 log = { version = "0.4", default-features = false }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
-
-# integritee dependencies
-itp-types = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "sdk-v0.9.0-polkadot-v0.9.26" }
-itp-utils = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "sdk-v0.9.0-polkadot-v0.9.26" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
 
 # local
 itc-tls-websocket-server = { path = "../tls-websocket-server", default-features = false }
 itp-rpc = { path = "../../core-primitives/rpc", default-features = false }
+itp-types = { default-features = false, path = "../../core-primitives/types" }
+itp-utils = { default-features = false, path = "../../core-primitives/utils" }
 
 # sgx enabled external libraries
 jsonrpc-core_sgx = { package = "jsonrpc-core", git = "https://github.com/scs/jsonrpc", branch = "no_std_v18", default-features = false, optional = true }
@@ -59,3 +56,4 @@ sgx = [
     "sgx_types",
     "thiserror_sgx",
 ]
+mocks = []

@@ -78,7 +78,7 @@ echo ""
 
 sleep 10
 echo "* Get $ICGACCOUNTALICE 's shielding key"
-ACTUAL_KEY=$($CLIENT trusted --mrenclave $MRENCLAVE --direct shielding-key $ICGACCOUNTALICE)
+ACTUAL_KEY=$($CLIENT trusted --mrenclave $MRENCLAVE --direct user-shielding-key $ICGACCOUNTALICE)
 echo ""
 
 if [ "$ACTUAL_KEY" = "$KEY" ]; then
@@ -100,7 +100,7 @@ echo ""
 
 sleep 10
 echo "* Get $ICGACCOUNTALICE 's shielding key"
-ACTUAL_KEY=$($CLIENT trusted --mrenclave $MRENCLAVE --direct shielding-key $ICGACCOUNTALICE)
+ACTUAL_KEY=$($CLIENT trusted --mrenclave $MRENCLAVE --direct user-shielding-key $ICGACCOUNTALICE)
 echo ""
 
 if [ "$ACTUAL_KEY" = "$KEY" ]; then

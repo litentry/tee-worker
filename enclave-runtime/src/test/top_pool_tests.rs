@@ -33,25 +33,29 @@ use ita_stf::{
 	TrustedCall, TrustedOperation,
 };
 use itc_parentchain::indirect_calls_executor::{ExecuteIndirectCalls, IndirectCallsExecutor};
-use itp_node_api::metadata::{
-	metadata_mocks::NodeMetadataMock, pallet_teerex::TeerexCallIndexes,
-	provider::NodeMetadataRepository,
+use itc_parentchain_test::{
+	parentchain_block_builder::ParentchainBlockBuilder,
+	parentchain_header_builder::ParentchainHeaderBuilder,
+};
+use itp_node_api::{
+	api_client::{
+		ParentchainExtrinsicParams, ParentchainExtrinsicParamsBuilder,
+		ParentchainUncheckedExtrinsic,
+	},
+	metadata::{
+		metadata_mocks::NodeMetadataMock, pallet_teerex::TeerexCallIndexes,
+		provider::NodeMetadataRepository,
+	},
 };
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_executor::enclave_signer::StfEnclaveSigner;
+use itp_stf_state_observer::mock::ObserveStateMock;
 use itp_test::mock::metrics_ocall_mock::MetricsOCallMock;
 use itp_top_pool_author::{top_filter::AllowAllTopsFilter, traits::AuthorApi};
-use itp_types::{
-	AccountId, Block, ParentchainExtrinsicParams, ParentchainExtrinsicParamsBuilder,
-	ParentchainUncheckedExtrinsic, ShardIdentifier, ShieldFundsFn, H256,
-};
+use itp_types::{AccountId, Block, ShardIdentifier, ShieldFundsFn, H256};
 use jsonrpc_core::futures::executor;
 use log::*;
-use parentchain_test::{
-	parentchain_block_builder::ParentchainBlockBuilder,
-	parentchain_header_builder::ParentchainHeaderBuilder,
-};
 use sgx_crypto_helper::RsaKeyPair;
 use sp_core::{ed25519, Pair};
 use sp_runtime::{MultiSignature, OpaqueExtrinsic};
@@ -87,7 +91,7 @@ pub fn process_indirect_call_in_top_pool() {
 
 	executor::block_on(top_pool_author.submit_top(encrypted_indirect_call, shard_id)).unwrap();
 
-	assert_eq!(1, top_pool_author.get_pending_tops_separated(shard_id).unwrap().0.len());
+	assert_eq!(1, top_pool_author.get_pending_trusted_calls(shard_id).len());
 }
 
 pub fn submit_shielding_call_to_top_pool() {
@@ -102,20 +106,21 @@ pub fn submit_shielding_call_to_top_pool() {
 	let mr_enclave = ocall_api.get_mrenclave_of_self().unwrap();
 
 	let state_handler = Arc::new(TestStateHandler::default());
-	let (_, shard_id) = init_state(state_handler.as_ref(), signer.public().into());
+	let (state, shard_id) = init_state(state_handler.as_ref(), signer.public().into());
+	let state_observer = Arc::new(ObserveStateMock::new(state));
 
 	let top_pool = create_top_pool();
 
 	let top_pool_author = Arc::new(TestTopPoolAuthor::new(
 		top_pool,
 		AllowAllTopsFilter {},
-		state_handler.clone(),
+		state_handler,
 		shielding_key_repo.clone(),
 		Arc::new(MetricsOCallMock::default()),
 	));
 
 	let enclave_signer = Arc::new(StfEnclaveSigner::new(
-		state_handler.clone(),
+		state_observer,
 		ocall_api.clone(),
 		shielding_key_repo.clone(),
 	));
@@ -134,14 +139,9 @@ pub fn submit_shielding_call_to_top_pool() {
 		.execute_indirect_calls_in_extrinsics(&block_with_shielding_call)
 		.unwrap();
 
-	assert_eq!(1, top_pool_author.get_pending_tops_separated(shard_id).unwrap().0.len());
-	let trusted_operation = top_pool_author
-		.get_pending_tops_separated(shard_id)
-		.unwrap()
-		.0
-		.first()
-		.cloned()
-		.unwrap();
+	assert_eq!(1, top_pool_author.get_pending_trusted_calls(shard_id).len());
+	let trusted_operation =
+		top_pool_author.get_pending_trusted_calls(shard_id).first().cloned().unwrap();
 	let trusted_call = trusted_operation.to_call().unwrap();
 	assert!(trusted_call.verify_signature(&mr_enclave.m, &shard_id));
 }

@@ -28,11 +28,12 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use itp_types::OpaqueCall;
-use sidechain_primitives::traits::{ShardIdentifierFor, SignedBlock as SignedSidechainBlockTrait};
+use its_primitives::traits::{ShardIdentifierFor, SignedBlock as SignedSidechainBlockTrait};
 use sp_runtime::traits::Block as ParentchainBlockTrait;
 use std::{time::Duration, vec::Vec};
 
 mod block_import;
+mod block_import_confirmation_handler;
 mod block_import_queue_worker;
 mod error;
 mod peer_block_sync;
@@ -41,6 +42,7 @@ mod peer_block_sync;
 mod test;
 
 pub use block_import::*;
+pub use block_import_confirmation_handler::*;
 pub use block_import_queue_worker::*;
 pub use error::*;
 pub use peer_block_sync::*;

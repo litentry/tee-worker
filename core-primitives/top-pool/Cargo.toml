@@ -1,9 +1,8 @@
 [package]
 name = "itp-top-pool"
-version = "0.8.0"
+version = "0.9.0"
 authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2018"
-resolver = "2"
+edition = "2021"
 
 [dependencies]
 # sgx dependencies
@@ -13,9 +12,8 @@ sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sd
 # local dependencies
 ita-stf = { path = "../../app-libs/stf", default-features = false }
 itc-direct-rpc-server = { path = "../../core/direct-rpc-server", default-features = false }
-
-# integritee
-itp-types = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "sdk-v0.9.0-polkadot-v0.9.26" }
+itp-types = { path = "../types", default-features = false }
+its-primitives = { path = "../../sidechain/primitives", default-features = false }
 
 # sgx enabled external libraries
 jsonrpc-core_sgx = { package = "jsonrpc-core", git = "https://github.com/scs/jsonrpc", branch = "no_std_v18", default-features = false, optional = true }
@@ -33,10 +31,9 @@ codec  = { package = "parity-scale-codec", version = "3.0.0", default-features =
 derive_more = { version = "0.99.5" }
 log = { version = "0.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
-sp-application-crypto = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
-sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
-sidechain-primitives = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "sdk-v0.9.0-polkadot-v0.9.26" }
+sp-application-crypto = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
+sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
 
 # dev dependencies (for tests)
 [dev-dependencies]
@@ -57,7 +54,7 @@ std = [
     "ita-stf/std",
     "itc-direct-rpc-server/std",
     "itp-types/std",
-    "sidechain-primitives/std",
+    "its-primitives/std",
     "jsonrpc-core",
     "linked-hash-map",
     "log/std",

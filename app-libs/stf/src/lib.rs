@@ -31,6 +31,12 @@ pub use ita_sgx_runtime::{Balance, BlockNumber, Index};
 #[cfg(feature = "std")]
 pub use my_node_runtime::{Balance, BlockNumber, Index};
 
+#[cfg(feature = "evm")]
+use sp_core::{H160, U256};
+
+#[cfg(feature = "evm")]
+use std::vec::Vec;
+
 use codec::{Compact, Decode, Encode};
 use derive_more::Display;
 use ita_sgx_runtime::{
@@ -39,10 +45,7 @@ use ita_sgx_runtime::{
 };
 use itp_node_api_metadata::Error as MetadataError;
 use itp_node_api_metadata_provider::Error as MetadataProviderError;
-use litentry_primitives::{
-	eth::{EthAddress, EthSignature},
-	LinkingAccountIndex, UserShieldingKeyType,
-};
+use litentry_primitives::UserShieldingKeyType;
 use sp_core::{crypto::AccountId32, ed25519, sr25519, Pair, H256};
 use sp_runtime::{traits::Verify, MultiSignature};
 use std::string::String;
@@ -51,7 +54,7 @@ pub use std::sync::Arc;
 pub type Signature = MultiSignature;
 pub type AuthorityId = <Signature as Verify>::Signer;
 pub type AccountId = AccountId32;
-pub type Hash = sp_core::H256;
+pub type Hash = H256;
 pub type BalanceTransferFn = ([u8; 2], AccountId, Compact<u128>);
 
 pub type ShardIdentifier = H256;
@@ -68,8 +71,6 @@ pub enum StfError {
 	Dispatch(String),
 	#[display(fmt = "Not enough funds to perform operation")]
 	MissingFunds,
-	#[display(fmt = "Account does not exist {:?}", _0)]
-	InexistentAccount(AccountId),
 	#[display(fmt = "Invalid Nonce {:?}", _0)]
 	InvalidNonce(Index),
 	StorageHashMismatch,
@@ -123,6 +124,8 @@ pub mod hash;
 pub mod helpers;
 pub mod stf_sgx_primitives;
 
+#[cfg(feature = "evm")]
+pub mod evm_helpers;
 #[cfg(feature = "sgx")]
 pub mod stf_sgx;
 
@@ -212,34 +215,73 @@ pub enum TrustedCall {
 	balance_transfer(AccountId, AccountId, Balance),
 	balance_unshield(AccountId, AccountId, Balance, ShardIdentifier), // (AccountIncognito, BeneficiaryPublicAccount, Amount, Shard)
 	balance_shield(AccountId, AccountId, Balance), // (Root, AccountIncognito, Amount)
-	// litentry
-	set_user_shielding_key(AccountId, AccountId, UserShieldingKeyType), // (Root, Account, Key)
-	link_identity(AccountId, AccountId, DidOf<Runtime>, Option<MetadataOf<Runtime>>), // (Root, Account, did, metadata)
-
-	link_eth(AccountId, LinkingAccountIndex, EthAddress, BlockNumber, EthSignature), // (LitentryAcc, EthAcc Index, EthAcc, ParentchainBlockNr, Signature)
-	link_sub(
+	#[cfg(feature = "evm")]
+	evm_withdraw(AccountId, H160, Balance), // (Origin, Address EVM Account, Value)
+	// (Origin, Source, Target, Input, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
+	#[cfg(feature = "evm")]
+	evm_call(
 		AccountId,
-		LinkingAccountIndex,
-		pallet_sgx_account_linker::NetworkType,
-		AccountId,
-		BlockNumber,
-		pallet_sgx_account_linker::MultiSignature,
+		H160,
+		H160,
+		Vec<u8>,
+		U256,
+		u64,
+		U256,
+		Option<U256>,
+		Option<U256>,
+		Vec<(H160, Vec<H256>)>,
 	),
+	// (Origin, Source, Init, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
+	#[cfg(feature = "evm")]
+	evm_create(
+		AccountId,
+		H160,
+		Vec<u8>,
+		U256,
+		u64,
+		U256,
+		Option<U256>,
+		Option<U256>,
+		Vec<(H160, Vec<H256>)>,
+	),
+	// (Origin, Source, Init, Salt, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
+	#[cfg(feature = "evm")]
+	evm_create2(
+		AccountId,
+		H160,
+		Vec<u8>,
+		H256,
+		U256,
+		u64,
+		U256,
+		Option<U256>,
+		Option<U256>,
+		Vec<(H160, Vec<H256>)>,
+	),
+	// litentry
+	set_user_shielding_key(AccountId, AccountId, UserShieldingKeyType), // (Root, AccountIncognito, Key)
+	link_identity(AccountId, AccountId, DidOf<Runtime>, Option<MetadataOf<Runtime>>), // (Root, Account, did, metadata)
 	query_credit(AccountId),
 }
 
 impl TrustedCall {
-	pub fn account(&self) -> &AccountId {
+	pub fn sender_account(&self) -> &AccountId {
 		match self {
-			TrustedCall::balance_set_balance(account, _, _, _) => account,
-			TrustedCall::balance_transfer(account, _, _) => account,
-			TrustedCall::balance_unshield(account, _, _, _) => account,
-			TrustedCall::balance_shield(account, _, _) => account,
+			TrustedCall::balance_set_balance(sender_account, ..) => sender_account,
+			TrustedCall::balance_transfer(sender_account, ..) => sender_account,
+			TrustedCall::balance_unshield(sender_account, ..) => sender_account,
+			TrustedCall::balance_shield(sender_account, ..) => sender_account,
+			#[cfg(feature = "evm")]
+			TrustedCall::evm_withdraw(sender_account, ..) => sender_account,
+			#[cfg(feature = "evm")]
+			TrustedCall::evm_call(sender_account, ..) => sender_account,
+			#[cfg(feature = "evm")]
+			TrustedCall::evm_create(sender_account, ..) => sender_account,
+			#[cfg(feature = "evm")]
+			TrustedCall::evm_create2(sender_account, ..) => sender_account,
 			// litentry
 			TrustedCall::set_user_shielding_key(account, _, _) => account,
 			TrustedCall::link_identity(account, _, _, _) => account,
-			TrustedCall::link_eth(account, _, _, _, _) => account,
-			TrustedCall::link_sub(account, _, _, _, _, _) => account,
 			TrustedCall::query_credit(account) => account,
 		}
 	}
@@ -266,22 +308,30 @@ pub enum TrustedGetter {
 	free_balance(AccountId),
 	reserved_balance(AccountId),
 	nonce(AccountId),
+	#[cfg(feature = "evm")]
+	evm_nonce(AccountId),
+	#[cfg(feature = "evm")]
+	evm_account_codes(AccountId, H160),
+	#[cfg(feature = "evm")]
+	evm_account_storages(AccountId, H160, H256),
 	// litentry
-	shielding_key(AccountId),
-	linked_ethereum_addresses(AccountId),
-	linked_substrate_addresses(AccountId),
+	user_shielding_key(AccountId),
 }
 
 impl TrustedGetter {
-	pub fn account(&self) -> &AccountId {
+	pub fn sender_account(&self) -> &AccountId {
 		match self {
-			TrustedGetter::free_balance(account) => account,
-			TrustedGetter::reserved_balance(account) => account,
-			TrustedGetter::nonce(account) => account,
+			TrustedGetter::free_balance(sender_account) => sender_account,
+			TrustedGetter::reserved_balance(sender_account) => sender_account,
+			TrustedGetter::nonce(sender_account) => sender_account,
+			#[cfg(feature = "evm")]
+			TrustedGetter::evm_nonce(sender_account) => sender_account,
+			#[cfg(feature = "evm")]
+			TrustedGetter::evm_account_codes(sender_account, _) => sender_account,
+			#[cfg(feature = "evm")]
+			TrustedGetter::evm_account_storages(sender_account, ..) => sender_account,
 			// litentry
-			TrustedGetter::shielding_key(account) => account,
-			TrustedGetter::linked_ethereum_addresses(account) => account,
-			TrustedGetter::linked_substrate_addresses(account) => account,
+			TrustedGetter::user_shielding_key(account) => account,
 		}
 	}
 
@@ -303,7 +353,8 @@ impl TrustedGetterSigned {
 	}
 
 	pub fn verify_signature(&self) -> bool {
-		self.signature.verify(self.getter.encode().as_slice(), self.getter.account())
+		self.signature
+			.verify(self.getter.encode().as_slice(), self.getter.sender_account())
 	}
 }
 
@@ -324,7 +375,7 @@ impl TrustedCallSigned {
 		payload.append(&mut self.nonce.encode());
 		payload.append(&mut mrenclave.encode());
 		payload.append(&mut shard.encode());
-		self.signature.verify(payload.as_slice(), self.call.account())
+		self.signature.verify(payload.as_slice(), self.call.sender_account())
 	}
 
 	pub fn into_trusted_operation(self, direct: bool) -> TrustedOperation {

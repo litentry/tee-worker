@@ -77,13 +77,15 @@ ifeq ($(SGX_PRODUCTION), 1)
 	SGX_ENCLAVE_MODE = "Production Mode"
 	SGX_ENCLAVE_CONFIG = "enclave-runtime/Enclave.config.production.xml"
 	SGX_SIGN_KEY = $(SGX_COMMERCIAL_KEY)
-	WORKER_FEATURES = --features=production,$(WORKER_MODE)
+	WORKER_FEATURES = --features=production,$(WORKER_MODE),$(ADDITIONAL_FEATURES)
 else
 	SGX_ENCLAVE_MODE = "Development Mode"
 	SGX_ENCLAVE_CONFIG = "enclave-runtime/Enclave.config.xml"
 	SGX_SIGN_KEY = "enclave-runtime/Enclave_private.pem"
-	WORKER_FEATURES = --features=default,$(WORKER_MODE)
+	WORKER_FEATURES = --features=default,$(WORKER_MODE),$(ADDITIONAL_FEATURES)
 endif
+
+CLIENT_FEATURES = --features=$(WORKER_MODE),$(ADDITIONAL_FEATURES)
 
 # check if running on Jenkins
 ifdef BUILD_ID
@@ -100,8 +102,8 @@ CUSTOM_COMMON_PATH := ./rust-sgx-sdk/common
 Enclave_EDL_Files := enclave-runtime/Enclave_t.c enclave-runtime/Enclave_t.h service/Enclave_u.c service/Enclave_u.h
 
 ######## Integritee-service settings ########
+SRC_Files := $(shell find . -type f -name '*.rs') $(shell find . -type f -name 'Cargo.toml')
 Worker_Rust_Flags := $(CARGO_TARGET) $(WORKER_FEATURES)
-Worker_SRC_Files := $(shell find service/ -type f -name '*.rs') $(shell find service/ -type f -name 'Cargo.toml')
 Worker_Include_Paths := -I ./service -I./include -I$(SGX_SDK)/include -I$(CUSTOM_EDL_PATH)
 Worker_C_Flags := $(SGX_COMMON_CFLAGS) -fPIC -Wno-attributes $(Worker_Include_Paths)
 
@@ -110,12 +112,7 @@ Worker_Enclave_u_Object :=service/libEnclave_u.a
 Worker_Name := bin/app
 
 ######## Integritee-cli settings ########
-Client_SRC_Path := cli
-STF_SRC_Path := app-libs/stf
-Client_Rust_Flags := $(CARGO_TARGET)
-Client_SRC_Files := $(shell find $(Client_SRC_Path)/ -type f -name '*.rs') $(shell find $(STF_SRC_Path)/ -type f -name '*.rs') $(shell find $(Client_SRC_Path)/ -type f -name 'Cargo.toml')
-Client_Include_Paths := -I ./$(Client_SRC_Path) -I./include -I$(SGX_SDK)/include -I$(CUSTOM_EDL_PATH)
-Client_C_Flags := $(SGX_COMMON_CFLAGS) -fPIC -Wno-attributes $(Client_Include_Paths)
+Client_Rust_Flags := $(CARGO_TARGET) $(CLIENT_FEATURES)
 
 Client_Rust_Path := target/$(OUTPUT_PATH)
 Client_Path := bin
@@ -171,7 +168,7 @@ $(Worker_Enclave_u_Object): service/Enclave_u.o
 	$(AR) rcsD $@ $^
 	cp $(Worker_Enclave_u_Object) ./lib
 
-$(Worker_Name): $(Worker_Enclave_u_Object) $(Worker_SRC_Files)
+$(Worker_Name): $(Worker_Enclave_u_Object) $(SRC_Files)
 	@echo
 	@echo "Building the integritee-service"
 	@SGX_SDK=$(SGX_SDK) SGX_MODE=$(SGX_MODE) cargo build -p integritee-service $(Worker_Rust_Flags)
@@ -179,7 +176,7 @@ $(Worker_Name): $(Worker_Enclave_u_Object) $(Worker_SRC_Files)
 	cp $(Worker_Rust_Path)/integritee-service ./bin
 
 ######## Integritee-client objects ########
-$(Client_Name): $(Client_SRC_Files)
+$(Client_Name): $(SRC_Files)
 	@echo
 	@echo "Building the integritee-cli"
 	@cargo build -p integritee-cli $(Client_Rust_Flags)
