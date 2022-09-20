@@ -1,9 +1,8 @@
 [package]
 name = "itc-parentchain-indirect-calls-executor"
-version = "0.8.0"
+version = "0.9.0"
 authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2018"
-resolver = "2"
+edition = "2021"
 
 [dependencies]
 # sgx dependencies
@@ -18,6 +17,7 @@ itp-ocall-api = { path = "../../../core-primitives/ocall-api", default-features 
 itp-sgx-crypto = { path = "../../../core-primitives/sgx/crypto", default-features = false }
 itp-stf-executor = { path = "../../../core-primitives/stf-executor", default-features = false }
 itp-top-pool-author = { path = "../../../core-primitives/top-pool-author", default-features = false }
+itp-types = { path = "../../../core-primitives/types", default-features = false }
 
 # sgx enabled external libraries
 thiserror_sgx = { package = "thiserror", git = "https://github.com/mesalock-linux/thiserror-sgx", tag = "sgx_1.1.3", optional = true }
@@ -31,15 +31,14 @@ futures = { version = "0.3.8", optional = true }
 bs58 = { version = "0.4.0", default-features = false, features = ["alloc"] }
 codec  = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 log = { version = "0.4", default-features = false }
-sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
-#beefy-merkle-tree = { default-features = false, features = "keccak", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
-#remove as soon as we can import beefy-merkle-tree:
-tiny-keccak = { version = "2.0.2", features = ["keccak"] }
+
+# substrate dep
+beefy-merkle-tree = { default-features = false, features = ["keccak"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
+sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
 
 # scs/integritee
-itp-types = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "sdk-v0.9.0-polkadot-v0.9.26" }
-substrate-api-client = { git = "https://github.com/scs/substrate-api-client", branch = "polkadot-v0.9.26", default-features = false }
+substrate-api-client = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.28", default-features = false }
 
 [dev-dependencies]
 env_logger = "0.9.0"
@@ -47,7 +46,7 @@ itp-sgx-crypto = { path = "../../../core-primitives/sgx/crypto", features = ["mo
 itp-stf-executor = { path = "../../../core-primitives/stf-executor", features = ["mocks"] }
 itp-test = { path = "../../../core-primitives/test" }
 itp-top-pool-author = { path = "../../../core-primitives/top-pool-author", features = ["mocks"] }
-parentchain-test = { git = "https://github.com/integritee-network/pallets.git", branch = "sdk-v0.9.0-polkadot-v0.9.26" }
+itc-parentchain-test = { path = "../../../core/parentchain/test" }
 
 [features]
 default = ["std"]
@@ -64,6 +63,8 @@ std = [
     "itp-top-pool-author/std",
     "itp-types/std",
     "log/std",
+    #substrate
+    "beefy-merkle-tree/std",
     "sp-core/std",
     "sp-runtime/std",
     "substrate-api-client/std",

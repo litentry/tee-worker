@@ -27,14 +27,13 @@ use crate::{
 	initialized_service::{
 		start_is_initialized_server, InitializationHandler, IsInitialized, TrackInitialization,
 	},
-	interval_scheduling::schedule_on_repeating_intervals,
 	ocall_bridge::{
 		bridge_api::Bridge as OCallBridge, component_factory::OCallBridgeComponentFactory,
 	},
 	parentchain_block_syncer::{ParentchainBlockSyncer, SyncParentchainBlocks},
 	prometheus_metrics::{start_metrics_server, EnclaveMetricsReceiver, MetricsHandler},
 	sidechain_setup::{sidechain_init_block_production, sidechain_start_untrusted_rpc_server},
-	sync_block_gossiper::SyncBlockGossiper,
+	sync_block_broadcaster::SyncBlockBroadcaster,
 	utils::{check_files, extract_shard},
 	worker::Worker,
 	worker_peers_updater::WorkerPeersUpdater,
@@ -70,11 +69,11 @@ use itp_settings::{
 use its_peer_fetch::{
 	block_fetch_client::BlockFetcher, untrusted_peer_fetch::UntrustedPeerFetcher,
 };
+use its_primitives::types::block::SignedBlock as SignedSidechainBlock;
 use its_storage::{interface::FetchBlocks, BlockPruner, SidechainStorageLock};
 use log::*;
 use my_node_runtime::{Event, Hash, Header};
 use sgx_types::*;
-use sidechain_primitives::types::block::SignedBlock as SignedSidechainBlock;
 use sp_core::crypto::{AccountId32, Ss58Codec};
 use sp_finality_grandpa::VersionedAuthorityList;
 use sp_keyring::AccountKeyring;
@@ -97,13 +96,12 @@ mod enclave;
 mod error;
 mod globals;
 mod initialized_service;
-mod interval_scheduling;
 mod ocall_bridge;
 mod parentchain_block_syncer;
 mod prometheus_metrics;
 mod setup;
 mod sidechain_setup;
-mod sync_block_gossiper;
+mod sync_block_broadcaster;
 mod sync_state;
 mod tests;
 mod utils;
@@ -160,8 +158,8 @@ fn main() {
 		initialization_handler.clone(),
 		Vec::new(),
 	));
-	let sync_block_gossiper =
-		Arc::new(SyncBlockGossiper::new(tokio_handle.clone(), worker.clone()));
+	let sync_block_broadcaster =
+		Arc::new(SyncBlockBroadcaster::new(tokio_handle.clone(), worker.clone()));
 	let peer_updater = Arc::new(WorkerPeersUpdater::new(worker));
 	let untrusted_peer_fetcher = UntrustedPeerFetcher::new(node_api_factory.clone());
 	let peer_sidechain_block_fetcher =
@@ -171,7 +169,7 @@ fn main() {
 	// initialize o-call bridge with a concrete factory implementation
 	OCallBridge::initialize(Arc::new(OCallBridgeComponentFactory::new(
 		node_api_factory.clone(),
-		sync_block_gossiper,
+		sync_block_broadcaster,
 		enclave.clone(),
 		sidechain_blockstorage.clone(),
 		peer_updater,
@@ -453,7 +451,6 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	initialization_handler.registered_on_parentchain();
 
 	let last_synced_header = init_light_client(&node_api, enclave.clone()).unwrap();
-	println!("*** [+] Finished syncing light client, syncing parentchain...");
 
 	// ------------------------------------------------------------------------
 	// Start https client daemon
@@ -462,64 +459,54 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		enclave_api_https_client.run_https_client_daemon().unwrap();
 	});
 
-	// Syncing all parentchain blocks, this might take a while..
-	let parentchain_block_syncer =
-		Arc::new(ParentchainBlockSyncer::new(node_api.clone(), enclave.clone()));
-	let mut last_synced_header = parentchain_block_syncer.sync_parentchain(last_synced_header);
-
-	// ------------------------------------------------------------------------
-	// initialize the sidechain
-	if WorkerModeProvider::worker_mode() == WorkerMode::Sidechain {
-		last_synced_header = sidechain_init_block_production(
-			enclave.clone(),
-			&register_enclave_xt_header,
-			we_are_primary_validateer,
-			parentchain_block_syncer,
-			sidechain_storage,
-			&last_synced_header,
-		);
-	}
-
 	// ------------------------------------------------------------------------
 	// initialize teeracle interval
 	#[cfg(feature = "teeracle")]
 	if WorkerModeProvider::worker_mode() == WorkerMode::Teeracle {
 		start_interval_market_update(
-			&node_api.clone(),
+			&node_api,
 			run_config.teeracle_update_interval,
-			enclave.clone().as_ref(),
+			enclave.as_ref(),
 			&teeracle_tokio_handle,
 		);
 	}
 
-	// ------------------------------------------------------------------------
-	// start parentchain syncing loop (subscribe to header updates)
-	let api4 = node_api.clone();
-	let parentchain_sync_enclave_api = enclave.clone();
-	thread::Builder::new()
-		.name("parentchain_sync_loop".to_owned())
-		.spawn(move || {
-			if let Err(e) = subscribe_to_parentchain_new_headers(
-				parentchain_sync_enclave_api,
-				&api4,
-				last_synced_header,
-			) {
-				error!("Parentchain block syncing terminated with a failure: {:?}", e);
-			}
-			println!("[!] Parentchain block syncing has terminated");
-		})
-		.unwrap();
+	if WorkerModeProvider::worker_mode() != WorkerMode::Teeracle {
+		println!("*** [+] Finished syncing light client, syncing parentchain...");
 
-	//-------------------------------------------------------------------------
-	// start execution of trusted getters
-	if WorkerModeProvider::worker_mode() == WorkerMode::Sidechain
-		|| WorkerModeProvider::worker_mode() == WorkerMode::OffChainWorker
-	{
-		let trusted_getters_enclave_api = enclave;
+		// Syncing all parentchain blocks, this might take a while..
+		let parentchain_block_syncer =
+			Arc::new(ParentchainBlockSyncer::new(node_api.clone(), enclave.clone()));
+		let mut last_synced_header = parentchain_block_syncer.sync_parentchain(last_synced_header);
+
+		// ------------------------------------------------------------------------
+		// Initialize the sidechain
+		if WorkerModeProvider::worker_mode() == WorkerMode::Sidechain {
+			last_synced_header = sidechain_init_block_production(
+				enclave.clone(),
+				&register_enclave_xt_header,
+				we_are_primary_validateer,
+				parentchain_block_syncer,
+				sidechain_storage,
+				&last_synced_header,
+			);
+		}
+
+		// ------------------------------------------------------------------------
+		// start parentchain syncing loop (subscribe to header updates)
+		let api4 = node_api.clone();
+		let enclave_parentchain_sync = enclave;
 		thread::Builder::new()
-			.name("trusted_getters_execution".to_owned())
+			.name("parentchain_sync_loop".to_owned())
 			.spawn(move || {
-				start_interval_trusted_getter_execution(trusted_getters_enclave_api.as_ref())
+				if let Err(e) = subscribe_to_parentchain_new_headers(
+					enclave_parentchain_sync,
+					&api4,
+					last_synced_header,
+				) {
+					error!("Parentchain block syncing terminated with a failure: {:?}", e);
+				}
+				println!("[!] Parentchain block syncing has terminated");
 			})
 			.unwrap();
 	}
@@ -578,22 +565,6 @@ fn spawn_worker_for_shard_polling<InitializationHandler>(
 			thread::sleep(Duration::from_secs(POLL_INTERVAL_SECS));
 		}
 	});
-}
-
-/// Starts the execution of trusted getters in repeating intervals.
-///
-/// The getters are executed in a pre-defined slot duration.
-fn start_interval_trusted_getter_execution<E: Sidechain>(enclave_api: &E) {
-	use itp_settings::enclave::TRUSTED_GETTERS_SLOT_DURATION;
-
-	schedule_on_repeating_intervals(
-		|| {
-			if let Err(e) = enclave_api.execute_trusted_getters() {
-				error!("Execution of trusted getters failed: {:?}", e);
-			}
-		},
-		TRUSTED_GETTERS_SLOT_DURATION,
-	);
 }
 
 type Events = Vec<frame_system::EventRecord<Event, Hash>>;
@@ -663,22 +634,50 @@ fn print_events(events: Events, _sender: Sender<String>) {
 					},
 				}
 			},
-			/*
-			/// FIXME: to add as soon as worker, node, and pallet are compatible (based on the same substrate version)
-						Event::Teeracle(re) => {
-							debug!("{:?}", re);
-							match &re {
-								my_node_runtime::pallet_teeracle::RawEvent::ExchangeRateUpdated(
-									currency,
-									new_value,
-								) => {
-									println!("[+] Received ExchangeRateUpdated event");
-									println!("    Currency:  {:?}", str::from_utf8(&currency).unwrap());
-									println!("    Exchange rate: {}", new_value.to_string());
-								},
-							}
-						},
-			*/
+			#[cfg(feature = "teeracle")]
+			Event::Teeracle(re) => {
+				debug!("{:?}", re);
+				match &re {
+					my_node_runtime::pallet_teeracle::Event::ExchangeRateUpdated(
+						source,
+						currency,
+						new_value,
+					) => {
+						println!("[+] Received ExchangeRateUpdated event");
+						println!("    Data source:  {:?}", source);
+						println!("    Currency:  {:?}", currency);
+						println!("    Exchange rate: {:?}", new_value);
+					},
+					my_node_runtime::pallet_teeracle::Event::ExchangeRateDeleted(
+						source,
+						currency,
+					) => {
+						println!("[+] Received ExchangeRateDeleted event");
+						println!("    Data source:  {:?}", source);
+						println!("    Currency:  {:?}", currency);
+					},
+					my_node_runtime::pallet_teeracle::Event::AddedToWhitelist(
+						source,
+						mrenclave,
+					) => {
+						println!("[+] Received AddedToWhitelist event");
+						println!("    Data source:  {:?}", source);
+						println!("    Currency:  {:?}", mrenclave);
+					},
+					my_node_runtime::pallet_teeracle::Event::RemovedFromWhitelist(
+						source,
+						mrenclave,
+					) => {
+						println!("[+] Received RemovedFromWhitelist event");
+						println!("    Data source:  {:?}", source);
+						println!("    Currency:  {:?}", mrenclave);
+					},
+					_ => {
+						trace!("Ignoring unsupported pallet_teeracle event");
+					},
+				}
+			},
+			#[cfg(feature = "sidechain")]
 			Event::Sidechain(re) => match &re {
 				my_node_runtime::pallet_sidechain::Event::ProposedSidechainBlock(
 					sender,

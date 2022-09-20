@@ -320,6 +320,7 @@ mod tests {
 	}
 
 	#[test]
+	#[ignore = "depends on external web-service that proved to be unreliable for CI"]
 	fn get_with_parameters() {
 		#[derive(Serialize, Deserialize, Debug)]
 		struct RequestArgs {
@@ -370,6 +371,7 @@ mod tests {
 	}
 
 	#[test]
+	#[ignore = "depends on external web-service that proved to be unreliable for CI"]
 	fn get_without_parameters() {
 		// Data structure that matches with REST API JSON
 		#[derive(Serialize, Deserialize, Debug)]
@@ -406,6 +408,7 @@ mod tests {
 	}
 
 	#[test]
+	#[ignore = "depends on external web-service that proved to be unreliable for CI"]
 	fn post_with_body() {
 		#[derive(Serialize, Deserialize, Debug)]
 		struct HttpBinAnything {
@@ -449,6 +452,7 @@ mod tests {
 	}
 
 	#[test]
+	#[ignore = "depends on external web-service that proved to be unreliable for CI"]
 	fn get_coins_list_from_coin_gecko_works() {
 		// Data structure that matches with REST API JSON
 		#[derive(Serialize, Deserialize, Debug)]
@@ -480,6 +484,7 @@ mod tests {
 	}
 
 	#[test]
+	#[ignore = "depends on external web-service that proved to be unreliable for CI"]
 	fn authenticated_get_works() {
 		#[derive(Serialize, Deserialize, Debug)]
 		struct HttpBinAnything {
@@ -516,6 +521,7 @@ mod tests {
 	}
 
 	#[test]
+	#[ignore = "depends on external web-service that proved to be unreliable for CI"]
 	fn authenticated_get_with_wrong_root_certificate_fails() {
 		#[derive(Serialize, Deserialize, Debug)]
 		struct HttpBinAnything {

@@ -1,5 +1,5 @@
 [workspace]
-resolver = "2"
+
 members = [
     "app-libs/exchange-oracle",
     "app-libs/sgx-runtime",
@@ -40,7 +40,9 @@ members = [
     "core-primitives/sgx/io",
     "core-primitives/stf-executor",
     "core-primitives/stf-state-handler",
+    "core-primitives/stf-state-observer",
     "core-primitives/storage",
+    "core-primitives/substrate-sgx/environmental",
     "core-primitives/substrate-sgx/externalities",
     "core-primitives/substrate-sgx/sp-io",
     "core-primitives/teerex-storage",
@@ -48,16 +50,19 @@ members = [
     "core-primitives/time-utils",
     "core-primitives/top-pool",
     "core-primitives/top-pool-author",
+    "core-primitives/types",
+    "core-primitives/utils",
     "service",
     "sidechain/block-composer",
+    "sidechain/block-verification",
     "sidechain/consensus/aura",
     "sidechain/consensus/common",
     "sidechain/consensus/slots",
     "sidechain/peer-fetch",
+    "sidechain/primitives",
     "sidechain/rpc-handler",
     "sidechain/sidechain-crate",
     "sidechain/state",
-    "sidechain/top-pool-executor",
     "sidechain/validateer-fetch",
 ]
 
@@ -72,6 +77,17 @@ sgx_tcrypto = { version = "1.1.5", git = "https://github.com/apache/incubator-te
 sgx_crypto_helper = { version = "1.1.5", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", tag = "v1.1.5"}
 sgx_rand = { version = "1.1.5", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", tag = "v1.1.5"}
 sgx_urts = { version = "1.1.5", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", tag = "v1.1.5"}
+
+# have to patch the substrate crates for polkadot-v0.9.28 due to too old rust toolchain
+# see also https://github.com/integritee-network/worker/issues/1000
+# I had to make sure the other crate dependencies point to the original repo though:
+# https://github.com/Kailai-Wang/substrate/commit/0bee196fbcac2e8663220b277a3767767202c630
+# otherwise I'll get "maybe two versions of ..." error
+[patch."https://github.com/paritytech/substrate.git"]
+sc-transaction-pool = { git = "https://github.com/Kailai-Wang/substrate", branch = "kai-patch-v0.9.28" }
+sc-consensus-babe = { git = "https://github.com/Kailai-Wang/substrate", branch = "kai-patch-v0.9.28" }
+[patch.crates-io]
+parity-db = { git = 'https://github.com/Kailai-Wang/parity-db', branch = "kai-patch-v0.9.28" }
 
 #[patch."https://github.com/integritee-network/sgx-runtime"]
 #sgx-runtime = { path = "../sgx-runtime/runtime"}

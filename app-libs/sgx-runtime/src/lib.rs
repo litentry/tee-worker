@@ -69,9 +69,8 @@ pub use pallet_timestamp::Call as TimestampCall;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
-/// litentry
+// litentry
 pub use pallet_identity_management::{self, Call as IdentityManagementCall};
-pub use pallet_sgx_account_linker::{self, Call as SgxAccountLinkerCall};
 
 /// The address format for describing accounts.
 pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
@@ -295,11 +294,6 @@ impl pallet_parentchain::Config for Runtime {
 	type WeightInfo = ();
 }
 
-impl pallet_sgx_account_linker::Config for Runtime {
-	type Event = Event;
-	type WeightInfo = ();
-}
-
 impl pallet_identity_management::Config for Runtime {
 	type Event = Event;
 	type ManageOrigin = EnsureRoot<AccountId>;
@@ -323,7 +317,6 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>},
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		Parentchain: pallet_parentchain::{Pallet, Call, Storage},
-		SgxAccountLinker: pallet_sgx_account_linker,
 		IdentityManagement: pallet_identity_management,
 	}
 );
@@ -345,6 +338,7 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>},
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		Parentchain: pallet_parentchain::{Pallet, Call, Storage},
+		IdentityManagement: pallet_identity_management,
 
 		Evm: pallet_evm::{Pallet, Call, Storage, Config, Event<T>},
 	}

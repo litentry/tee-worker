@@ -18,21 +18,22 @@
 use crate::{
 	error::{Error, Result as EnclaveResult},
 	global_components::{
-		EnclaveOCallApi, EnclaveRpcConnectionRegistry, EnclaveRpcResponder,
-		EnclaveShieldingKeyRepository, EnclaveSidechainApi, EnclaveSidechainBlockImportQueue,
+		EnclaveBlockImportConfirmationHandler, EnclaveGetterExecutor, EnclaveOCallApi,
+		EnclaveRpcConnectionRegistry, EnclaveRpcResponder, EnclaveShieldingKeyRepository,
+		EnclaveSidechainApi, EnclaveSidechainBlockImportQueue,
 		EnclaveSidechainBlockImportQueueWorker, EnclaveSidechainBlockImporter,
 		EnclaveSidechainBlockSyncer, EnclaveStateFileIo, EnclaveStateHandler,
-		EnclaveStateKeyRepository, EnclaveStfEnclaveSigner, EnclaveStfExecutor, EnclaveTopPool,
-		EnclaveTopPoolAuthor, EnclaveTopPoolOperationHandler, EnclaveValidatorAccessor,
-		GLOBAL_EXTRINSICS_FACTORY_COMPONENT,
+		EnclaveStateKeyRepository, EnclaveStateObserver, EnclaveStateSnapshotRepository,
+		EnclaveStfEnclaveSigner, EnclaveStfExecutor, EnclaveTopPool, EnclaveTopPoolAuthor,
+		EnclaveValidatorAccessor, GLOBAL_EXTRINSICS_FACTORY_COMPONENT,
 		GLOBAL_IMMEDIATE_PARENTCHAIN_IMPORT_DISPATCHER_COMPONENT,
 		GLOBAL_NODE_METADATA_REPOSITORY_COMPONENT, GLOBAL_OCALL_API_COMPONENT,
 		GLOBAL_PARENTCHAIN_BLOCK_VALIDATOR_ACCESS_COMPONENT, GLOBAL_RPC_WS_HANDLER_COMPONENT,
 		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT, GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT,
 		GLOBAL_SIDECHAIN_BLOCK_SYNCER_COMPONENT, GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT,
 		GLOBAL_SIDECHAIN_IMPORT_QUEUE_WORKER_COMPONENT, GLOBAL_STATE_HANDLER_COMPONENT,
-		GLOBAL_STATE_KEY_REPOSITORY_COMPONENT, GLOBAL_STF_EXECUTOR_COMPONENT,
-		GLOBAL_TOP_POOL_AUTHOR_COMPONENT, GLOBAL_TOP_POOL_OPERATION_HANDLER_COMPONENT,
+		GLOBAL_STATE_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_OBSERVER_COMPONENT,
+		GLOBAL_STF_EXECUTOR_COMPONENT, GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 		GLOBAL_TRIGGERED_PARENTCHAIN_IMPORT_DISPATCHER_COMPONENT,
 		GLOBAL_WEB_SOCKET_SERVER_COMPONENT,
 	},
@@ -81,6 +82,7 @@ use itp_sgx_crypto::{
 use itp_sgx_io::StaticSealedIO;
 use itp_stf_state_handler::{
 	handle_state::HandleState, query_shard_state::QueryShardState,
+	state_snapshot_repository::VersionedStateAccess,
 	state_snapshot_repository_loader::StateSnapshotRepositoryLoader, StateHandler,
 };
 use itp_top_pool::pool::Options as PoolOptions;
@@ -90,7 +92,7 @@ use its_sidechain::block_composer::BlockComposer;
 use log::*;
 use primitive_types::H256;
 use sp_core::crypto::Pair;
-use std::{fs, string::String, sync::Arc};
+use std::{collections::HashMap, fs, string::String, sync::Arc};
 
 pub(crate) fn init_enclave(mu_ra_url: String, untrusted_worker_url: String) -> EnclaveResult<()> {
 	// Initialize the logging environment in the enclave.
@@ -126,8 +128,12 @@ pub(crate) fn init_enclave(mu_ra_url: String, untrusted_worker_url: String) -> E
 		StateSnapshotRepositoryLoader::<EnclaveStateFileIo, StfState, H256>::new(state_file_io);
 	let state_snapshot_repository =
 		state_snapshot_repository_loader.load_snapshot_repository(STATE_SNAPSHOTS_CACHE_SIZE)?;
+	let state_observer = initialize_state_observer(&state_snapshot_repository)?;
+	GLOBAL_STATE_OBSERVER_COMPONENT.initialize(state_observer.clone());
 
-	let state_handler = Arc::new(StateHandler::new(state_snapshot_repository));
+	let state_handler =
+		Arc::new(StateHandler::new(state_snapshot_repository, state_observer.clone()));
+
 	GLOBAL_STATE_HANDLER_COMPONENT.initialize(state_handler.clone());
 
 	let ocall_api = Arc::new(OcallApi);
@@ -141,7 +147,7 @@ pub(crate) fn init_enclave(mu_ra_url: String, untrusted_worker_url: String) -> E
 		state_handler.clone(),
 		node_metadata_repository,
 	));
-	GLOBAL_STF_EXECUTOR_COMPONENT.initialize(stf_executor.clone());
+	GLOBAL_STF_EXECUTOR_COMPONENT.initialize(stf_executor);
 
 	// For debug purposes, list shards. no problem to panic if fails.
 	let shards = state_handler.list_shards().unwrap();
@@ -176,11 +182,8 @@ pub(crate) fn init_enclave(mu_ra_url: String, untrusted_worker_url: String) -> E
 	);
 	GLOBAL_TOP_POOL_AUTHOR_COMPONENT.initialize(top_pool_author.clone());
 
-	let top_pool_operation_handler =
-		Arc::new(EnclaveTopPoolOperationHandler::new(top_pool_author.clone(), stf_executor));
-	GLOBAL_TOP_POOL_OPERATION_HANDLER_COMPONENT.initialize(top_pool_operation_handler);
-
-	let io_handler = public_api_rpc_handler(top_pool_author);
+	let getter_executor = Arc::new(EnclaveGetterExecutor::new(state_observer));
+	let io_handler = public_api_rpc_handler(top_pool_author, getter_executor);
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
 	GLOBAL_RPC_WS_HANDLER_COMPONENT.initialize(rpc_handler);
 
@@ -190,10 +193,25 @@ pub(crate) fn init_enclave(mu_ra_url: String, untrusted_worker_url: String) -> E
 	Ok(())
 }
 
+fn initialize_state_observer(
+	snapshot_repository: &EnclaveStateSnapshotRepository,
+) -> EnclaveResult<Arc<EnclaveStateObserver>> {
+	let shards = snapshot_repository.list_shards()?;
+	let mut states_map = HashMap::<
+		ShardIdentifier,
+		<EnclaveStateSnapshotRepository as VersionedStateAccess>::StateType,
+	>::new();
+	for shard in shards.into_iter() {
+		let state = snapshot_repository.load_latest(&shard)?;
+		states_map.insert(shard, state);
+	}
+	Ok(Arc::new(EnclaveStateObserver::from_map(states_map)))
+}
+
 pub(crate) fn init_enclave_sidechain_components() -> EnclaveResult<()> {
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
-	let top_pool_operation_handler = GLOBAL_TOP_POOL_OPERATION_HANDLER_COMPONENT.get()?;
+	let top_pool_author = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
 
 	let parentchain_block_import_dispatcher =
 		GLOBAL_TRIGGERED_PARENTCHAIN_IMPORT_DISPATCHER_COMPONENT.get()?;
@@ -205,15 +223,28 @@ pub(crate) fn init_enclave_sidechain_components() -> EnclaveResult<()> {
 	let sidechain_block_importer = Arc::new(EnclaveSidechainBlockImporter::new(
 		state_handler,
 		state_key_repository.clone(),
-		top_pool_operation_handler,
+		top_pool_author,
 		parentchain_block_import_dispatcher,
 		ocall_api.clone(),
 	));
 
 	let sidechain_block_import_queue = GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT.get()?;
+	let metadata_repository = GLOBAL_NODE_METADATA_REPOSITORY_COMPONENT.get()?;
+	let extrinsics_factory = GLOBAL_EXTRINSICS_FACTORY_COMPONENT.get()?;
+	let validator_accessor = GLOBAL_PARENTCHAIN_BLOCK_VALIDATOR_ACCESS_COMPONENT.get()?;
 
-	let sidechain_block_syncer =
-		Arc::new(EnclaveSidechainBlockSyncer::new(sidechain_block_importer, ocall_api));
+	let sidechain_block_import_confirmation_handler =
+		Arc::new(EnclaveBlockImportConfirmationHandler::new(
+			metadata_repository,
+			extrinsics_factory,
+			validator_accessor,
+		));
+
+	let sidechain_block_syncer = Arc::new(EnclaveSidechainBlockSyncer::new(
+		sidechain_block_importer,
+		ocall_api,
+		sidechain_block_import_confirmation_handler,
+	));
 	GLOBAL_SIDECHAIN_BLOCK_SYNCER_COMPONENT.initialize(sidechain_block_syncer.clone());
 
 	let sidechain_block_import_queue_worker =
@@ -223,9 +254,7 @@ pub(crate) fn init_enclave_sidechain_components() -> EnclaveResult<()> {
 		));
 	GLOBAL_SIDECHAIN_IMPORT_QUEUE_WORKER_COMPONENT.initialize(sidechain_block_import_queue_worker);
 
-	let node_metadata_repo = GLOBAL_NODE_METADATA_REPOSITORY_COMPONENT.get()?;
-	let block_composer =
-		Arc::new(BlockComposer::new(signer, state_key_repository, node_metadata_repo));
+	let block_composer = Arc::new(BlockComposer::new(signer, state_key_repository));
 	GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT.initialize(block_composer);
 
 	Ok(())
@@ -266,6 +295,7 @@ pub(crate) fn init_light_client<WorkerModeProvider: ProvideWorkerMode>(
 fn initialize_parentchain_import_dispatcher<WorkerModeProvider: ProvideWorkerMode>(
 ) -> EnclaveResult<()> {
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
+	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
 	let stf_executor = GLOBAL_STF_EXECUTOR_COMPONENT.get()?;
 	let top_pool_author = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
@@ -275,7 +305,7 @@ fn initialize_parentchain_import_dispatcher<WorkerModeProvider: ProvideWorkerMod
 	let node_metadata_repository = GLOBAL_NODE_METADATA_REPOSITORY_COMPONENT.get()?;
 
 	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
-		state_handler.clone(),
+		state_observer,
 		ocall_api,
 		shielding_key_repository.clone(),
 	));

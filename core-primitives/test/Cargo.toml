@@ -1,7 +1,7 @@
 [package]
 name = "itp-test"
-version = "0.8.0"
-edition = "2018"
+version = "0.9.0"
+edition = "2021"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
@@ -17,9 +17,9 @@ jsonrpc-core_sgx = { package = "jsonrpc-core", git = "https://github.com/scs/jso
 jsonrpc-core = { version = "18", optional = true }
 
 # substrate deps
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
 
 # local deps
 ita-stf = { path = "../../app-libs/stf", default-features = false }
@@ -30,9 +30,7 @@ itp-stf-state-handler = { path = "../stf-state-handler", default-features = fals
 itp-storage = { path = "../storage", default-features = false }
 itp-teerex-storage = { path = "../teerex-storage", default-features = false }
 itp-time-utils = { path = "../time-utils", default-features = false }
-
-# integritee
-itp-types = { default-features = false, features = ["test"], git = "https://github.com/integritee-network/pallets.git", branch = "sdk-v0.9.0-polkadot-v0.9.26" }
+itp-types = { path = "../types", default-features = false, features = ["test"] }
 
 [features]
 default = ["std"]
