@@ -60,7 +60,7 @@ services:
   # this is actually litentry parachain, keep the integritee name so that we don't have change
   # the service name everywhere in other yml files
   integritee-node:
-    image: "integritee/integritee-node-dev:1.0.17"
+    image: docker_integritee-node:latest
     container_name: integritee-node
     networks:
       - integritee-test-network
