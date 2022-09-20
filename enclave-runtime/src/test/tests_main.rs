@@ -14,6 +14,9 @@
 	limitations under the License.
 */
 
+#[cfg(feature = "evm")]
+use crate::test::evm_pallet_tests;
+
 use crate::{
 	attestation,
 	ocall::OcallApi,
@@ -21,85 +24,50 @@ use crate::{
 	sync::tests::{enclave_rw_lock_works, sidechain_rw_lock_works},
 	test::{
 		cert_tests::*,
-		fixtures::initialize_test_state::init_state,
-		mocks::{rpc_responder_mock::RpcResponderMock, types::TestStateKeyRepo},
+		direct_rpc_tests,
+		fixtures::test_setup::{enclave_call_signer, test_setup, TestTopPoolAuthor},
+		mocks::types::TestStateKeyRepo,
 		sidechain_aura_tests, top_pool_tests,
 	},
 	tls_ra,
 };
-use codec::{Decode, Encode};
+use codec::Decode;
+use ita_sgx_runtime::Parentchain;
 use ita_stf::{
-	helpers::{
-		account_key_hash, get_parentchain_blockhash, get_parentchain_number,
-		get_parentchain_parenthash,
-	},
-	stf_sgx_tests,
-	test_genesis::endowed_account as funded_pair,
-	AccountInfo, ShardIdentifier, State, StatePayload, StateTypeDiff, Stf, TrustedCall,
+	helpers::account_key_hash, stf_sgx_tests, test_genesis::endowed_account as funded_pair,
+	AccountInfo, Getter, ShardIdentifier, State, StatePayload, StateTypeDiff, Stf, TrustedCall,
 	TrustedCallSigned, TrustedGetter, TrustedOperation,
 };
-use itp_node_api::metadata::{
-	metadata_mocks::NodeMetadataMock, pallet_sidechain::SidechainCallIndexes,
-	provider::NodeMetadataRepository,
-};
-use itp_ocall_api::EnclaveAttestationOCallApi;
-use itp_settings::enclave::MAX_TRUSTED_OPS_EXEC_DURATION;
-use itp_sgx_crypto::{
-	ed25519_derivation::DeriveEd25519, mocks::KeyRepositoryMock, Aes, StateCrypto,
-};
+use itp_node_api::metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository};
+use itp_sgx_crypto::{Aes, StateCrypto};
 use itp_sgx_externalities::{SgxExternalities, SgxExternalitiesTrait};
 use itp_stf_executor::{
 	enclave_signer_tests as stf_enclave_signer_tests, executor::StfExecutor,
 	executor_tests as stf_executor_tests, traits::StateUpdateProposer, BatchExecutionResult,
 };
 use itp_stf_state_handler::handle_state::HandleState;
-use itp_test::mock::{
-	handle_state_mock, handle_state_mock::HandleStateMock, metrics_ocall_mock::MetricsOCallMock,
-	shielding_crypto_mock::ShieldingCryptoMock,
-};
-use itp_top_pool::{basic_pool::BasicPool, pool::ExtrinsicHash};
-use itp_top_pool_author::{
-	api::SidechainApi, author::Author, test_utils::submit_operation_to_top_pool,
-	top_filter::AllowAllTopsFilter, traits::AuthorApi,
-};
-use itp_types::{AccountId, Block, Header, MrEnclave, OpaqueCall};
-use its_sidechain::{
-	block_composer::{BlockComposer, ComposeBlockAndConfirmation},
-	state::{SidechainDB, SidechainState, SidechainSystemExt},
-	top_pool_executor::{TopPoolCallOperator, TopPoolOperationHandler},
-};
-use sgx_tunittest::*;
-use sgx_types::size_t;
-use sidechain_primitives::{
+use itp_test::mock::{handle_state_mock, handle_state_mock::HandleStateMock};
+use itp_top_pool_author::{test_utils::submit_operation_to_top_pool, traits::AuthorApi};
+use itp_types::{AccountId, Block, Header};
+use its_primitives::{
 	traits::{
 		Block as BlockTrait, BlockData, Header as SidechainHeaderTrait,
 		SignedBlock as SignedBlockTrait,
 	},
 	types::block::SignedBlock,
 };
-use sp_core::{
-	crypto::{AccountId32, Pair},
-	ed25519 as spEd25519, H256,
+use its_sidechain::{
+	block_composer::{BlockComposer, ComposeBlock},
+	state::{SidechainDB, SidechainState, SidechainSystemExt},
 };
+use sgx_tunittest::*;
+use sgx_types::size_t;
+use sp_core::{crypto::Pair, ed25519 as spEd25519, H256};
 use sp_runtime::traits::Header as HeaderT;
-use std::{string::String, sync::Arc, vec::Vec};
+use std::{string::String, sync::Arc, time::Duration, vec::Vec};
 
-use pallet_sgx_account_linker;
-
-type TestRpcResponder = RpcResponderMock<ExtrinsicHash<SidechainApi<Block>>>;
-type TestTopPool = BasicPool<SidechainApi<Block>, Block, TestRpcResponder>;
-type TestShieldingKeyRepo = KeyRepositoryMock<ShieldingCryptoMock>;
 type TestStfExecutor =
 	StfExecutor<OcallApi, HandleStateMock, NodeMetadataRepository<NodeMetadataMock>>;
-type TestTopPoolAuthor = Author<
-	TestTopPool,
-	AllowAllTopsFilter,
-	HandleStateMock,
-	TestShieldingKeyRepo,
-	MetricsOCallMock,
->;
-type TestTopPoolOperationHandler =
-	TopPoolOperationHandler<Block, SignedBlock, TestTopPoolAuthor, TestStfExecutor>;
 
 #[no_mangle]
 pub extern "C" fn test_main_entrance() -> size_t {
@@ -118,7 +86,7 @@ pub extern "C" fn test_main_entrance() -> size_t {
 		itp_stf_state_handler::test::sgx_tests::test_state_files_from_handler_can_be_loaded_again,
 		itp_stf_state_handler::test::sgx_tests::test_file_io_get_state_hash_works,
 		itp_stf_state_handler::test::sgx_tests::test_list_state_ids_ignores_files_not_matching_the_pattern,
-		test_compose_block_and_confirmation,
+		test_compose_block,
 		test_submit_trusted_call_to_top_pool,
 		test_submit_trusted_getter_to_top_pool,
 		test_differentiate_getter_and_call_works,
@@ -129,6 +97,7 @@ pub extern "C" fn test_main_entrance() -> size_t {
 		test_executing_call_updates_account_nonce,
 		test_call_set_update_parentchain_block,
 		test_invalid_nonce_call_is_not_executed,
+		test_signature_must_match_public_sender_in_call,
 		test_non_root_shielding_call_is_not_executed,
 		test_shielding_call_with_enclave_self_is_executed,
 		rpc::worker_api_direct::tests::test_given_io_handler_methods_then_retrieve_all_names_as_string,
@@ -153,6 +122,7 @@ pub extern "C" fn test_main_entrance() -> size_t {
 		stf_executor_tests::execute_timed_getters_does_not_execute_more_than_once_if_not_enough_time,
 		stf_executor_tests::execute_timed_getters_batch_returns_early_when_no_getter,
 		stf_executor_tests::propose_state_update_always_executes_preprocessing_step,
+        stf_executor_tests::propose_state_update_executes_no_trusted_calls_given_no_time,
 		stf_executor_tests::propose_state_update_executes_only_one_trusted_call_given_not_enough_time,
 		stf_executor_tests::propose_state_update_executes_all_calls_given_enough_time,
 		stf_enclave_signer_tests::enclave_signer_signatures_are_valid,
@@ -172,6 +142,11 @@ pub extern "C" fn test_main_entrance() -> size_t {
 		tls_ra::seal_handler::test::seal_state_fails_for_invalid_state,
 		tls_ra::seal_handler::test::unseal_seal_state_works,
 		tls_ra::tests::test_tls_ra_server_client_networking,
+		// RPC tests
+		direct_rpc_tests::get_state_request_works,
+
+		// EVM tests
+		run_evm_tests,
 
 		// these unit test (?) need an ipfs node running..
 		// ipfs::test_creates_ipfs_content_struct_works,
@@ -181,13 +156,6 @@ pub extern "C" fn test_main_entrance() -> size_t {
 
 		// Teeracle tests
 		run_teeracle_tests,
-
-		// litentry
-		test_call_link_eth,
-		test_call_link_sub_sr25519,
-		test_call_link_sub_ed25519,
-		// comment out for the moment
-		// test_call_link_sub_ecdsa,
 	)
 }
 
@@ -202,15 +170,22 @@ fn run_teeracle_tests() {
 #[cfg(not(feature = "teeracle"))]
 fn run_teeracle_tests() {}
 
-fn test_compose_block_and_confirmation() {
+#[cfg(feature = "evm")]
+fn run_evm_tests() {
+	evm_pallet_tests::test_evm_call();
+	evm_pallet_tests::test_evm_counter();
+	evm_pallet_tests::test_evm_create();
+	evm_pallet_tests::test_evm_create2();
+}
+#[cfg(not(feature = "evm"))]
+fn run_evm_tests() {}
+
+fn test_compose_block() {
 	// given
 	let (_, _, shard, _, _, state_handler) = test_setup();
-	let node_metadata = NodeMetadataMock::new();
-	let node_metadata_repo = Arc::new(NodeMetadataRepository::new(node_metadata.clone()));
-	let block_composer = BlockComposer::<Block, SignedBlock, _, _, _>::new(
+	let block_composer = BlockComposer::<Block, SignedBlock, _, _>::new(
 		test_account(),
 		Arc::new(TestStateKeyRepo::new(state_key())),
-		node_metadata_repo,
 	);
 
 	let signed_top_hashes: Vec<H256> = vec![[94; 32].into(), [1; 32].into()].to_vec();
@@ -222,8 +197,8 @@ fn test_compose_block_and_confirmation() {
 	state_handler.write_after_mutation(db.ext.clone(), lock, &shard).unwrap();
 
 	// when
-	let (opaque_call, signed_block) = block_composer
-		.compose_block_and_confirmation(
+	let signed_block = block_composer
+		.compose_block(
 			&latest_parentchain_header(),
 			signed_top_hashes,
 			shard,
@@ -233,13 +208,8 @@ fn test_compose_block_and_confirmation() {
 		.unwrap();
 
 	// then
-	let call_indexes = node_metadata.confirm_proposed_sidechain_block_indexes().unwrap();
-	let expected_call =
-		OpaqueCall::from_tuple(&(call_indexes, shard, &signed_block.block().header()));
-
 	assert!(signed_block.verify_signature());
 	assert_eq!(signed_block.block().header().block_number(), 1);
-	assert!(opaque_call.encode().starts_with(&expected_call.encode()));
 }
 
 fn test_submit_trusted_call_to_top_pool() {
@@ -262,12 +232,17 @@ fn test_submit_trusted_call_to_top_pool() {
 	)
 	.unwrap();
 
-	let (calls, _) = top_pool_author.get_pending_tops_separated(shard).unwrap();
+	let calls = top_pool_author.get_pending_trusted_calls(shard);
 
 	// then
 	assert_eq!(calls[0], trusted_operation);
 }
 
+// The TOP pool can hold any TrustedOperation, which at the moment also includes Getters.
+// However, in reality we don't submit getters to the TOP pool anymore, they are executed immediately.
+// The filter set in the TOP pool author prevents getters from being submitted.
+// In this test however, we set the filter to `AllowAllTops`, so getters can be submitted.
+// We want to keep this back door open, in case we would want to submit getter into the TOP pool again in the future.
 fn test_submit_trusted_getter_to_top_pool() {
 	// given
 	let (top_pool_author, _, shard, _, shielding_key, _) = test_setup();
@@ -285,10 +260,10 @@ fn test_submit_trusted_getter_to_top_pool() {
 	)
 	.unwrap();
 
-	let (_, getters) = top_pool_author.get_pending_tops_separated(shard).unwrap();
+	let getters = top_pool_author.get_pending_trusted_getters(shard);
 
 	// then
-	assert_eq!(getters[0], signed_getter);
+	assert_eq!(getters[0], TrustedOperation::get(Getter::trusted(signed_getter)));
 }
 
 fn test_differentiate_getter_and_call_works() {
@@ -322,11 +297,12 @@ fn test_differentiate_getter_and_call_works() {
 	)
 	.unwrap();
 
-	let (calls, getters) = top_pool_author.get_pending_tops_separated(shard).unwrap();
+	let calls = top_pool_author.get_pending_trusted_calls(shard);
+	let getters = top_pool_author.get_pending_trusted_getters(shard);
 
 	// then
 	assert_eq!(calls[0], trusted_operation);
-	assert_eq!(getters[0], signed_getter);
+	assert_eq!(getters[0], TrustedOperation::get(Getter::trusted(signed_getter)));
 }
 
 fn test_create_block_and_confirmation_works() {
@@ -339,14 +315,9 @@ fn test_create_block_and_confirmation_works() {
 		state_handler.clone(),
 		node_metadata_repo.clone(),
 	));
-	let top_pool_operation_handler = TopPoolOperationHandler::<Block, SignedBlock, _, _>::new(
-		top_pool_author.clone(),
-		stf_executor.clone(),
-	);
-	let block_composer = BlockComposer::<Block, SignedBlock, _, _, _>::new(
+	let block_composer = BlockComposer::<Block, SignedBlock, _, _>::new(
 		test_account(),
 		Arc::new(TestStateKeyRepo::new(state_key())),
-		node_metadata_repo,
 	);
 
 	let sender = funded_pair();
@@ -365,14 +336,13 @@ fn test_create_block_and_confirmation_works() {
 	.unwrap();
 
 	// when
-	let execution_result =
-		execute_trusted_calls(&shard, stf_executor.as_ref(), &top_pool_operation_handler);
+	let execution_result = execute_trusted_calls(&shard, stf_executor.as_ref(), &top_pool_author);
 
 	let executed_operation_hashes =
 		execution_result.get_executed_operation_hashes().iter().copied().collect();
 
-	let (opaque_call, signed_block) = block_composer
-		.compose_block_and_confirmation(
+	let signed_block = block_composer
+		.compose_block(
 			&latest_parentchain_header(),
 			executed_operation_hashes,
 			shard,
@@ -382,14 +352,9 @@ fn test_create_block_and_confirmation_works() {
 		.unwrap();
 
 	// then
-	let call_indexes = node_metadata.confirm_proposed_sidechain_block_indexes().unwrap();
-	let expected_call =
-		OpaqueCall::from_tuple(&(call_indexes, shard, &signed_block.block().header()));
-
 	assert!(signed_block.verify_signature());
 	assert_eq!(signed_block.block().header().block_number(), 1);
 	assert_eq!(signed_block.block().block_data().signed_top_hashes()[0], top_hash);
-	assert!(opaque_call.encode().starts_with(&expected_call.encode()));
 }
 
 fn test_create_state_diff() {
@@ -401,14 +366,9 @@ fn test_create_state_diff() {
 		state_handler.clone(),
 		node_metadata_repo.clone(),
 	));
-	let top_pool_operation_handler = TopPoolOperationHandler::<Block, SignedBlock, _, _>::new(
-		top_pool_author.clone(),
-		stf_executor.clone(),
-	);
-	let block_composer = BlockComposer::<Block, SignedBlock, _, _, _>::new(
+	let block_composer = BlockComposer::<Block, SignedBlock, _, _>::new(
 		test_account(),
 		Arc::new(TestStateKeyRepo::new(state_key())),
-		node_metadata_repo,
 	);
 
 	let sender = funded_pair();
@@ -427,14 +387,13 @@ fn test_create_state_diff() {
 	.unwrap();
 
 	// when
-	let execution_result =
-		execute_trusted_calls(&shard, stf_executor.as_ref(), &top_pool_operation_handler);
+	let execution_result = execute_trusted_calls(&shard, stf_executor.as_ref(), &top_pool_author);
 
 	let executed_operation_hashes =
 		execution_result.get_executed_operation_hashes().iter().copied().collect();
 
-	let (_, signed_block) = block_composer
-		.compose_block_and_confirmation(
+	let signed_block = block_composer
+		.compose_block(
 			&latest_parentchain_header(),
 			executed_operation_hashes,
 			shard,
@@ -468,10 +427,6 @@ fn test_executing_call_updates_account_nonce() {
 	let node_metadata_repo = Arc::new(NodeMetadataRepository::new(NodeMetadataMock::new()));
 	let stf_executor =
 		Arc::new(StfExecutor::new(Arc::new(OcallApi), state_handler.clone(), node_metadata_repo));
-	let top_pool_operation_handler = TopPoolOperationHandler::<Block, SignedBlock, _, _>::new(
-		top_pool_author.clone(),
-		stf_executor.clone(),
-	);
 
 	let sender = funded_pair();
 	let receiver = unfunded_public();
@@ -491,7 +446,7 @@ fn test_executing_call_updates_account_nonce() {
 
 	// when
 	let mut execution_result =
-		execute_trusted_calls(&shard, stf_executor.as_ref(), &top_pool_operation_handler);
+		execute_trusted_calls(&shard, stf_executor.as_ref(), &top_pool_author);
 
 	let nonce =
 		Stf::account_nonce(&mut execution_result.state_after_execution, &sender.public().into());
@@ -515,9 +470,40 @@ fn test_call_set_update_parentchain_block() {
 
 	Stf::update_parentchain_block(&mut state, header.clone()).unwrap();
 
-	assert_eq!(header.hash(), state.execute_with(|| get_parentchain_blockhash().unwrap()));
-	assert_eq!(parent_hash, state.execute_with(|| get_parentchain_parenthash().unwrap()));
-	assert_eq!(block_number, state.execute_with(|| get_parentchain_number().unwrap()));
+	assert_eq!(header.hash(), state.execute_with(|| Parentchain::block_hash()));
+	assert_eq!(parent_hash, state.execute_with(|| Parentchain::parent_hash()));
+	assert_eq!(block_number, state.execute_with(|| Parentchain::block_number()));
+}
+
+fn test_signature_must_match_public_sender_in_call() {
+	// given
+	let (top_pool_author, _, shard, mrenclave, shielding_key, state_handler) = test_setup();
+	let node_metadata_repo = Arc::new(NodeMetadataRepository::new(NodeMetadataMock::new()));
+	let stf_executor =
+		Arc::new(StfExecutor::new(Arc::new(OcallApi), state_handler.clone(), node_metadata_repo));
+
+	// create accounts
+	let sender = funded_pair();
+	let receiver = unfunded_public();
+
+	let trusted_operation =
+		TrustedCall::balance_transfer(receiver.into(), sender.public().into(), 1000)
+			.sign(&sender.clone().into(), 10, &mrenclave, &shard)
+			.into_trusted_operation(true);
+
+	submit_operation_to_top_pool(
+		top_pool_author.as_ref(),
+		&trusted_operation,
+		&shielding_key,
+		shard,
+	)
+	.unwrap();
+
+	// when
+	let executed_batch = execute_trusted_calls(&shard, stf_executor.as_ref(), &top_pool_author);
+
+	// then
+	assert!(!executed_batch.executed_operations[0].is_success());
 }
 
 fn test_invalid_nonce_call_is_not_executed() {
@@ -526,10 +512,6 @@ fn test_invalid_nonce_call_is_not_executed() {
 	let node_metadata_repo = Arc::new(NodeMetadataRepository::new(NodeMetadataMock::new()));
 	let stf_executor =
 		Arc::new(StfExecutor::new(Arc::new(OcallApi), state_handler.clone(), node_metadata_repo));
-	let top_pool_operation_handler = TopPoolOperationHandler::<Block, SignedBlock, _, _>::new(
-		top_pool_author.clone(),
-		stf_executor.clone(),
-	);
 
 	// create accounts
 	let sender = funded_pair();
@@ -549,8 +531,7 @@ fn test_invalid_nonce_call_is_not_executed() {
 	.unwrap();
 
 	// when
-	let executed_batch =
-		execute_trusted_calls(&shard, stf_executor.as_ref(), &top_pool_operation_handler);
+	let executed_batch = execute_trusted_calls(&shard, stf_executor.as_ref(), &top_pool_author);
 
 	// then
 	assert!(!executed_batch.executed_operations[0].is_success());
@@ -562,10 +543,6 @@ fn test_non_root_shielding_call_is_not_executed() {
 	let node_metadata_repo = Arc::new(NodeMetadataRepository::new(NodeMetadataMock::new()));
 	let stf_executor =
 		Arc::new(StfExecutor::new(Arc::new(OcallApi), state_handler.clone(), node_metadata_repo));
-	let top_pool_operation_handler = TopPoolOperationHandler::<Block, SignedBlock, _, _>::new(
-		top_pool_author.clone(),
-		stf_executor.clone(),
-	);
 
 	let sender = funded_pair();
 	let sender_acc: AccountId = sender.public().into();
@@ -582,8 +559,7 @@ fn test_non_root_shielding_call_is_not_executed() {
 	.unwrap();
 
 	// when
-	let executed_batch =
-		execute_trusted_calls(&shard, stf_executor.as_ref(), &top_pool_operation_handler);
+	let executed_batch = execute_trusted_calls(&shard, stf_executor.as_ref(), &top_pool_author);
 
 	// then
 	assert!(!executed_batch.executed_operations[0].is_success());
@@ -594,10 +570,6 @@ fn test_shielding_call_with_enclave_self_is_executed() {
 	let node_metadata_repo = Arc::new(NodeMetadataRepository::new(NodeMetadataMock::new()));
 	let stf_executor =
 		Arc::new(StfExecutor::new(Arc::new(OcallApi), state_handler.clone(), node_metadata_repo));
-	let top_pool_operation_handler = TopPoolOperationHandler::<Block, SignedBlock, _, _>::new(
-		top_pool_author.clone(),
-		stf_executor.clone(),
-	);
 
 	let sender = funded_pair();
 	let sender_account: AccountId = sender.public().into();
@@ -621,7 +593,7 @@ fn test_shielding_call_with_enclave_self_is_executed() {
 
 	// when
 	let executed_batch =
-		execute_trusted_calls(&shard, stf_executor.as_ref(), &top_pool_operation_handler);
+		execute_trusted_calls(&shard, stf_executor.as_ref(), top_pool_author.as_ref());
 
 	// then
 	assert_eq!(1, executed_batch.executed_operations.len());
@@ -631,15 +603,15 @@ fn test_shielding_call_with_enclave_self_is_executed() {
 fn execute_trusted_calls(
 	shard: &ShardIdentifier,
 	stf_executor: &TestStfExecutor,
-	top_pool_executor: &TestTopPoolOperationHandler,
+	top_pool_author: &TestTopPoolAuthor,
 ) -> BatchExecutionResult<State> {
-	let top_pool_calls = top_pool_executor.get_trusted_calls(&shard).unwrap();
+	let top_pool_calls = top_pool_author.get_pending_trusted_calls(*shard);
 	let execution_result = stf_executor
 		.propose_state_update(
 			&top_pool_calls,
 			&latest_parentchain_header(),
 			&shard,
-			MAX_TRUSTED_OPS_EXEC_DURATION,
+			Duration::from_millis(600),
 			|s| {
 				let mut sidechain_db = SidechainDB::<SignedBlock, SgxExternalities>::new(s);
 				sidechain_db
@@ -651,246 +623,7 @@ fn execute_trusted_calls(
 	execution_result
 }
 
-// litentry test link eth
-fn test_call_link_eth() {
-	// init test environment
-	let (_, mut state, shard, mrenclave, _, _) = test_setup();
-	// update parent chain header
-	let block_number = 10;
-	let parent_hash = H256::from([1; 32]);
-
-	let header: Header = HeaderT::new(
-		block_number,
-		Default::default(),
-		Default::default(),
-		parent_hash,
-		Default::default(),
-	);
-
-	Stf::update_parentchain_block(&mut state, header.clone()).unwrap();
-
-	// link eth arguments
-	let sender = funded_pair();
-
-	let link_acc: AccountId32 = AccountId32::from([
-		0xd4, 0x35, 0x93, 0xc7, 0x15, 0xfd, 0xd3, 0x1c, 0x61, 0x14, 0x1a, 0xbd, 0x04, 0xa9, 0x9f,
-		0xd6, 0x82, 0x2c, 0x85, 0x58, 0x85, 0x4c, 0xcd, 0xe3, 0x9a, 0x56, 0x84, 0xe7, 0xa5, 0x6d,
-		0xa2, 0x7d,
-	]);
-	let index = 0;
-	let eth_address: [u8; 20] =
-		[77, 136, 220, 93, 82, 138, 51, 228, 184, 190, 87, 158, 148, 118, 113, 95, 96, 6, 5, 130];
-	let block_number = 10000;
-	let signature: [u8; 65] = [
-		49, 132, 0, 240, 249, 189, 21, 240, 216, 132, 40, 112, 181, 16, 233, 150, 223, 252, 148,
-		75, 119, 17, 29, 237, 3, 164, 37, 92, 102, 232, 45, 66, 113, 50, 231, 101, 213, 230, 187,
-		33, 186, 4, 109, 187, 152, 226, 139, 178, 140, 178, 190, 190, 12, 138, 206, 210, 197, 71,
-		172, 166, 10, 85, 72, 146, 28,
-	];
-	let signed_call =
-		TrustedCall::link_eth(link_acc.clone(), index, eth_address, block_number, signature).sign(
-			&sender.clone().into(),
-			0,
-			&mrenclave,
-			&shard,
-		);
-
-	// when
-	let mut dummy_vec = vec![];
-	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
-	Stf::execute(&mut state, signed_call, &mut dummy_vec, repo).unwrap();
-
-	// let mut updated_state = state_handler.load_initialized(&shard).unwrap();
-
-	// then
-	// FIXME: That's not yet working.. needs some more investigation
-	// let signed_getter = crate::Getter::trusted(
-	// 	TrustedGetter::linked_ethereum_addresses(link_acc).sign(&sender.clone().into()),
-	// );
-	// let encoded_eth_address = Stf::get_state(&mut updated_state, signed_getter).unwrap();
-	// assert_eq!(encoded_eth_address, vec![eth_address].encode());
-
-	// check the result via comparing nonce
-	// let nonce = Stf::account_nonce(&mut updated_state, &sender.public().into());
-	// assert_eq!(nonce, 1);
-}
-
-fn test_call_link_sub_sr25519() {
-	// init test environment
-	let (_, mut state, shard, mrenclave, _, _) = test_setup();
-	// update parent chain header
-	let block_number = 10;
-	let parent_hash = H256::from([1; 32]);
-
-	let header: Header = HeaderT::new(
-		block_number,
-		Default::default(),
-		Default::default(),
-		parent_hash,
-		Default::default(),
-	);
-
-	Stf::update_parentchain_block(&mut state, header.clone()).unwrap();
-
-	// link eth arguments
-	let sender = funded_pair();
-
-	let link_acc: AccountId32 = AccountId32::from([
-		0xd4, 0x35, 0x93, 0xc7, 0x15, 0xfd, 0xd3, 0x1c, 0x61, 0x14, 0x1a, 0xbd, 0x04, 0xa9, 0x9f,
-		0xd6, 0x82, 0x2c, 0x85, 0x58, 0x85, 0x4c, 0xcd, 0xe3, 0x9a, 0x56, 0x84, 0xe7, 0xa5, 0x6d,
-		0xa2, 0x7d,
-	]);
-	let index = 0;
-
-	let network_type = pallet_sgx_account_linker::NetworkType::Kusama;
-
-	let block_number = 10000;
-
-	let signature: [u8; 64] = [
-		222, 199, 221, 119, 241, 81, 156, 222, 87, 197, 34, 148, 246, 98, 178, 197, 1, 100, 76, 7,
-		186, 157, 27, 175, 120, 122, 177, 136, 200, 162, 250, 87, 105, 145, 155, 114, 127, 199,
-		192, 0, 254, 87, 133, 220, 75, 39, 248, 175, 169, 223, 195, 19, 116, 248, 78, 150, 205, 31,
-		7, 222, 39, 8, 200, 140,
-	];
-
-	let multi_signature = pallet_sgx_account_linker::MultiSignature::Sr25519Signature(signature);
-
-	let signed_call = TrustedCall::link_sub(
-		link_acc.clone(),
-		index,
-		network_type,
-		link_acc.clone(),
-		block_number,
-		multi_signature,
-	)
-	.sign(&sender.clone().into(), 0, &mrenclave, &shard);
-
-	let mut dummy_vec = vec![];
-	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
-	Stf::execute(&mut state, signed_call, &mut dummy_vec, repo).unwrap();
-}
-
-fn test_call_link_sub_ed25519() {
-	// init test environment
-	let (_, mut state, shard, mrenclave, _, _) = test_setup();
-	// update parent chain header
-	let block_number = 10;
-	let parent_hash = H256::from([1; 32]);
-
-	let header: Header = HeaderT::new(
-		block_number,
-		Default::default(),
-		Default::default(),
-		parent_hash,
-		Default::default(),
-	);
-
-	Stf::update_parentchain_block(&mut state, header.clone()).unwrap();
-
-	// link eth arguments
-	let sender = funded_pair();
-
-	// account id of Alice 0x88dc3417d5058ec4b4503e0c12ea1a0a89be200fe98922423d4334014fa6b0ee
-	let link_acc: AccountId32 = AccountId32::from([
-		136, 220, 52, 23, 213, 5, 142, 196, 180, 80, 62, 12, 18, 234, 26, 10, 137, 190, 32, 15,
-		233, 137, 34, 66, 61, 67, 52, 1, 79, 166, 176, 238,
-	]);
-	let index = 0;
-
-	let network_type = pallet_sgx_account_linker::NetworkType::Kusama;
-
-	let block_number = 10000;
-
-	let signature: [u8; 64] = [
-		58, 226, 34, 84, 182, 42, 7, 168, 0, 196, 66, 184, 230, 130, 152, 152, 151, 105, 30, 246,
-		64, 210, 148, 46, 90, 215, 198, 18, 20, 3, 38, 245, 44, 230, 24, 138, 65, 31, 197, 215,
-		129, 165, 251, 132, 87, 33, 251, 199, 79, 227, 102, 55, 175, 180, 104, 166, 124, 54, 201,
-		241, 44, 233, 249, 14,
-	];
-
-	let multi_signature = pallet_sgx_account_linker::MultiSignature::Ed25519Signature(signature);
-
-	let signed_call = TrustedCall::link_sub(
-		link_acc.clone(),
-		index,
-		network_type,
-		link_acc.clone(),
-		block_number,
-		multi_signature,
-	)
-	.sign(&sender.clone().into(), 0, &mrenclave, &shard);
-
-	let mut dummy_vec = vec![];
-	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
-	Stf::execute(&mut state, signed_call, &mut dummy_vec, repo).unwrap();
-}
-
-#[allow(dead_code)]
-fn test_call_link_sub_ecdsa() {
-	// init test environment
-	let (_, mut state, shard, mrenclave, _, _) = test_setup();
-	// update parent chain header
-	let block_number = 10;
-	let parent_hash = H256::from([1; 32]);
-
-	let header: Header = HeaderT::new(
-		block_number,
-		Default::default(),
-		Default::default(),
-		parent_hash,
-		Default::default(),
-	);
-
-	Stf::update_parentchain_block(&mut state, header.clone()).unwrap();
-
-	// link eth arguments
-	let sender = funded_pair();
-
-	// account id of Alice 0x01e552298e47454041ea31273b4b630c64c104e4514aa3643490b8aaca9cf8ed
-	let link_acc: AccountId32 = AccountId32::from([
-		1, 229, 82, 41, 142, 71, 69, 64, 65, 234, 49, 39, 59, 75, 99, 12, 100, 193, 4, 228, 81, 74,
-		163, 100, 52, 144, 184, 170, 202, 156, 248, 237,
-	]);
-
-	let index = 0;
-
-	let network_type = pallet_sgx_account_linker::NetworkType::KusamaParachain(1);
-
-	let block_number = 10000;
-
-	let signature: [u8; 65] = [
-		5, 24, 201, 38, 61, 125, 93, 167, 213, 109, 202, 205, 113, 155, 62, 172, 208, 148, 242,
-		198, 171, 6, 4, 187, 36, 38, 216, 123, 118, 107, 254, 115, 125, 219, 81, 167, 154, 117, 1,
-		184, 144, 4, 248, 144, 177, 8, 44, 93, 153, 204, 137, 1, 21, 92, 63, 245, 244, 36, 141, 73,
-		118, 200, 228, 167, 1,
-	];
-
-	let multi_signature = pallet_sgx_account_linker::MultiSignature::EcdsaSignature(signature);
-
-	let signed_call = TrustedCall::link_sub(
-		link_acc.clone(),
-		index,
-		network_type,
-		link_acc.clone(),
-		block_number,
-		multi_signature,
-	)
-	.sign(&sender.clone().into(), 0, &mrenclave, &shard);
-
-	let mut dummy_vec = vec![];
-	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
-	Stf::execute(&mut state, signed_call, &mut dummy_vec, repo).unwrap();
-}
-
 // helper functions
-pub fn test_top_pool() -> TestTopPool {
-	let chain_api = Arc::new(SidechainApi::<Block>::new());
-	let top_pool =
-		BasicPool::create(Default::default(), chain_api, Arc::new(TestRpcResponder::new()));
-
-	top_pool
-}
-
 /// Decrypt `encrypted` and decode it into `StatePayload`
 pub fn encrypted_state_diff_from_encrypted(encrypted: &[u8]) -> StatePayload {
 	let mut encrypted_payload: Vec<u8> = encrypted.to_vec();
@@ -903,41 +636,6 @@ pub fn state_key() -> Aes {
 	Aes::default()
 }
 
-/// Returns all the things that are commonly used in tests and runs
-/// `ensure_no_empty_shard_directory_exists`
-pub fn test_setup() -> (
-	Arc<TestTopPoolAuthor>,
-	State,
-	ShardIdentifier,
-	MrEnclave,
-	ShieldingCryptoMock,
-	Arc<HandleStateMock>,
-) {
-	let shielding_key = ShieldingCryptoMock::default();
-	let shielding_key_repo = Arc::new(KeyRepositoryMock::new(shielding_key.clone()));
-
-	let state_handler = Arc::new(HandleStateMock::default());
-	let (state, shard) =
-		init_state(state_handler.as_ref(), enclave_call_signer(&shielding_key).public().into());
-	let top_pool = test_top_pool();
-	let mrenclave = OcallApi.get_mrenclave_of_self().unwrap().m;
-
-	(
-		Arc::new(TestTopPoolAuthor::new(
-			Arc::new(top_pool),
-			AllowAllTopsFilter,
-			state_handler.clone(),
-			shielding_key_repo,
-			Arc::new(MetricsOCallMock::default()),
-		)),
-		state,
-		shard,
-		mrenclave,
-		shielding_key,
-		state_handler,
-	)
-}
-
 /// Some random account that has no funds in the `Stf`'s `test_genesis` config.
 pub fn unfunded_public() -> spEd25519::Public {
 	spEd25519::Public::from_raw(*b"asdfasdfadsfasdfasfasdadfadfasdf")
@@ -945,10 +643,6 @@ pub fn unfunded_public() -> spEd25519::Public {
 
 pub fn test_account() -> spEd25519::Pair {
 	spEd25519::Pair::from_seed(b"42315678901234567890123456789012")
-}
-
-pub fn enclave_call_signer<Source: DeriveEd25519>(key_source: &Source) -> spEd25519::Pair {
-	key_source.derive_ed25519().unwrap()
 }
 
 /// transforms `call` into `TrustedOperation::direct(call)`

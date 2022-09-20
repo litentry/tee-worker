@@ -61,6 +61,7 @@ services:
   # the service name everywhere in other yml files
   integritee-node:
     image: docker_integritee-node:latest
+    container_name: integritee-node
     networks:
       - integritee-test-network
     ports:

@@ -14,9 +14,7 @@
 	limitations under the License.
 
 */
-use crate::{
-	stf_sgx_primitives::types::*, AccountId, Index, StfError, StfResult, ENCLAVE_ACCOUNT_KEY, H256,
-};
+use crate::{AccountId, StfError, StfResult, ENCLAVE_ACCOUNT_KEY};
 use aes_gcm::{
 	aead::{Aead, KeyInit, Payload},
 	Aes256Gcm,
@@ -24,11 +22,8 @@ use aes_gcm::{
 use codec::{Decode, Encode};
 use itp_storage::{storage_double_map_key, storage_map_key, storage_value_key, StorageHasher};
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{
-	eth::EthAddress, AesOutput, UserShieldingKeyType, USER_SHIELDING_KEY_NONCE_LEN,
-};
+use litentry_primitives::{AesOutput, UserShieldingKeyType, USER_SHIELDING_KEY_NONCE_LEN};
 use log::*;
-use pallet_sgx_account_linker::LinkedSubAccount;
 use std::prelude::v1::*;
 
 use aes_gcm::{aead::OsRng, AeadCore};
@@ -90,95 +85,8 @@ pub fn account_key_hash(account: &AccountId) -> Vec<u8> {
 	storage_map_key("System", "Account", account, &StorageHasher::Blake2_128Concat)
 }
 
-pub fn get_account_info(who: &AccountId) -> Option<AccountInfo> {
-	let maybe_storage_map =
-		get_storage_map("System", "Account", who, &StorageHasher::Blake2_128Concat);
-	if maybe_storage_map.is_none() {
-		info!("Failed to get account info for account {}", account_id_to_string(who));
-	}
-	maybe_storage_map
-}
-
-pub fn validate_nonce(who: &AccountId, nonce: Index) -> StfResult<()> {
-	// validate
-	let expected_nonce = match get_account_info(who) {
-		None => {
-			info!(
-				"Attempted to validate account nonce of non-existent account: {}",
-				account_id_to_string(who)
-			);
-			0
-		},
-		Some(account_info) => account_info.nonce,
-	};
-	if expected_nonce == nonce {
-		return Ok(())
-	}
-	Err(StfError::InvalidNonce(nonce))
-}
-
-/// increment nonce after a successful call execution
-pub fn increment_nonce(account: &AccountId) {
-	//FIXME: Proper error handling - should be taken into
-	// consideration after implementing pay fee check
-	if let Some(mut acc_info) = get_account_info(account) {
-		debug!("incrementing account nonce");
-		acc_info.nonce += 1;
-		sp_io::storage::set(&account_key_hash(account), &acc_info.encode());
-		debug!(
-			"updated account {} nonce: {:?}",
-			account_id_to_string(account),
-			get_account_info(account).unwrap().nonce
-		);
-	} else {
-		error!(
-			"tried to increment nonce of a non-existent account: {}",
-			account_id_to_string(account)
-		)
-	}
-}
-
-pub fn account_nonce(account: &AccountId) -> Index {
-	if let Some(info) = get_account_info(account) {
-		info.nonce
-	} else {
-		info!("Attempted to get nonce of non-existent account: {}", account_id_to_string(account));
-		0_u32
-	}
-}
-
-pub fn account_data(account: &AccountId) -> Option<AccountData> {
-	if let Some(info) = get_account_info(account) {
-		Some(info.data)
-	} else {
-		info!(
-			"Attempted to get account data of non-existent account: {}",
-			account_id_to_string(account)
-		);
-		None
-	}
-}
-
-pub fn root() -> AccountId {
-	get_storage_value("Sudo", "Key").expect("No root account")
-}
-
 pub fn enclave_signer_account() -> AccountId {
 	get_storage_value("Sudo", ENCLAVE_ACCOUNT_KEY).expect("No enclave account")
-}
-
-// FIXME: Use Option<ParentchainHeader:Hash> as return type after fixing sgx-runtime issue #37
-pub fn get_parentchain_blockhash() -> Option<H256> {
-	get_storage_value("Parentchain", "BlockHash")
-}
-
-// FIXME: Use Option<ParentchainHeader:Hash> as return type after fixing sgx-runtime issue #37
-pub fn get_parentchain_parenthash() -> Option<H256> {
-	get_storage_value("Parentchain", "ParentHash")
-}
-
-pub fn get_parentchain_number() -> Option<BlockNumber> {
-	get_storage_value("Parentchain", "Number")
 }
 
 /// Ensures an account is a registered enclave account.
@@ -196,15 +104,8 @@ pub fn ensure_enclave_signer_account(account: &AccountId) -> StfResult<()> {
 	}
 }
 
-pub fn ensure_root(account: AccountId) -> StfResult<()> {
-	if root() == account {
-		Ok(())
-	} else {
-		Err(StfError::MissingPrivileges(account))
-	}
-}
-
-/// Litentry
+// Litentry
+// TODO: maybe directly access the pallet
 pub fn get_user_shielding_key(who: &AccountId) -> Option<UserShieldingKeyType> {
 	get_storage_map(
 		"IdentityManagement",
@@ -212,14 +113,6 @@ pub fn get_user_shielding_key(who: &AccountId) -> Option<UserShieldingKeyType> {
 		who,
 		&StorageHasher::Blake2_128Concat,
 	)
-}
-
-pub fn get_linked_ethereum_addresses(who: &AccountId) -> Option<Vec<EthAddress>> {
-	get_storage_map("SgxAccountLinker", "EthereumLink", who, &StorageHasher::Blake2_128Concat)
-}
-
-pub fn get_linked_substrate_addresses(who: &AccountId) -> Option<Vec<LinkedSubAccount<AccountId>>> {
-	get_storage_map("SgxAccountLinker", "SubLink", who, &StorageHasher::Blake2_128Concat)
 }
 
 pub fn aes_encrypt_default(key: &UserShieldingKeyType, data: &[u8]) -> AesOutput {
