@@ -19,8 +19,9 @@ use codec::{Decode, Encode};
 use sp_runtime::{traits::ConstU32, BoundedVec};
 use sp_std::vec::Vec;
 
+mod identity;
 mod validation_data;
-
+pub use identity::*;
 pub use validation_data::*;
 
 // TODO: import the const and struct from the parachain once the code is there
@@ -53,5 +54,3 @@ pub mod eth {
 	pub type EthAddress = [u8; 20];
 	pub type EthSignature = [u8; 65];
 }
-
-pub struct Identity {}
