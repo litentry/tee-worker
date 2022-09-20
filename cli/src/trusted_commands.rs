@@ -47,6 +47,7 @@ use sp_core::{
 	sr25519 as sr25519_core, Pair,
 };
 pub type AccountId = AccountId32;
+use litentry_primitives::ValidationData;
 use std::{
 	sync::mpsc::{channel, Receiver},
 	thread, time,
@@ -241,7 +242,7 @@ pub enum TrustedCommands {
 	PrepareVerifyIdentity {
 		account: String,
 		did: String,
-		tweet_id: String,
+		validation_data: String,
 	},
 }
 
@@ -317,8 +318,8 @@ pub fn match_trusted_commands(cli: &Cli, trusted_args: &TrustedArgs) {
 			link_identity(cli, trusted_args, account, did),
 		TrustedCommands::SetChallengeCode { account, did, code } =>
 			set_challenge_code(cli, trusted_args, account, did, code.clone()),
-		TrustedCommands::PrepareVerifyIdentity { account, did, tweet_id } =>
-			prepare_verify_identity(cli, trusted_args, account, did, tweet_id),
+		TrustedCommands::PrepareVerifyIdentity { account, did, validation_data } =>
+			prepare_verify_identity(cli, trusted_args, account, did, validation_data),
 	}
 }
 

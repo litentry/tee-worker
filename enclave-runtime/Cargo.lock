@@ -2344,6 +2344,8 @@ name = "litentry-primitives"
 version = "0.1.0"
 dependencies = [
  "parity-scale-codec",
+ "serde 1.0.143",
+ "serde_json 1.0.83",
  "sp-runtime",
  "sp-std 4.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.26)",
 ]

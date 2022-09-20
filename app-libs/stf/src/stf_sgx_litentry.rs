@@ -23,7 +23,7 @@ use codec::Encode;
 use ita_sgx_runtime::Runtime;
 use litentry_primitives::{
 	eth::{EthAddress, EthSignature},
-	LinkingAccountIndex, UserShieldingKeyType, VerificationType, DID,
+	LinkingAccountIndex, UserShieldingKeyType, Web2ValidationData, DID,
 };
 use log::*;
 
@@ -243,7 +243,7 @@ impl Stf {
 		_sender: AccountId,
 		target: AccountId,
 		did: DID,
-		verification_type: VerificationType,
+		validation_data: Web2ValidationData,
 	) -> StfResult<()> {
 		let code: Option<u32> = helpers::get_storage_double_map(
 			"IdentityManagement",
@@ -259,7 +259,7 @@ impl Stf {
 			target,
 			did,
 			challenge_code: code.unwrap(),
-			verification_type,
+			validation_data,
 		};
 		let http_sender = itc_https_client_daemon::daemon_sender::HttpRequestSender::new();
 		http_sender.send_https_request(request);

@@ -39,11 +39,11 @@ pub mod daemon_sender;
 pub mod error;
 pub mod https_client;
 pub use error::Result;
-use litentry_primitives::{VerificationType, DID};
+use litentry_primitives::{Web2ValidationData, DID};
 
 pub struct Request {
 	pub target: AccountId,
 	pub did: DID,
 	pub challenge_code: u32,
-	pub verification_type: VerificationType,
+	pub validation_data: Web2ValidationData,
 }

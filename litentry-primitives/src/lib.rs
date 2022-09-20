@@ -19,6 +19,10 @@ use codec::{Decode, Encode};
 use sp_runtime::{traits::ConstU32, BoundedVec};
 use sp_std::vec::Vec;
 
+mod validation_data;
+
+pub use validation_data::*;
+
 // TODO: import the const and struct from the parachain once the code is there
 //
 // we use 256-bit AES-GCM as user shielding key
@@ -50,7 +54,4 @@ pub mod eth {
 	pub type EthSignature = [u8; 65];
 }
 
-pub enum VerificationType {
-	TWITTER(Vec<u8>),                   //tweet_id
-	DISCORD(Vec<u8>, Vec<u8>, Vec<u8>), //channel_id , message_id, guild_id
-}
+pub struct Identity {}

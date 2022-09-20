@@ -40,7 +40,7 @@ use itp_storage::storage_value_key;
 use itp_types::OpaqueCall;
 use itp_utils::stringify::account_id_to_string;
 use its_state::SidechainSystemExt;
-use litentry_primitives::VerificationType;
+use litentry_primitives::{TwitterValidationData, ValidationData, Web2ValidationData};
 use log::*;
 use sidechain_primitives::types::{BlockHash, BlockNumber as SidechainBlockNumber, Timestamp};
 use sp_io::hashing::blake2_256;
@@ -333,14 +333,25 @@ impl Stf {
 					Self::link_identity(root, account, did),
 				TrustedCall::set_challenge_code(root, account, did, challenge_code) =>
 					Self::set_challenge_code(root, account, did, challenge_code),
-				TrustedCall::prepare_verify_identity(root, account, did, tweet_id) =>
-				// TODO support other verification_type
-					Self::prepare_verify_identity(
-						root,
-						account,
-						did,
-						VerificationType::TWITTER(tweet_id),
-					),
+				TrustedCall::prepare_verify_identity(root, account, did, validation_data) =>
+				// TODO support other validation_data
+					if let ValidationData::Web2(Web2ValidationData::Twitter(
+						TwitterValidationData { ref tweet_id },
+					)) = validation_data
+					{
+						Self::prepare_verify_identity(
+							root,
+							account,
+							did,
+							Web2ValidationData::Twitter(TwitterValidationData {
+								tweet_id: tweet_id.to_vec(),
+							}),
+						)
+					} else {
+						Err(StfError::Dispatch(
+							"validation_data only support Web2ValidationData::Twitter".to_string(),
+						))
+					},
 				TrustedCall::verify_identity(root, account, did) =>
 					Self::verify_identity(root, account, did),
 			}?;

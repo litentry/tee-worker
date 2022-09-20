@@ -45,7 +45,7 @@ use itp_nonce_cache::GLOBAL_NONCE_CACHE;
 use itp_sgx_crypto::{Ed25519Seal, Rsa3072Seal};
 use itp_sgx_io::StaticSealedIO;
 use itp_stf_state_handler::query_shard_state::QueryShardState;
-use litentry_primitives::VerificationType;
+use litentry_primitives::{TwitterValidationData, Web2ValidationData};
 
 const HTTPS_ADDRESS: &str = "https://api.coingecko.com";
 
@@ -128,8 +128,8 @@ fn run_https_client_daemon_internal(url: &str) -> Result<()> {
 	let handler = CommonHandler {};
 	loop {
 		let request = receiver.recv().map_err(|e| Error::Other(e.into()))?;
-		if let Err(e) = match &request.verification_type {
-			VerificationType::TWITTER(_) => {
+		if let Err(e) = match &request.validation_data {
+			Web2ValidationData::Twitter(_) => {
 				let client = build_twitter_client(twitter_authorization_token.clone());
 				handler.send_request::<TwitterResponse>(
 					&verification_context,
@@ -138,7 +138,7 @@ fn run_https_client_daemon_internal(url: &str) -> Result<()> {
 					"/2/tweets".to_string(),
 				)
 			},
-			VerificationType::DISCORD(_, _, _) => {
+			Web2ValidationData::Discord(_) => {
 				// todo!()
 				Ok(())
 			},

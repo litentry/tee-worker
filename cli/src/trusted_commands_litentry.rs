@@ -25,7 +25,7 @@ use crate::{
 };
 use codec::Decode;
 use ita_stf::{Index, KeyPair, TrustedCall, TrustedGetter, TrustedOperation};
-use litentry_primitives::DID;
+use litentry_primitives::{ValidationData, DID};
 use log::*;
 use pallet_sgx_account_linker::{MultiSignature, NetworkType};
 use sp_application_crypto::Ss58Codec;
@@ -417,7 +417,7 @@ pub fn prepare_verify_identity(
 	trusted_args: &TrustedArgs,
 	arg_who: &str,
 	arg_did: &str,
-	arg_tweet_id: &str,
+	arg_validation_data: &str,
 ) {
 	// get the litentry account
 	let account_pair = get_pair_from_str(trusted_args, arg_who);
@@ -440,8 +440,13 @@ pub fn prepare_verify_identity(
 		0
 	};
 	debug!("who: {:?} got nonce: {:?}", arg_who, nonce);
-
-	let tweet_id = arg_tweet_id.as_bytes().to_vec();
+	let validation_data = serde_json::from_str(arg_validation_data);
+	if let Err(e) = validation_data {
+		warn!("Deserialize obj error: {:?}", e.to_string());
+		return
+	}
+	let validation_data = validation_data.unwrap();
+	// let tweet_id = arg_tweet_id.as_bytes().to_vec();
 	let did = DID::try_from(arg_did.as_bytes().to_vec());
 	// compose the extrinsic
 	if let Ok(did) = did {
@@ -449,7 +454,7 @@ pub fn prepare_verify_identity(
 			get_accountid_from_str("//Alice"),
 			account,
 			did,
-			tweet_id,
+			validation_data,
 		)
 		.sign(&KeyPair::Sr25519(account_pair), nonce, &mrenclave, &shard)
 		.into_trusted_operation(trusted_args.direct);

@@ -37,7 +37,7 @@ use itp_node_api_metadata::Error as MetadataError;
 use itp_node_api_metadata_provider::Error as MetadataProviderError;
 use litentry_primitives::{
 	eth::{EthAddress, EthSignature},
-	LinkingAccountIndex, UserShieldingKeyType, DID,
+	LinkingAccountIndex, UserShieldingKeyType, ValidationData, DID,
 };
 use sp_core::{crypto::AccountId32, ed25519, sr25519, Pair, H256};
 use sp_runtime::{traits::Verify, MultiSignature};
@@ -222,7 +222,7 @@ pub enum TrustedCall {
 	query_credit(AccountId),
 	link_identity(AccountId, AccountId, DID), // (Root, Account, DID)
 	set_challenge_code(AccountId, AccountId, DID, u32), // (Root, Account, Code)
-	prepare_verify_identity(AccountId, AccountId, DID, Vec<u8>), // (Root, Account, tweetId)
+	prepare_verify_identity(AccountId, AccountId, DID, ValidationData), // (Root, Account, tweetId)
 	verify_identity(AccountId, AccountId, DID), // (Root/Sender, Account/Target, DID)
 }
 

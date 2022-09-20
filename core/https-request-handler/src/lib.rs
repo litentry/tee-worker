@@ -55,7 +55,7 @@ use itc_rest_client::{
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_top_pool_author::traits::AuthorApi;
-use litentry_primitives::VerificationType;
+use litentry_primitives::{TwitterValidationData, Web2ValidationData, Web2ValidationData::Twitter};
 use serde::{Deserialize, Serialize};
 use sp_core::ByteArray;
 use std::{
@@ -198,14 +198,14 @@ pub trait RequestHandler<
 		request: Request,
 		path: String,
 	) -> Result<(), Error> {
-		let query: Vec<(&str, &str)> = match request.verification_type {
-			VerificationType::TWITTER(ref tweet_id) => {
+		let query: Vec<(&str, &str)> = match request.validation_data {
+			Web2ValidationData::Twitter(TwitterValidationData { ref tweet_id }) => {
 				vec![
 					("ids", str::from_utf8(tweet_id.as_slice()).unwrap()),
 					("expansions", "author_id"),
 				]
 			},
-			VerificationType::DISCORD(_, _, _) => {
+			Web2ValidationData::Discord(_) => {
 				//todo
 				vec![]
 			},
