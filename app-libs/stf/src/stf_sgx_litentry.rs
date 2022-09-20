@@ -17,12 +17,10 @@
 use crate::{stf_sgx_primitives::types::*, AccountId, StfError, StfResult};
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
-use codec::Encode;
-use log::*;
 use crate::{DidOf, MetadataOf, Runtime};
-use pallet_sgx_account_linker::{MultiSignature, NetworkType};
-use ita_sgx_runtime::Runtime;
+use codec::Encode;
 use litentry_primitives::UserShieldingKeyType;
+use log::*;
 
 use std::{format, str, vec::Vec};
 use support::traits::UnfilteredDispatchable;

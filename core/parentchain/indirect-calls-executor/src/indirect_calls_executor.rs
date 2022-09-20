@@ -27,7 +27,9 @@ use futures::executor;
 use ita_stf::{AccountId, TrustedCall, TrustedOperation};
 use itp_node_api::{
 	api_client::ParentchainUncheckedExtrinsic,
-	metadata::{pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata},
+	metadata::{
+		pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata,
+	},
 };
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_stf_executor::traits::StfEnclaveSigning;
