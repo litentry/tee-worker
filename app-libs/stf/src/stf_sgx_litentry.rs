@@ -20,7 +20,11 @@ extern crate sgx_tstd as std;
 use codec::Encode;
 use ita_sgx_runtime::Runtime;
 use litentry_primitives::{UserShieldingKeyType, Web2ValidationData, DID};
+use litentry_primitives::{Identity, IdentityWebType, UserShieldingKeyType};
 use log::*;
+
+use std::format;
+use support::traits::UnfilteredDispatchable;
 
 use ita_sgx_runtime::pallet_identity_management::DidOf;
 
@@ -33,36 +37,18 @@ use support::traits::UnfilteredDispatchable;
 
 impl Stf {
 	// TODO: refactor the following two methods (is_web2_account & is_web3_account) later
-	fn is_web2_account(did: DidOf<Runtime>) -> bool {
-		match str::from_utf8(&did) {
-			Ok(v) => {
-				let vstr: Vec<&str> = v.split(':').collect();
-				if vstr[3] == "web2" {
-					return true
-				}
-			},
-			Err(e) => {
-				error!("Invalid account bytes: {}", e);
-			},
-		};
-
-		false
+	fn is_web2_account(did: Identity) -> bool {
+		match did.web_type {
+			IdentityWebType::Web2(_) => true,
+			IdentityWebType::Web3(_) => false,
+		}
 	}
 
-	fn is_web3_account(did: DidOf<Runtime>) -> bool {
-		match str::from_utf8(&did) {
-			Ok(v) => {
-				let vstr: Vec<&str> = v.split(':').collect();
-				if vstr[3] == "web3" {
-					return true
-				}
-			},
-			Err(e) => {
-				error!("Invalid account bytes: {}", e);
-			},
-		};
-
-		false
+	fn is_web3_account(did: Identity) -> bool {
+		match did.web_type {
+			IdentityWebType::Web2(_) => false,
+			IdentityWebType::Web3(_) => true,
+		}
 	}
 
 	pub fn set_user_shielding_key(who: AccountId, key: UserShieldingKeyType) -> StfResult<()> {

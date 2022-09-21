@@ -54,7 +54,7 @@ itp-utils = { path = "../core-primitives/utils" }
 ita-sgx-runtime = { path = "../app-libs/sgx-runtime" }
 
 # litentry
-litentry-primitives = { path = "../litentry-primitives" }
+litentry-primitives = { path = "../litentry/primitives" }
 
 [features]
 default = []

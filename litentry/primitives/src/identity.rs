@@ -19,16 +19,19 @@ use std::format;
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-
-use codec::{Decode, Encode};
+#[cfg(feature = "std")]
 use sp_core::hexdisplay::HexDisplay;
-use sp_runtime::{traits::ConstU32, BoundedVec, MultiSignature};
-use sp_std::vec::Vec;
+#[cfg(feature = "std")]
+use std::vec::Vec;
+
+use codec::{Decode, Encode, MaxEncodedLen};
+use scale_info::TypeInfo;
+use sp_runtime::{traits::ConstU32, BoundedVec};
 
 pub type MaxStringLength = ConstU32<64>;
 pub type IdentityString = BoundedVec<u8, MaxStringLength>;
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum SubstrateNetwork {
 	Polkadot,
@@ -37,21 +40,21 @@ pub enum SubstrateNetwork {
 	Litmus,
 }
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum EvmNetwork {
 	Ethereum,
 	BSC,
 }
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum Web3Network {
 	Substrate(SubstrateNetwork),
 	Evm(EvmNetwork),
 }
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum Web2Network {
 	Twitter,
@@ -59,14 +62,14 @@ pub enum Web2Network {
 	Github,
 }
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum IdentityWebType {
 	Web2(Web2Network),
 	Web3(Web3Network),
 }
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum IdentityHandle {
 	Address32([u8; 32]),
@@ -75,7 +78,7 @@ pub enum IdentityHandle {
 	String(IdentityString),
 }
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct Identity {
 	pub web_type: IdentityWebType,
