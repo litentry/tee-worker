@@ -76,7 +76,23 @@ impl Stf {
 		who: AccountId,
 		did: DidOf<Runtime>,
 		metadta: Option<MetadataOf<Runtime>>,
+		bn: BlockNumberOf<Runtime>,
 	) -> StfResult<()> {
+		debug!(
+			"who.str = {:?}, did = {:?}, metadata = {:?}, bn = {:?}",
+			account_id_to_string(&who),
+			key.clone(),
+			metadta,
+			bn
+		);
+		ita_sgx_runtime::IdentityManagementCall::<Runtime>::link_identity {
+			who,
+			did,
+			metadata,
+			linking_request_block: bn,
+		}
+		.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
 		Ok(())
 	}
 

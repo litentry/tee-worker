@@ -24,6 +24,10 @@ use crate::error::Result;
 use beefy_merkle_tree::{merkle_root, Keccak256};
 use codec::{Decode, Encode};
 use futures::executor;
+use ita_sgx_runtime::{
+	pallet_identity_management::{DidOf, MetadataOf},
+	Runtime,
+};
 use ita_stf::{AccountId, TrustedCall, TrustedOperation};
 use itp_node_api::{
 	api_client::ParentchainUncheckedExtrinsic,
@@ -40,16 +44,10 @@ use sp_core::blake2_256;
 use sp_runtime::traits::{AccountIdLookup, Block as ParentchainBlockTrait, Header, StaticLookup};
 use std::{sync::Arc, vec::Vec};
 
-// litentry
-// use pallet_imp::{
-// 	LinkIdentityFn, SetUserShieldingKeyFn, ShardIdentifier, UnlinkIdentityFn, UserShieldingKeyType,
-// 	VerifyIdentityFn,
-// };
-
 // TODO: import from pallet_imp
 pub type UserShieldingKeyType = [u8; 32];
 pub type SetUserShieldingKeyFn = ([u8; 2], ShardIdentifier, Vec<u8>);
-pub type LinkIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>);
+pub type LinkIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>, Option<Vec<u8>>);
 pub type UnlinkIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>);
 pub type VerifyIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>, Vec<u8>);
 
@@ -255,9 +253,10 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 				if self.is_set_user_shielding_key_function(&xt.function.0) {
 					let (_, shard, encrypted_key) = xt.function;
 					let shielding_key = self.shielding_key_repo.retrieve_key()?;
-					let decryted_key = shielding_key.decrypt(&encrypted_key)?;
 
-					let key = UserShieldingKeyType::decode(&mut decryted_key.as_slice())?;
+					let key = UserShieldingKeyType::decode(
+						&mut shielding_key.decrypt(&encrypted_key)?.as_slice(),
+					)?;
 
 					if let Some((multiaddress_account, _, _)) = xt.signature {
 						let account = AccountIdLookup::lookup(multiaddress_account)?;
@@ -276,41 +275,105 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 				}
 			}
 
-			// // Found LinkIdentityFn extrinsic
-			// if let Ok(xt) = ParentchainUncheckedExtrinsic::<LinkIdentityFn>::decode(
-			// 	&mut encoded_xt_opaque.as_slice(),
-			// ) {
-			// 	if self.is_link_identity_funciton(&xt.function.0) {
-			// 		let (_, request) = xt.function;
-			// 		let (shard, cypher_text) = (request.shard, request.cyphertext);
-			// 		debug!("Found trusted call extrinsic, submitting it to the top pool");
-			// 		self.submit_trusted_call(shard, cypher_text);
-			// 	}
-			// }
+			// Found LinkIdentityFn extrinsic
+			if let Ok(xt) = ParentchainUncheckedExtrinsic::<LinkIdentityFn>::decode(
+				&mut encoded_xt_opaque.as_slice(),
+			) {
+				if self.is_link_identity_funciton(&xt.function.0) {
+					let (_, shard, encrypted_identity, encrypted_metadata) = xt.function;
+					let shielding_key = self.shielding_key_repo.retrieve_key()?;
 
-			// // Found UnlinkIdentityFn extrinsic
-			// if let Ok(xt) = ParentchainUncheckedExtrinsic::<UnlinkIdentityFn>::decode(
-			// 	&mut encoded_xt_opaque.as_slice(),
-			// ) {
-			// 	if self.is_unlink_identity_funciton(&xt.function.0) {
-			// 		let (_, request) = xt.function;
-			// 		let (shard, cypher_text) = (request.shard, request.cyphertext);
-			// 		debug!("Found trusted call extrinsic, submitting it to the top pool");
-			// 		self.submit_trusted_call(shard, cypher_text);
-			// 	}
-			// }
+					// TODO: decode identity into struct once it's there
+					let identity: DidOf<Runtime> =
+						shielding_key.decrypt(&encrypted_identity)?.try_into().unwrap();
+					let metadata: Option<MetadataOf<Runtime>> =
+						encrypted_metadata.map(|m| shielding_key.decrypt(&m)?.try_into().unwrap());
 
-			// // Found VerifyIdentityFn extrinsic
-			// if let Ok(xt) = ParentchainUncheckedExtrinsic::<VerifyIdentityFn>::decode(
-			// 	&mut encoded_xt_opaque.as_slice(),
-			// ) {
-			// 	if self.is_verify_identity_funciton(&xt.function.0) {
-			// 		let (_, request) = xt.function;
-			// 		let (shard, cypher_text) = (request.shard, request.cyphertext);
-			// 		debug!("Found trusted call extrinsic, submitting it to the top pool");
-			// 		self.submit_trusted_call(shard, cypher_text);
-			// 	}
-			// }
+					if let Some((multiaddress_account, _, _)) = xt.signature {
+						let account = AccountIdLookup::lookup(multiaddress_account)?;
+						let enclave_account_id = self.stf_enclave_signer.get_enclave_account()?;
+						let trusted_call = TrustedCall::link_identity(
+							enclave_account_id,
+							account,
+							identity,
+							metadata,
+							block_number,
+						);
+						let signed_trusted_call =
+							self.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;
+						let trusted_operation =
+							TrustedOperation::indirect_call(signed_trusted_call);
+
+						let encrypted_trusted_call =
+							shielding_key.encrypt(&trusted_operation.encode())?;
+						self.submit_trusted_call(shard, encrypted_trusted_call);
+					}
+				}
+			}
+
+			// Found UnlinkIdentityFn extrinsic
+			if let Ok(xt) = ParentchainUncheckedExtrinsic::<UnlinkIdentityFn>::decode(
+				&mut encoded_xt_opaque.as_slice(),
+			) {
+				if self.is_link_identity_funciton(&xt.function.0) {
+					let (_, shard, encrypted_identity) = xt.function;
+					let shielding_key = self.shielding_key_repo.retrieve_key()?;
+
+					// TODO: decode identity into struct once it's there
+					let identity: DidOf<Runtime> =
+						shielding_key.decrypt(&encrypted_identity)?.try_into().unwrap();
+
+					if let Some((multiaddress_account, _, _)) = xt.signature {
+						let account = AccountIdLookup::lookup(multiaddress_account)?;
+						let enclave_account_id = self.stf_enclave_signer.get_enclave_account()?;
+						let trusted_call =
+							TrustedCall::unlink_identity(enclave_account_id, account, identity);
+						let signed_trusted_call =
+							self.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;
+						let trusted_operation =
+							TrustedOperation::indirect_call(signed_trusted_call);
+
+						let encrypted_trusted_call =
+							shielding_key.encrypt(&trusted_operation.encode())?;
+						self.submit_trusted_call(shard, encrypted_trusted_call);
+					}
+				}
+			}
+
+			// Found VerifyIdentity extrinsic
+			if let Ok(xt) = ParentchainUncheckedExtrinsic::<VerifyIdentityFn>::decode(
+				&mut encoded_xt_opaque.as_slice(),
+			) {
+				if self.is_link_identity_funciton(&xt.function.0) {
+					let (_, shard, encrypted_identity, encrypted_validation_data) = xt.function;
+					let shielding_key = self.shielding_key_repo.retrieve_key()?;
+
+					// TODO: decode identity and validation_data into struct once it's there
+					let identity: DidOf<Runtime> =
+						shielding_key.decrypt(&encrypted_identity)?.try_into().unwrap();
+					let validation_data = shielding_key.decrypt(&encrypted_validation_data)?;
+
+					if let Some((multiaddress_account, _, _)) = xt.signature {
+						let account = AccountIdLookup::lookup(multiaddress_account)?;
+						let enclave_account_id = self.stf_enclave_signer.get_enclave_account()?;
+						let trusted_call = TrustedCall::verify_identity(
+							enclave_account_id,
+							account,
+							identity,
+							validation_data,
+							block_number,
+						);
+						let signed_trusted_call =
+							self.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;
+						let trusted_operation =
+							TrustedOperation::indirect_call(signed_trusted_call);
+
+						let encrypted_trusted_call =
+							shielding_key.encrypt(&trusted_operation.encode())?;
+						self.submit_trusted_call(shard, encrypted_trusted_call);
+					}
+				}
+			}
 		}
 
 		// Include a processed parentchain block confirmation for each block.

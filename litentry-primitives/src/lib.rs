@@ -18,6 +18,8 @@
 use codec::{Decode, Encode};
 use sp_std::vec::Vec;
 
+pub use my_node_runtime::BlockNumber as ParentchainBlockNumber;
+
 // TODO: import the const and struct from the parachain once the code is there
 //
 // we use 256-bit AES-GCM as user shielding key

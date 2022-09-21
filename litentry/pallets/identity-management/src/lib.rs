@@ -38,11 +38,11 @@ pub mod identity_context;
 use frame_support::{pallet_prelude::*, traits::StorageVersion};
 use frame_system::pallet_prelude::*;
 pub use identity_context::IdentityContext;
+use litentry_primitives::ParentchainBlockNumber;
 pub use litentry_primitives::UserShieldingKeyType;
 
 pub type ChallengeCodeOf<T> = <T as Config>::ChallengeCode;
 pub type DidOf<T> = BoundedVec<u8, <T as Config>::MaxDidLength>;
-pub type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
 pub type MetadataOf<T> = BoundedVec<u8, <T as Config>::MaxMetadataLength>;
 
 use sp_std::vec::Vec;
@@ -75,7 +75,7 @@ pub mod pallet {
 		type MaxMetadataLength: Get<u32>;
 		/// maximum delay in block numbers between linking an identity and verifying an identity
 		#[pallet::constant]
-		type MaxVerificationDelay: Get<BlockNumberOf<Self>>;
+		type MaxVerificationDelay: Get<ParentchainBlockNumber>;
 	}
 
 	#[pallet::event]
@@ -192,7 +192,7 @@ pub mod pallet {
 			who: T::AccountId,
 			did: DidOf<T>,
 			metadata: Option<MetadataOf<T>>,
-			linking_request_block: BlockNumberOf<T>,
+			linking_request_block: ParentchainBlockNumber,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 			ensure!(!IDGraphs::<T>::contains_key(&who, &did), Error::<T>::IdentityAlreadyExist);
@@ -224,7 +224,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			who: T::AccountId,
 			did: DidOf<T>,
-			verification_request_block: BlockNumberOf<T>,
+			verification_request_block: ParentchainBlockNumber,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 			IDGraphs::<T>::try_mutate(&who, &did, |context| -> DispatchResult {
