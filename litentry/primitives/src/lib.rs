@@ -18,6 +18,7 @@
 use codec::{Decode, Encode};
 use sp_std::vec::Vec;
 
+mod ethereum_signature;
 mod identity;
 mod validation_data;
 pub use identity::*;

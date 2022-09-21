@@ -17,12 +17,27 @@
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
+use crate::ethereum_signature::EthereumSignature;
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
-use sp_runtime::{traits::ConstU32, BoundedVec, MultiSignature};
+use sp_core::{ecdsa, ed25519, sr25519};
+use sp_runtime::{traits::ConstU32, BoundedVec};
 
 pub type MaxStringLength = ConstU32<64>;
 pub type ValidationString = BoundedVec<u8, MaxStringLength>;
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub enum IdentityMultiSignature {
+	/// An Ed25519 signature.
+	Ed25519(ed25519::Signature),
+	/// An Sr25519 signature.
+	Sr25519(sr25519::Signature),
+	/// An ECDSA/SECP256k1 signature.
+	Ecdsa(ecdsa::Signature),
+	/// An ECDSA/keccak256 signature. An Ethereum signature. hash message with keccak256
+	Ethereum(EthereumSignature),
+}
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
@@ -42,7 +57,7 @@ pub struct DiscordValidationData {
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct Web3CommonValidationData {
 	pub message: ValidationString, // or String if under std
-	pub signature: MultiSignature,
+	pub signature: IdentityMultiSignature,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]

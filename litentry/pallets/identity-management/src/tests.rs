@@ -15,12 +15,13 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	identity_context::IdentityContext, mock::*, BlockNumberOf, DidOf, Error, MetadataOf,
+	identity_context::IdentityContext, mock::*, BlockNumberOf, Error, MetadataOf,
 	UserShieldingKeyType,
 };
 use frame_support::{assert_noop, assert_ok};
-use litentry_primitives::USER_SHIELDING_KEY_LEN;
-
+use litentry_primitives::{
+	Identity, IdentityHandle, IdentityString, IdentityWebType, Web2Network, USER_SHIELDING_KEY_LEN,
+};
 #[test]
 fn set_user_shielding_key_works() {
 	new_test_ext().execute_with(|| {
@@ -38,18 +39,16 @@ fn set_user_shielding_key_works() {
 #[test]
 fn link_identity_works() {
 	new_test_ext().execute_with(|| {
-		let did: DidOf<Test> =
-			"did:polkadot:web3:substrate:0x1234".as_bytes().to_vec().try_into().unwrap();
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		assert_ok!(IMT::link_identity(
 			Origin::signed(1),
 			2,
-			did.clone(),
+			ALICE_WEB3_IDENTITY.clone(),
 			Some(metadata.clone()),
 			1
 		));
 		assert_eq!(
-			IMT::id_graphs(2, did).unwrap(),
+			IMT::id_graphs(2, ALICE_WEB3_IDENTITY).unwrap(),
 			IdentityContext {
 				metadata: Some(metadata),
 				linking_request_block: Some(1),
@@ -63,22 +62,20 @@ fn link_identity_works() {
 #[test]
 fn unlink_identity_works() {
 	new_test_ext().execute_with(|| {
-		let did: DidOf<Test> =
-			"did:polkadot:web3:substrate:0x1234".as_bytes().to_vec().try_into().unwrap();
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		assert_noop!(
-			IMT::unlink_identity(Origin::signed(1), 2, did.clone()),
+			IMT::unlink_identity(Origin::signed(1), 2, ALICE_WEB3_IDENTITY.clone()),
 			Error::<Test>::IdentityNotExist
 		);
 		assert_ok!(IMT::link_identity(
 			Origin::signed(1),
 			2,
-			did.clone(),
+			ALICE_WEB3_IDENTITY.clone(),
 			Some(metadata.clone()),
 			1
 		));
 		assert_eq!(
-			IMT::id_graphs(2, did.clone()).unwrap(),
+			IMT::id_graphs(2, ALICE_WEB3_IDENTITY.clone()).unwrap(),
 			IdentityContext {
 				metadata: Some(metadata),
 				linking_request_block: Some(1),
@@ -86,27 +83,25 @@ fn unlink_identity_works() {
 				is_verified: false,
 			}
 		);
-		assert_ok!(IMT::unlink_identity(Origin::signed(1), 2, did.clone()));
-		assert_eq!(IMT::id_graphs(2, did), None);
+		assert_ok!(IMT::unlink_identity(Origin::signed(1), 2, ALICE_WEB3_IDENTITY.clone()));
+		assert_eq!(IMT::id_graphs(2, ALICE_WEB3_IDENTITY), None);
 	});
 }
 
 #[test]
 fn verify_identity_works() {
 	new_test_ext().execute_with(|| {
-		let did: DidOf<Test> =
-			"did:polkadot:web3:substrate:0x1234".as_bytes().to_vec().try_into().unwrap();
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		assert_ok!(IMT::link_identity(
 			Origin::signed(1),
 			2,
-			did.clone(),
+			ALICE_WEB3_IDENTITY.clone(),
 			Some(metadata.clone()),
 			1
 		));
-		assert_ok!(IMT::verify_identity(Origin::signed(1), 2, did.clone(), 1));
+		assert_ok!(IMT::verify_identity(Origin::signed(1), 2, ALICE_WEB3_IDENTITY.clone(), 1));
 		assert_eq!(
-			IMT::id_graphs(2, did).unwrap(),
+			IMT::id_graphs(2, ALICE_WEB3_IDENTITY).unwrap(),
 			IdentityContext {
 				metadata: Some(metadata),
 				linking_request_block: Some(1),
@@ -120,29 +115,31 @@ fn verify_identity_works() {
 #[test]
 fn get_did_and_identity_context_works() {
 	new_test_ext().execute_with(|| {
-		let did3: DidOf<Test> =
-			"did:polkadot:web3:substrate:0x1234".as_bytes().to_vec().try_into().unwrap();
 		let metadata3: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		assert_ok!(IMT::link_identity(
 			Origin::signed(1),
 			2,
-			did3.clone(),
+			ALICE_WEB3_IDENTITY.clone(),
 			Some(metadata3.clone()),
 			3
 		));
-		assert_ok!(IMT::verify_identity(Origin::signed(1), 2, did3.clone(), 3));
+		assert_ok!(IMT::verify_identity(Origin::signed(1), 2, ALICE_WEB3_IDENTITY.clone(), 3));
 
-		let did2: DidOf<Test> =
-			"did:twitter:web2:_:myTwitterHandle".as_bytes().to_vec().try_into().unwrap();
+		let alice_web2_identity: Identity = Identity {
+			web_type: IdentityWebType::Web2(Web2Network::Twitter),
+			handle: IdentityHandle::String(
+				IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
+			),
+		};
 		let metadata2: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		assert_ok!(IMT::link_identity(
 			Origin::signed(1),
 			2,
-			did2.clone(),
+			alice_web2_identity.clone(),
 			Some(metadata2.clone()),
 			2
 		));
-		assert_ok!(IMT::verify_identity(Origin::signed(1), 2, did2.clone(), 2));
+		assert_ok!(IMT::verify_identity(Origin::signed(1), 2, alice_web2_identity.clone(), 2));
 
 		let did_contex = IMT::get_did_and_identity_context(&2);
 		assert_eq!(did_contex.len(), 2);
@@ -155,22 +152,25 @@ fn verify_identity_fails_when_too_early() {
 		const LINKNIG_REQUEST_BLOCK: BlockNumberOf<Test> = 2;
 		const VERIFICATION_REQUEST_BLOCK: BlockNumberOf<Test> = 1;
 
-		let did: DidOf<Test> =
-			"did:polkadot:web3:substrate:0x1234".as_bytes().to_vec().try_into().unwrap();
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		assert_ok!(IMT::link_identity(
 			Origin::signed(1),
 			2,
-			did.clone(),
+			ALICE_WEB3_IDENTITY.clone(),
 			Some(metadata.clone()),
 			LINKNIG_REQUEST_BLOCK
 		));
 		assert_noop!(
-			IMT::verify_identity(Origin::signed(1), 2, did.clone(), VERIFICATION_REQUEST_BLOCK),
+			IMT::verify_identity(
+				Origin::signed(1),
+				2,
+				ALICE_WEB3_IDENTITY.clone(),
+				VERIFICATION_REQUEST_BLOCK
+			),
 			Error::<Test>::VerificationRequestTooEarly
 		);
 		assert_eq!(
-			IMT::id_graphs(2, did).unwrap(),
+			IMT::id_graphs(2, ALICE_WEB3_IDENTITY).unwrap(),
 			IdentityContext {
 				metadata: Some(metadata),
 				linking_request_block: Some(LINKNIG_REQUEST_BLOCK),
@@ -187,22 +187,25 @@ fn verify_identity_fails_when_too_late() {
 		const LINKNIG_REQUEST_BLOCK: BlockNumberOf<Test> = 1;
 		const VERIFICATION_REQUEST_BLOCK: BlockNumberOf<Test> = 5;
 
-		let did: DidOf<Test> =
-			"did:polkadot:web3:substrate:0x1234".as_bytes().to_vec().try_into().unwrap();
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		assert_ok!(IMT::link_identity(
 			Origin::signed(1),
 			2,
-			did.clone(),
+			ALICE_WEB3_IDENTITY.clone(),
 			Some(metadata.clone()),
 			LINKNIG_REQUEST_BLOCK
 		));
 		assert_noop!(
-			IMT::verify_identity(Origin::signed(1), 2, did.clone(), VERIFICATION_REQUEST_BLOCK),
+			IMT::verify_identity(
+				Origin::signed(1),
+				2,
+				ALICE_WEB3_IDENTITY.clone(),
+				VERIFICATION_REQUEST_BLOCK
+			),
 			Error::<Test>::VerificationRequestTooLate
 		);
 		assert_eq!(
-			IMT::id_graphs(2, did).unwrap(),
+			IMT::id_graphs(2, ALICE_WEB3_IDENTITY).unwrap(),
 			IdentityContext {
 				metadata: Some(metadata),
 				linking_request_block: Some(LINKNIG_REQUEST_BLOCK),
