@@ -17,7 +17,7 @@
 use crate::{stf_sgx_primitives::types::*, AccountId, StfError, StfResult};
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
-use crate::{DidOf, MetadataOf, Runtime};
+use crate::{MetadataOf, Runtime};
 use codec::Encode;
 use ita_sgx_runtime::Runtime;
 use litentry_primitives::{Identity, IdentityWebType, UserShieldingKeyType};
@@ -30,15 +30,15 @@ use itc_https_client_daemon::daemon_sender::SendHttpsRequest;
 use itp_utils::stringify::account_id_to_string;
 
 impl Stf {
-	fn is_web2_account(did: Identity) -> bool {
-		match did.web_type {
+	fn is_web2_account(identity: Identity) -> bool {
+		match identity.web_type {
 			IdentityWebType::Web2(_) => true,
 			IdentityWebType::Web3(_) => false,
 		}
 	}
 
-	fn is_web3_account(did: Identity) -> bool {
-		match did.web_type {
+	fn is_web3_account(identity: Identity) -> bool {
+		match identity.web_type {
 			IdentityWebType::Web2(_) => false,
 			IdentityWebType::Web3(_) => true,
 		}
@@ -54,12 +54,12 @@ impl Stf {
 
 	pub fn link_identity(
 		who: AccountId,
-		did: DidOf<Runtime>,
+		identity: Identity,
 		metadta: Option<MetadataOf<Runtime>>,
 		bn: BlockNumberOf<Runtime>,
 	) -> StfResult<()> {
 		debug!(
-			"who.str = {:?}, did = {:?}, metadata = {:?}, bn = {:?}",
+			"who.str = {:?}, identity = {:?}, metadata = {:?}, bn = {:?}",
 			account_id_to_string(&who),
 			key.clone(),
 			metadta,
@@ -67,7 +67,7 @@ impl Stf {
 		);
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::link_identity {
 			who,
-			did,
+			identity,
 			metadata,
 			linking_request_block: bn,
 		}
@@ -77,17 +77,17 @@ impl Stf {
 	}
 
 	pub fn verify_ruleset1(who: AccountId) -> StfResult<()> {
-		let v_did_context =
-		ita_sgx_runtime::pallet_identity_management::Pallet::<Runtime>::get_did_and_identity_context(&who);
+		let v_identity_context =
+		ita_sgx_runtime::pallet_identity_management::Pallet::<Runtime>::get_identity_and_identity_context(&who);
 
 		let mut web2_cnt = 0;
 		let mut web3_cnt = 0;
 
-		for did_ctx in &v_did_context {
-			if did_ctx.1.is_verified {
-				if Self::is_web2_account(did_ctx.0.clone()) {
+		for identity_ctx in &v_identity_context {
+			if identity_ctx.1.is_verified {
+				if Self::is_web2_account(identity_ctx.0.clone()) {
 					web2_cnt = web2_cnt + 1;
-				} else if Self::is_web3_account(did_ctx.0.clone()) {
+				} else if Self::is_web3_account(identity_ctx.0.clone()) {
 					web3_cnt = web3_cnt + 1;
 				}
 			}

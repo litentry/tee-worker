@@ -66,7 +66,7 @@ pub mod pallet {
 		type ManageOrigin: EnsureOrigin<Self::Origin>;
 		/// challenge code type
 		type ChallengeCode: Member + Parameter + Default + Copy + MaxEncodedLen;
-		/// maximum did length
+		/// maximum identity length
 		#[pallet::constant]
 		type MaxDidLength: Get<u32>;
 		/// maximum metadata length
@@ -83,22 +83,22 @@ pub mod pallet {
 		/// user shielding key was set
 		UserShieldingKeySet { who: T::AccountId, key: UserShieldingKeyType },
 		/// challenge code was set
-		ChallengeCodeSet { who: T::AccountId, did: Identity, code: ChallengeCodeOf<T> },
+		ChallengeCodeSet { who: T::AccountId, identity: Identity, code: ChallengeCodeOf<T> },
 		/// challenge code was removed
-		ChallengeCodeRemoved { who: T::AccountId, did: Identity },
+		ChallengeCodeRemoved { who: T::AccountId, identity: Identity },
 		/// an identity was linked
-		IdentityLinked { who: T::AccountId, did: Identity },
+		IdentityLinked { who: T::AccountId, identity: Identity },
 		/// an identity was removed
-		IdentityUnlinked { who: T::AccountId, did: Identity },
+		IdentityUnlinked { who: T::AccountId, identity: Identity },
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
 		/// challenge code doesn't exist
 		ChallengeCodeNotExist,
-		/// the pair (litentry-account, did) already exists
+		/// the pair (litentry-account, identity) already exists
 		IdentityAlreadyExist,
-		/// the pair (litentry-account, did) doesn't exist
+		/// the pair (litentry-account, identity) doesn't exist
 		IdentityNotExist,
 		/// the identity was not linked before verification
 		IdentityNotLinked,
@@ -114,7 +114,7 @@ pub mod pallet {
 	pub type UserShieldingKeys<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, UserShieldingKeyType, OptionQuery>;
 
-	/// challenge code is per Litentry account + did
+	/// challenge code is per Litentry account + identity
 	#[pallet::storage]
 	#[pallet::getter(fn challenge_codes)]
 	pub type ChallengeCodes<T: Config> = StorageDoubleMap<
@@ -127,7 +127,7 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
-	/// ID graph is per Litentry account + did
+	/// ID graph is per Litentry account + identity
 	#[pallet::storage]
 	#[pallet::getter(fn id_graphs)]
 	pub type IDGraphs<T: Config> = StorageDoubleMap<
@@ -159,13 +159,13 @@ pub mod pallet {
 		pub fn set_challenge_code(
 			origin: OriginFor<T>,
 			who: T::AccountId,
-			did: Identity,
+			identity: Identity,
 			code: ChallengeCodeOf<T>,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 			// we don't care if it has already associated with any challenge code
-			ChallengeCodes::<T>::insert(&who, &did, &code);
-			Self::deposit_event(Event::ChallengeCodeSet { who, did, code });
+			ChallengeCodes::<T>::insert(&who, &identity, &code);
+			Self::deposit_event(Event::ChallengeCodeSet { who, identity, code });
 			Ok(())
 		}
 
@@ -173,15 +173,15 @@ pub mod pallet {
 		pub fn remove_challenge_code(
 			origin: OriginFor<T>,
 			who: T::AccountId,
-			did: Identity,
+			identity: Identity,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 			ensure!(
-				ChallengeCodes::<T>::contains_key(&who, &did),
+				ChallengeCodes::<T>::contains_key(&who, &identity),
 				Error::<T>::ChallengeCodeNotExist
 			);
-			ChallengeCodes::<T>::remove(&who, &did);
-			Self::deposit_event(Event::ChallengeCodeRemoved { who, did });
+			ChallengeCodes::<T>::remove(&who, &identity);
+			Self::deposit_event(Event::ChallengeCodeRemoved { who, identity });
 			Ok(())
 		}
 
@@ -189,19 +189,22 @@ pub mod pallet {
 		pub fn link_identity(
 			origin: OriginFor<T>,
 			who: T::AccountId,
-			did: Identity,
+			identity: Identity,
 			metadata: Option<MetadataOf<T>>,
 			linking_request_block: ParentchainBlockNumber,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
-			ensure!(!IDGraphs::<T>::contains_key(&who, &did), Error::<T>::IdentityAlreadyExist);
+			ensure!(
+				!IDGraphs::<T>::contains_key(&who, &identity),
+				Error::<T>::IdentityAlreadyExist
+			);
 			let context = IdentityContext {
 				metadata,
 				linking_request_block: Some(linking_request_block),
 				..Default::default()
 			};
-			IDGraphs::<T>::insert(&who, &did, context);
-			Self::deposit_event(Event::IdentityLinked { who, did });
+			IDGraphs::<T>::insert(&who, &identity, context);
+			Self::deposit_event(Event::IdentityLinked { who, identity });
 			Ok(())
 		}
 
@@ -209,12 +212,12 @@ pub mod pallet {
 		pub fn unlink_identity(
 			origin: OriginFor<T>,
 			who: T::AccountId,
-			did: Identity,
+			identity: Identity,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
-			ensure!(IDGraphs::<T>::contains_key(&who, &did), Error::<T>::IdentityNotExist);
-			IDGraphs::<T>::remove(&who, &did);
-			Self::deposit_event(Event::IdentityUnlinked { who, did });
+			ensure!(IDGraphs::<T>::contains_key(&who, &identity), Error::<T>::IdentityNotExist);
+			IDGraphs::<T>::remove(&who, &identity);
+			Self::deposit_event(Event::IdentityUnlinked { who, identity });
 			Ok(())
 		}
 
@@ -222,11 +225,11 @@ pub mod pallet {
 		pub fn verify_identity(
 			origin: OriginFor<T>,
 			who: T::AccountId,
-			did: Identity,
+			identity: Identity,
 			verification_request_block: ParentchainBlockNumber,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
-			IDGraphs::<T>::try_mutate(&who, &did, |context| -> DispatchResult {
+			IDGraphs::<T>::try_mutate(&who, &identity, |context| -> DispatchResult {
 				let mut c = context.take().ok_or(Error::<T>::IdentityNotExist)?;
 
 				if let Some(b) = c.linking_request_block {
@@ -254,7 +257,7 @@ pub mod pallet {
 			Self::user_shielding_keys(who)
 		}
 
-		pub fn get_did_and_identity_context(
+		pub fn get_identity_and_identity_context(
 			who: &T::AccountId,
 		) -> Vec<(Identity, IdentityContext<T>)> {
 			IDGraphs::iter_prefix(who).collect::<Vec<_>>()

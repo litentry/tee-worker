@@ -389,16 +389,16 @@ impl Stf {
 					}
 					Ok(())
 				},
-				TrustedCall::link_identity(root, who, did, metadata) => {
+				TrustedCall::link_identity(root, who, identity, metadata) => {
 					ensure!(is_root(&root), StfError::MissingPrivileges(root));
 					debug!(
-						"link_identity, who: {}, did: {:?}, metadata: {:?}",
+						"link_identity, who: {}, identity: {:?}, metadata: {:?}",
 						account_id_to_string(&who),
-						did.clone(),
+						identity.clone(),
 						metadata.clone()
 					);
 					// set link
-					match Self::link_identity(who.clone(), did.clone(), metadata) {
+					match Self::link_identity(who.clone(), identity.clone(), metadata) {
 						Ok(()) => {
 							debug!("link_identity {} OK", account_id_to_string(&who));
 							if let Some(key) = get_user_shielding_key(&who) {
@@ -406,7 +406,7 @@ impl Stf {
 									node_metadata_repo
 										.get_from_metadata(|m| m.link_identity_call_indexes())??,
 									aes_encrypt_default(&key, &who.encode()),
-									aes_encrypt_default(&key, &did),
+									aes_encrypt_default(&key, &identity),
 								)));
 							} else {
 								calls.push(OpaqueCall::from_tuple(&(
@@ -429,8 +429,8 @@ impl Stf {
 					}
 					Ok(())
 				},
-				TrustedCall::unlink_identity(root, who, did) => Ok(()),
-				TrustedCall::verify_identity(root, who, did, validation_data, bn) => Ok(()),
+				TrustedCall::unlink_identity(root, who, identity) => Ok(()),
+				TrustedCall::verify_identity(root, who, identity, validation_data, bn) => Ok(()),
 				TrustedCall::query_credit(account) => {
 					debug!("query_credit({:x?}", account.encode(),);
 					Self::query_credit(account)
