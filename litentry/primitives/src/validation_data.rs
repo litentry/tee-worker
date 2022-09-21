@@ -17,20 +17,21 @@
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
+use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
 // use sp_runtime::{traits::ConstU32, BoundedVec, MultiSignature};
 
 pub type MaxStringLength = ConstU32<64>;
 pub type ValidationString = BoundedVec<u8, MaxStringLength>;
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct TwitterValidationData {
 	pub tweet_id: ValidationString,
 }
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct DiscordValidationData {
 	pub channel_id: ValidationString,
@@ -38,14 +39,14 @@ pub struct DiscordValidationData {
 	pub guild_id: ValidationString,
 }
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct Web3CommonValidationData {
 	pub message: ValidationString, // or String if under std
 	                               // pub signature: MultiSignature,
 }
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[allow(non_camel_case_types)]
 pub enum Web2ValidationData {
@@ -53,7 +54,7 @@ pub enum Web2ValidationData {
 	Discord(DiscordValidationData),
 }
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[allow(non_camel_case_types)]
 pub enum Web3ValidationData {
@@ -61,7 +62,7 @@ pub enum Web3ValidationData {
 	Evm(Web3CommonValidationData),
 }
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum ValidationData {
 	Web2(Web2ValidationData),
