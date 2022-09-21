@@ -19,11 +19,13 @@ use std::format;
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "std")]
+use sp_core::hexdisplay::HexDisplay;
+#[cfg(feature = "std")]
+use std::vec::Vec;
 
 use codec::{Decode, Encode};
-use sp_core::hexdisplay::HexDisplay;
-use sp_runtime::{traits::ConstU32, BoundedVec, MultiSignature};
-use sp_std::vec::Vec;
+use sp_runtime::{traits::ConstU32, BoundedVec};
 
 pub type MaxStringLength = ConstU32<64>;
 pub type IdentityString = BoundedVec<u8, MaxStringLength>;
