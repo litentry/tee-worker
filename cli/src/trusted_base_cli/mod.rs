@@ -17,9 +17,18 @@
 
 use crate::{
 	trusted_base_cli::commands::{
-		balance::BalanceCommand, query_credit::QueryCreditCommand, set_balance::SetBalanceCommand,
-		set_user_shielding_key::SetUserShieldingKeyCommand, transfer::TransferCommand,
-		unshield_funds::UnshieldFundsCommand, user_shielding_key::UserShiledingKeyCommand,
+		balance::BalanceCommand,
+		litentry::{
+			link_identity::LinkIdentityCommand,
+			prepare_verify_identity::PrepareVerifyIdentityCommand,
+			set_challenge_code::SetChallengeCodeCommand,
+		},
+		query_credit::QueryCreditCommand,
+		set_balance::SetBalanceCommand,
+		set_user_shielding_key::SetUserShieldingKeyCommand,
+		transfer::TransferCommand,
+		unshield_funds::UnshieldFundsCommand,
+		user_shielding_key::UserShiledingKeyCommand,
 	},
 	trusted_command_utils::get_keystore_path,
 	trusted_commands::TrustedArgs,
@@ -61,6 +70,12 @@ pub enum TrustedBaseCli {
 
 	/// query a user's credit score -- TODO: to be removed/refactored
 	QueryCredit(QueryCreditCommand),
+
+	LinkIdentity(LinkIdentityCommand),
+
+	SetChallengeCode(SetChallengeCodeCommand),
+
+	PrepareVerifyIdentity(PrepareVerifyIdentityCommand),
 }
 
 impl TrustedBaseCli {
@@ -75,6 +90,9 @@ impl TrustedBaseCli {
 			TrustedBaseCli::SetUserShieldingKey(cmd) => cmd.run(cli, trusted_args),
 			TrustedBaseCli::UserShieldingKey(cmd) => cmd.run(cli, trusted_args),
 			TrustedBaseCli::QueryCredit(cmd) => cmd.run(cli, trusted_args),
+			TrustedBaseCli::LinkIdentity(cmd) => cmd.run(cli, trusted_args),
+			TrustedBaseCli::SetChallengeCode(cmd) => cmd.run(cli, trusted_args),
+			TrustedBaseCli::PrepareVerifyIdentity(cmd) => cmd.run(cli, trusted_args),
 		}
 	}
 }

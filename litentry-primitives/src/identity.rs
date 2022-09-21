@@ -14,7 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use sp_std::fmt;
+#[cfg(feature = "std")]
+use std::format;
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -81,6 +82,7 @@ pub struct Identity {
 	pub handle: IdentityHandle,
 }
 
+#[cfg(feature = "std")]
 impl Identity {
 	fn flat(&self) -> Vec<u8> {
 		let mut display = match &self.web_type {

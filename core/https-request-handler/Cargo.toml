@@ -28,21 +28,21 @@ serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 log = { version = "0.4", default-features = false }
 lazy_static = { version = "1.1.0", features = ["spin_no_std"] }
-sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.26" }
+sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
 
 # internal dependencies
 ita-stf = { path = "../../app-libs/stf", default-features = false }
 itc-rest-client = { path = "../rest-client", default-features = false }
 itc-https-client-daemon = { path = "../https-client-daemon", default-features = false, features = ["sgx"] }
-itp-types = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "sdk-v0.9.0-polkadot-v0.9.26" }
+itp-types = { path = "../../core-primitives/types", default-features = false }
 
 itp-ocall-api = { path = "../../core-primitives/ocall-api", default-features = false }
 itp-extrinsics-factory = { path = "../../core-primitives/extrinsics-factory", default-features = false }
 itp-sgx-crypto = { path = "../../core-primitives/sgx/crypto", default-features = false }
 itp-stf-executor = { path = "../../core-primitives/stf-executor", default-features = false }
-itp-storage = { default-features = false, path = "../../core-primitives/storage" }
+itp-storage = { path = "../../core-primitives/storage", default-features = false }
 itp-top-pool-author = { path = "../../core-primitives/top-pool-author", default-features = false }
-itp-utils = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "sdk-v0.9.0-polkadot-v0.9.26" }
+itp-utils = { path = "../../core-primitives/utils",default-features = false }
 
 # litentry
 litentry-primitives = { path = "../../litentry-primitives", default-features = false }

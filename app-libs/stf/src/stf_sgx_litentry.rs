@@ -19,9 +19,7 @@ use crate::{stf_sgx_primitives::types::*, AccountId, StfError, StfResult};
 extern crate sgx_tstd as std;
 use codec::Encode;
 use ita_sgx_runtime::Runtime;
-use litentry_primitives::{
-	 UserShieldingKeyType, Web2ValidationData, DID,
-};
+use litentry_primitives::{UserShieldingKeyType, Web2ValidationData, DID};
 use log::*;
 
 use ita_sgx_runtime::pallet_identity_management::DidOf;
@@ -115,23 +113,18 @@ impl Stf {
 	pub fn link_identity(sender: AccountId, account: AccountId, did: DID) -> StfResult<()> {
 		let origin = ita_sgx_runtime::Origin::signed(sender.clone());
 
-		match get_parentchain_number() {
-			Some(number) => {
-				ita_sgx_runtime::IdentityManagementCall::<Runtime>::link_identity {
-					who: account,
-					did,
-					metadata: None,
-					linking_request_block: number,
-				}
-				.dispatch_bypass_filter(origin)
-				.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
-				Ok(())
-			},
-			None => {
-				error!("link_sub blocknumber l1 unavailable");
-				Err(StfError::LayerOneNumberUnavailable)
-			},
+		let parentchain_number =
+			ita_sgx_runtime::pallet_parentchain::Pallet::<Runtime>::block_number();
+
+		ita_sgx_runtime::IdentityManagementCall::<Runtime>::link_identity {
+			who: account,
+			did,
+			metadata: None,
+			linking_request_block: parentchain_number,
 		}
+		.dispatch_bypass_filter(origin)
+		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+		Ok(())
 	}
 
 	pub fn set_challenge_code(
@@ -181,21 +174,17 @@ impl Stf {
 
 	pub fn verify_identity(sender: AccountId, account: AccountId, did: DID) -> StfResult<()> {
 		let origin = ita_sgx_runtime::Origin::signed(sender);
-		match get_parentchain_number() {
-			Some(number) => {
-				ita_sgx_runtime::IdentityManagementCall::<Runtime>::verify_identity {
-					who: account,
-					did,
-					verification_request_block: number,
-				}
-				.dispatch_bypass_filter(origin)
-				.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
-				Ok(())
-			},
-			None => {
-				error!("verify_identity blocknumber l1 unavailable");
-				Err(StfError::LayerOneNumberUnavailable)
-			},
+
+		let parentchain_number =
+			ita_sgx_runtime::pallet_parentchain::Pallet::<Runtime>::block_number();
+
+		ita_sgx_runtime::IdentityManagementCall::<Runtime>::verify_identity {
+			who: account,
+			did,
+			verification_request_block: parentchain_number,
 		}
+		.dispatch_bypass_filter(origin)
+		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+		Ok(())
 	}
 }

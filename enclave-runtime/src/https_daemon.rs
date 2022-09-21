@@ -34,7 +34,8 @@ use std::{
 use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, LightClientState};
 
 use crate::global_components::{
-	EnclaveStfEnclaveSigner, GLOBAL_OCALL_API_COMPONENT, GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
+	EnclaveStfEnclaveSigner, GLOBAL_OCALL_API_COMPONENT, GLOBAL_STATE_OBSERVER_COMPONENT,
+	GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 };
 use itc_https_request_handler::{
 	build_twitter_client, CommonHandler, RequestHandler, TwitterResponse, VerificationContext,
@@ -76,7 +77,6 @@ fn run_https_client_daemon_internal(url: &str) -> Result<()> {
 		let genesis_hash = v.genesis_hash(v.num_relays())?;
 		Ok((latest_parentchain_header, genesis_hash))
 	})?;
-
 	let authority = Ed25519Seal::unseal_from_static_file()?;
 	let node_metadata_repository = GLOBAL_NODE_METADATA_REPOSITORY_COMPONENT.get()?;
 
@@ -90,6 +90,8 @@ fn run_https_client_daemon_internal(url: &str) -> Result<()> {
 	let author_api = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
 
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
+	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
+
 	// For debug purposes, list shards. no problem to panic if fails.
 	let shards = state_handler.list_shards().unwrap();
 	let default_shard_identifier = shards.get(0).unwrap().clone();
@@ -103,7 +105,7 @@ fn run_https_client_daemon_internal(url: &str) -> Result<()> {
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 
 	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
-		state_handler.clone(),
+		state_observer,
 		ocall_api,
 		shielding_key_repository.clone(),
 	));

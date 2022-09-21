@@ -41,7 +41,7 @@ use codec::{Compact, Decode, Encode};
 use derive_more::Display;
 use itp_node_api_metadata::Error as MetadataError;
 use itp_node_api_metadata_provider::Error as MetadataProviderError;
-use litentry_primitives::UserShieldingKeyType;
+use litentry_primitives::{UserShieldingKeyType, ValidationData, DID};
 use sp_core::{crypto::AccountId32, ed25519, sr25519, Pair, H256};
 use sp_runtime::{traits::Verify, MultiSignature};
 pub use std::sync::Arc;
