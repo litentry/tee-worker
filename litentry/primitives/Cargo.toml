@@ -13,6 +13,9 @@ sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28", default-features = false }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28", default-features = false }
 
+# sgx dependencies
+sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true, features = ["net", "thread"] }
+
 [features]
 default = ["std"]
 std = [
@@ -21,5 +24,10 @@ std = [
 	"sp-core/std",
     "sp-std/std",
 	"sp-runtime/std",
+]
+sgx = [
+	"sgx_tstd",
+	"serde",
+	"serde_json"
 ]
 production = []

@@ -14,14 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#[cfg(feature = "std")]
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+extern crate sgx_tstd as std;
+
+#[cfg(any(feature = "std", feature = "sgx"))]
 use std::format;
 
-#[cfg(feature = "std")]
+#[cfg(any(feature = "std", feature = "sgx"))]
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "std")]
+#[cfg(any(feature = "std", feature = "sgx"))]
 use sp_core::hexdisplay::HexDisplay;
-#[cfg(feature = "std")]
+#[cfg(any(feature = "std", feature = "sgx"))]
 use std::vec::Vec;
 
 use codec::{Decode, Encode, MaxEncodedLen};
@@ -85,9 +88,9 @@ pub struct Identity {
 	pub handle: IdentityHandle,
 }
 
-#[cfg(feature = "std")]
 impl Identity {
-	fn flat(&self) -> Vec<u8> {
+	#[cfg(any(feature = "std", feature = "sgx"))]
+	pub fn flat(&self) -> Vec<u8> {
 		let mut display = match &self.web_type {
 			IdentityWebType::Web3(Web3Network::Substrate(sub)) =>
 				format!("did:{:?}:web3:substrate:", sub)
@@ -107,7 +110,7 @@ impl Identity {
 				format!("0x{}", HexDisplay::from(inner)).as_bytes().to_vec(),
 		};
 		display.append(&mut suffix);
-		return display
+		display
 	}
 }
 
