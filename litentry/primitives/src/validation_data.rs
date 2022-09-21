@@ -19,8 +19,7 @@ use serde::{Deserialize, Serialize};
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
-use sp_runtime::{traits::ConstU32, BoundedVec};
-// use sp_runtime::{traits::ConstU32, BoundedVec, MultiSignature};
+use sp_runtime::{traits::ConstU32, BoundedVec, MultiSignature};
 
 pub type MaxStringLength = ConstU32<64>;
 pub type ValidationString = BoundedVec<u8, MaxStringLength>;
@@ -43,7 +42,7 @@ pub struct DiscordValidationData {
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct Web3CommonValidationData {
 	pub message: ValidationString, // or String if under std
-	                               // pub signature: MultiSignature,
+	pub signature: MultiSignature,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
