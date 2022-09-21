@@ -16,7 +16,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 use codec::{Decode, Encode};
-use sp_runtime::{traits::ConstU32, BoundedVec};
 use sp_std::vec::Vec;
 
 mod identity;
@@ -32,8 +31,6 @@ pub const USER_SHIELDING_KEY_NONCE_LEN: usize = 12;
 pub const USER_SHIELDING_KEY_TAG_LEN: usize = 16;
 
 pub type UserShieldingKeyType = [u8; USER_SHIELDING_KEY_LEN];
-pub type MaxDidLength = ConstU32<128>;
-pub type DID = BoundedVec<u8, MaxDidLength>;
 
 // all-in-one struct containing the encrypted ciphertext with user's
 // shielding key and other metadata that is required for decryption
