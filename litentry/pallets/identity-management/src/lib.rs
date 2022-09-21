@@ -38,10 +38,9 @@ pub mod identity_context;
 use frame_support::{pallet_prelude::*, traits::StorageVersion};
 use frame_system::pallet_prelude::*;
 pub use identity_context::IdentityContext;
-pub use litentry_primitives::UserShieldingKeyType;
+pub use litentry_primitives::{Identity, UserShieldingKeyType};
 
 pub type ChallengeCodeOf<T> = <T as Config>::ChallengeCode;
-pub type DidOf<T> = BoundedVec<u8, <T as Config>::MaxDidLength>;
 pub(crate) type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
 pub(crate) type MetadataOf<T> = BoundedVec<u8, <T as Config>::MaxMetadataLength>;
 
@@ -84,13 +83,13 @@ pub mod pallet {
 		/// user shielding key was set
 		UserShieldingKeySet { who: T::AccountId, key: UserShieldingKeyType },
 		/// challenge code was set
-		ChallengeCodeSet { who: T::AccountId, did: DidOf<T>, code: ChallengeCodeOf<T> },
+		ChallengeCodeSet { who: T::AccountId, did: Identity, code: ChallengeCodeOf<T> },
 		/// challenge code was removed
-		ChallengeCodeRemoved { who: T::AccountId, did: DidOf<T> },
+		ChallengeCodeRemoved { who: T::AccountId, did: Identity },
 		/// an identity was linked
-		IdentityLinked { who: T::AccountId, did: DidOf<T> },
+		IdentityLinked { who: T::AccountId, did: Identity },
 		/// an identity was removed
-		IdentityUnlinked { who: T::AccountId, did: DidOf<T> },
+		IdentityUnlinked { who: T::AccountId, did: Identity },
 	}
 
 	#[pallet::error]
@@ -123,7 +122,7 @@ pub mod pallet {
 		Blake2_128Concat,
 		T::AccountId,
 		Blake2_128Concat,
-		DidOf<T>,
+		Identity,
 		ChallengeCodeOf<T>,
 		OptionQuery,
 	>;
@@ -136,7 +135,7 @@ pub mod pallet {
 		Blake2_128Concat,
 		T::AccountId,
 		Blake2_128Concat,
-		DidOf<T>,
+		Identity,
 		IdentityContext<T>,
 		OptionQuery,
 	>;
@@ -160,7 +159,7 @@ pub mod pallet {
 		pub fn set_challenge_code(
 			origin: OriginFor<T>,
 			who: T::AccountId,
-			did: DidOf<T>,
+			did: Identity,
 			code: ChallengeCodeOf<T>,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
@@ -174,7 +173,7 @@ pub mod pallet {
 		pub fn remove_challenge_code(
 			origin: OriginFor<T>,
 			who: T::AccountId,
-			did: DidOf<T>,
+			did: Identity,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 			ensure!(
@@ -190,7 +189,7 @@ pub mod pallet {
 		pub fn link_identity(
 			origin: OriginFor<T>,
 			who: T::AccountId,
-			did: DidOf<T>,
+			did: Identity,
 			metadata: Option<MetadataOf<T>>,
 			linking_request_block: BlockNumberOf<T>,
 		) -> DispatchResult {
@@ -210,7 +209,7 @@ pub mod pallet {
 		pub fn unlink_identity(
 			origin: OriginFor<T>,
 			who: T::AccountId,
-			did: DidOf<T>,
+			did: Identity,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 			ensure!(IDGraphs::<T>::contains_key(&who, &did), Error::<T>::IdentityNotExist);
@@ -223,7 +222,7 @@ pub mod pallet {
 		pub fn verify_identity(
 			origin: OriginFor<T>,
 			who: T::AccountId,
-			did: DidOf<T>,
+			did: Identity,
 			verification_request_block: BlockNumberOf<T>,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
@@ -257,7 +256,7 @@ pub mod pallet {
 
 		pub fn get_did_and_identity_context(
 			who: &T::AccountId,
-		) -> Vec<(DidOf<T>, IdentityContext<T>)> {
+		) -> Vec<(Identity, IdentityContext<T>)> {
 			IDGraphs::iter_prefix(who).collect::<Vec<_>>()
 		}
 	}
