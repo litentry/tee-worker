@@ -18,6 +18,13 @@
 use codec::{Decode, Encode};
 use sp_std::vec::Vec;
 
+mod ethereum_signature;
+mod identity;
+mod validation_data;
+pub use ethereum_signature::*;
+pub use identity::*;
+pub use validation_data::*;
+
 // TODO: import the const and struct from the parachain once the code is there
 //
 // we use 256-bit AES-GCM as user shielding key
