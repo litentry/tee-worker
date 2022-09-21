@@ -19,7 +19,8 @@ use crate::{stf_sgx_primitives::types::*, AccountId, StfError, StfResult};
 extern crate sgx_tstd as std;
 use crate::{DidOf, MetadataOf, Runtime};
 use codec::Encode;
-use litentry_primitives::UserShieldingKeyType;
+use ita_sgx_runtime::Runtime;
+use litentry_primitives::{Identity, IdentityWebType, UserShieldingKeyType};
 use log::*;
 
 use std::{format, str, vec::Vec};
@@ -29,39 +30,18 @@ use itc_https_client_daemon::daemon_sender::SendHttpsRequest;
 use itp_utils::stringify::account_id_to_string;
 
 impl Stf {
-	// TODO: refactor the following two methods (is_web2_account & is_web3_account) later
-	// TODO: - this should go to helpers
-	//       - which one is better, a raw string, or a struct?
-	fn is_web2_account(did: DidOf<Runtime>) -> bool {
-		match str::from_utf8(&did) {
-			Ok(v) => {
-				let vstr: Vec<&str> = v.split(':').collect();
-				if vstr[3] == "web2" {
-					return true
-				}
-			},
-			Err(e) => {
-				error!("Invalid account bytes: {}", e);
-			},
-		};
-
-		false
+	fn is_web2_account(did: Identity) -> bool {
+		match did.web_type {
+			IdentityWebType::Web2(_) => true,
+			IdentityWebType::Web3(_) => false,
+		}
 	}
 
-	fn is_web3_account(did: DidOf<Runtime>) -> bool {
-		match str::from_utf8(&did) {
-			Ok(v) => {
-				let vstr: Vec<&str> = v.split(':').collect();
-				if vstr[3] == "web3" {
-					return true
-				}
-			},
-			Err(e) => {
-				error!("Invalid account bytes: {}", e);
-			},
-		};
-
-		false
+	fn is_web3_account(did: Identity) -> bool {
+		match did.web_type {
+			IdentityWebType::Web2(_) => false,
+			IdentityWebType::Web3(_) => true,
+		}
 	}
 
 	pub fn set_user_shielding_key(who: AccountId, key: UserShieldingKeyType) -> StfResult<()> {

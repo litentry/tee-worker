@@ -40,7 +40,7 @@ use std::vec::Vec;
 use codec::{Compact, Decode, Encode};
 use derive_more::Display;
 use ita_sgx_runtime::{
-	pallet_identity_management::{DidOf, MetadataOf},
+	pallet_identity_management::{Identity, MetadataOf},
 	Runtime,
 };
 use itp_node_api_metadata::Error as MetadataError;
@@ -263,12 +263,12 @@ pub enum TrustedCall {
 	link_identity(
 		AccountId,
 		AccountId,
-		DidOf<Runtime>,
+		Identity,
 		Option<MetadataOf<Runtime>>,
 		ParentchainBlockNumber,
 	), // (Root, Account, identity, metadata, blocknumber)
-	unlink_identity(AccountId, AccountId, DidOf<Runtime>),              // (Root, Account, identity)
-	verify_identity(AccountId, AccountId, DidOf<Runtime>, Vec<u8>, ParentchainBlockNumber), // (Root, Account, identity, validation_data, blocknumber)
+	unlink_identity(AccountId, AccountId, Identity),                    // (Root, Account, identity)
+	verify_identity(AccountId, AccountId, Identity, Vec<u8>, ParentchainBlockNumber), // (Root, Account, identity, validation_data, blocknumber)
 	query_credit(AccountId),
 }
 
