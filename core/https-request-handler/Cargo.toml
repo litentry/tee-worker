@@ -45,7 +45,7 @@ itp-top-pool-author = { path = "../../core-primitives/top-pool-author", default-
 itp-utils = { path = "../../core-primitives/utils",default-features = false }
 
 # litentry
-litentry-primitives = { path = "../../litentry-primitives", default-features = false }
+litentry-primitives = { path = "../../litentry/primitives", default-features = false, features = ["sgx"] }
 
 [features]
 default = ["std"]

@@ -19,20 +19,14 @@ use crate::{stf_sgx_primitives::types::*, AccountId, StfError, StfResult};
 extern crate sgx_tstd as std;
 use codec::Encode;
 use ita_sgx_runtime::Runtime;
-use litentry_primitives::{UserShieldingKeyType, Web2ValidationData, DID};
-use litentry_primitives::{Identity, IdentityWebType, UserShieldingKeyType};
+use litentry_primitives::{Identity, IdentityWebType, UserShieldingKeyType, Web2ValidationData};
 use log::*;
-
-use std::format;
-use support::traits::UnfilteredDispatchable;
-
-use ita_sgx_runtime::pallet_identity_management::DidOf;
 
 use crate::helpers;
 use itc_https_client_daemon::daemon_sender::SendHttpsRequest;
 use itp_storage::StorageHasher;
 use itp_utils::stringify::account_id_to_string;
-use std::{format, str, vec::Vec};
+use std::format;
 use support::traits::UnfilteredDispatchable;
 
 impl Stf {
@@ -96,7 +90,7 @@ impl Stf {
 		Ok(())
 	}
 
-	pub fn link_identity(sender: AccountId, account: AccountId, did: DID) -> StfResult<()> {
+	pub fn link_identity(sender: AccountId, account: AccountId, did: Identity) -> StfResult<()> {
 		let origin = ita_sgx_runtime::Origin::signed(sender.clone());
 
 		let parentchain_number =
@@ -116,7 +110,7 @@ impl Stf {
 	pub fn set_challenge_code(
 		sender: AccountId,
 		account: AccountId,
-		did: DID,
+		did: Identity,
 		challenge_code: u32,
 	) -> StfResult<()> {
 		let origin = ita_sgx_runtime::Origin::signed(sender.clone());
@@ -134,7 +128,7 @@ impl Stf {
 	pub fn prepare_verify_identity(
 		_sender: AccountId,
 		target: AccountId,
-		did: DID,
+		did: Identity,
 		validation_data: Web2ValidationData,
 	) -> StfResult<()> {
 		let code: Option<u32> = helpers::get_storage_double_map(
@@ -158,7 +152,7 @@ impl Stf {
 		Ok(())
 	}
 
-	pub fn verify_identity(sender: AccountId, account: AccountId, did: DID) -> StfResult<()> {
+	pub fn verify_identity(sender: AccountId, account: AccountId, did: Identity) -> StfResult<()> {
 		let origin = ita_sgx_runtime::Origin::signed(sender);
 
 		let parentchain_number =

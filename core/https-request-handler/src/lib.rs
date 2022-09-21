@@ -228,7 +228,8 @@ pub trait RequestHandler<
 		request: Request,
 		payload: VerificationPayload,
 	) -> Result<(), Error> {
-		let request_did = str::from_utf8(request.did.as_slice())
+		let request_did = request.did.flat();
+		let request_did = str::from_utf8(request_did.as_slice())
 			.map_err(|_| Error::OtherError("did format error".to_string()))?;
 		if !payload.did.eq(request_did) {
 			return Err(Error::OtherError("did is not the same".to_string()))

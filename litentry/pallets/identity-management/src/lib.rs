@@ -66,9 +66,6 @@ pub mod pallet {
 		type ManageOrigin: EnsureOrigin<Self::Origin>;
 		/// challenge code type
 		type ChallengeCode: Member + Parameter + Default + Copy + MaxEncodedLen;
-		/// maximum did length
-		#[pallet::constant]
-		type MaxDidLength: Get<u32>;
 		/// maximum metadata length
 		#[pallet::constant]
 		type MaxMetadataLength: Get<u32>;

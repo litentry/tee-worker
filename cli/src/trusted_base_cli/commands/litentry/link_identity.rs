@@ -26,7 +26,6 @@ use codec::Decode;
 use ita_stf::{Index, KeyPair, TrustedCall, TrustedGetter, TrustedOperation};
 use log::*;
 use sp_core::Pair;
-use sp_runtime::{traits::ConstU32, BoundedVec};
 
 #[derive(Parser)]
 pub struct LinkIdentityCommand {
@@ -44,10 +43,13 @@ impl LinkIdentityCommand {
 		let (mrenclave, shard) = get_identifiers(trusted_args);
 		let nonce = get_layer_two_nonce!(root, cli, trusted_args);
 		// compose the extrinsic
-		let encode_did: Vec<u8> = self.did.as_bytes().to_vec();
-		let did = BoundedVec::<u8, ConstU32<128>>::try_from(encode_did);
+		let identity = serde_json::from_str(self.did.as_str());
+		if let Err(e) = identity {
+			warn!("Deserialize Identity error: {:?}", e.to_string());
+			return
+		}
 		let top: TrustedOperation =
-			TrustedCall::link_identity(root.public().into(), who, did.unwrap())
+			TrustedCall::link_identity(root.public().into(), who, identity.unwrap())
 				.sign(&KeyPair::Sr25519(root), nonce, &mrenclave, &shard)
 				.into_trusted_operation(trusted_args.direct);
 		let _ = perform_trusted_operation(cli, trusted_args, &top);
