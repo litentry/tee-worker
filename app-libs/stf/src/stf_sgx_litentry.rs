@@ -143,7 +143,7 @@ impl Stf {
 		code.ok_or_else(|| StfError::Dispatch(format!("code not found")))?;
 		let request = itc_https_client_daemon::Request {
 			target,
-			did,
+			identity: did,
 			challenge_code: code.unwrap(),
 			validation_data,
 		};

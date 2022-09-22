@@ -55,7 +55,10 @@ use itc_rest_client::{
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_top_pool_author::traits::AuthorApi;
-use litentry_primitives::{TwitterValidationData, Web2ValidationData, Web2ValidationData::Twitter};
+use litentry_primitives::{
+	Identity, IdentityHandle, IdentityString, IdentityWebType, TwitterValidationData, Web2Network,
+	Web2ValidationData, Web2ValidationData::Twitter,
+};
 use serde::{Deserialize, Serialize};
 use sp_core::ByteArray;
 use std::{
@@ -84,7 +87,7 @@ pub enum Error {
 pub struct VerificationPayload {
 	pub owner: String,
 	pub code: u32,
-	pub did: String,
+	pub identity: Identity,
 }
 
 pub struct VerificationContext<
@@ -158,7 +161,13 @@ impl<K: ShieldingCryptoDecrypt> DecryptionVerificationPayload<K> for TwitterResp
 		let payload = VerificationPayload {
 			owner: "d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d".to_string(), // alice public key
 			code: 1134,
-			did: "did:twitter:web2:_:myTwitterHandle".to_string(),
+			//identiy json: {"web_type":{"Web2":"Twitter"},"handle":{"String":[108,105,116,101,110,116,114,121]}}
+			identity: Identity {
+				web_type: IdentityWebType::Web2(Web2Network::Twitter),
+				handle: IdentityHandle::String(
+					IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
+				),
+			},
 		};
 		Ok(payload)
 	}
@@ -228,11 +237,10 @@ pub trait RequestHandler<
 		request: Request,
 		payload: VerificationPayload,
 	) -> Result<(), Error> {
-		let request_did = request.did.flat();
-		let request_did = str::from_utf8(request_did.as_slice())
-			.map_err(|_| Error::OtherError("did format error".to_string()))?;
-		if !payload.did.eq(request_did) {
-			return Err(Error::OtherError("did is not the same".to_string()))
+		//TODO verify author
+
+		if !payload.identity.eq(&request.identity) {
+			return Err(Error::OtherError("identity is not the same".to_string()))
 		}
 
 		let target_hex = hex::encode(request.target.as_slice());
@@ -252,7 +260,7 @@ pub trait RequestHandler<
 			.get_enclave_account()
 			.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
 		let trusted_call =
-			TrustedCall::verify_identity(enclave_account_id, request.target, request.did);
+			TrustedCall::verify_identity(enclave_account_id, request.target, request.identity);
 		let signed_trusted_call = verification_context
 			.enclave_signer
 			.sign_call_with_self(&trusted_call, &verification_context.shard_identifier)

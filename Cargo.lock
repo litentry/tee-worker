@@ -4159,6 +4159,7 @@ dependencies = [
  "lazy_static",
  "litentry-primitives",
  "log 0.4.17",
+ "parity-scale-codec",
  "serde 1.0.144",
  "serde_json 1.0.85",
  "sgx_tstd",

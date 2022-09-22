@@ -39,11 +39,14 @@ pub mod daemon_sender;
 pub mod error;
 pub mod https_client;
 pub use error::Result;
+
+use codec::{Decode, Encode, MaxEncodedLen};
 use litentry_primitives::{Identity, Web2ValidationData};
 
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen)]
 pub struct Request {
 	pub target: AccountId,
-	pub did: Identity,
+	pub identity: Identity,
 	pub challenge_code: u32,
 	pub validation_data: Web2ValidationData,
 }
