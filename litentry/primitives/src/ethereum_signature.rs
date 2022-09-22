@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 #[cfg(feature = "std")]
-use hex;
-#[cfg(feature = "std")]
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 
 use codec::{Decode, Encode, MaxEncodedLen};
