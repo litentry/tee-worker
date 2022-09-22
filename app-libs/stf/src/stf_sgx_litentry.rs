@@ -19,12 +19,8 @@ use crate::{stf_sgx_primitives::types::*, AccountId, StfError, StfResult};
 extern crate sgx_tstd as std;
 use codec::Encode;
 use ita_sgx_runtime::Runtime;
-use litentry_primitives::{Identity, IdentityWebType, UserShieldingKeyType};
 use litentry_primitives::{Identity, IdentityWebType, UserShieldingKeyType, Web2ValidationData};
 use log::*;
-
-use std::format;
-use support::traits::UnfilteredDispatchable;
 
 use crate::helpers;
 use itc_https_client_daemon::daemon_sender::SendHttpsRequest;

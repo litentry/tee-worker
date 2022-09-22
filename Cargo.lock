@@ -6282,6 +6282,7 @@ checksum = "d4d2456c373231a208ad294c33dc5bff30051eafd954cd4caae83a712b12854d"
 name = "litentry-primitives"
 version = "0.1.0"
 dependencies = [
+ "hex 0.4.3",
  "parity-scale-codec",
  "scale-info",
  "serde 1.0.144",
