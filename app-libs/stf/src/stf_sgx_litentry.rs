@@ -58,6 +58,7 @@ impl Stf {
 		}
 		.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
 		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+		// TODO: generate challenge code
 		Ok(())
 	}
 
@@ -87,6 +88,7 @@ impl Stf {
 		}
 		.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
 		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+		// TODO: remove challenge code
 		Ok(())
 	}
 
