@@ -15,8 +15,8 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	identity_context::IdentityContext, mock::*, Error, MetadataOf,
-	UserShieldingKeyType, ParentchainBlockNumber,
+	identity_context::IdentityContext, mock::*, Error, MetadataOf, ParentchainBlockNumber,
+	UserShieldingKeyType,
 };
 use frame_support::{assert_noop, assert_ok};
 use litentry_primitives::{
