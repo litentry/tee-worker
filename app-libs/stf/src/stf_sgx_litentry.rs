@@ -19,9 +19,7 @@ extern crate sgx_tstd as std;
 
 use crate::{stf_sgx_primitives::types::*, AccountId, MetadataOf, Runtime, StfError, StfResult};
 use codec::Encode;
-use litentry_primitives::{
-	Identity, IdentityWebType, ParentchainBlockNumber, UserShieldingKeyType,
-};
+use litentry_primitives::{Identity, ParentchainBlockNumber, UserShieldingKeyType};
 use log::*;
 
 use std::format;
@@ -31,20 +29,6 @@ use itc_https_client_daemon::daemon_sender::SendHttpsRequest;
 use itp_utils::stringify::account_id_to_string;
 
 impl Stf {
-	fn is_web2_account(identity: Identity) -> bool {
-		match identity.web_type {
-			IdentityWebType::Web2(_) => true,
-			IdentityWebType::Web3(_) => false,
-		}
-	}
-
-	fn is_web3_account(identity: Identity) -> bool {
-		match identity.web_type {
-			IdentityWebType::Web2(_) => false,
-			IdentityWebType::Web3(_) => true,
-		}
-	}
-
 	pub fn set_user_shielding_key(who: AccountId, key: UserShieldingKeyType) -> StfResult<()> {
 		debug!("who.str = {:?}, key = {:?}", account_id_to_string(&who), key.clone());
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_user_shielding_key { who, key }
@@ -77,6 +61,35 @@ impl Stf {
 		Ok(())
 	}
 
+	pub fn unlink_identity(who: AccountId, identity: Identity) -> StfResult<()> {
+		debug!("who.str = {:?}, identity = {:?}", account_id_to_string(&who), identity.clone(),);
+		ita_sgx_runtime::IdentityManagementCall::<Runtime>::unlink_identity { who, identity }
+			.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+		Ok(())
+	}
+
+	pub fn verify_identity(
+		who: AccountId,
+		identity: Identity,
+		bn: ParentchainBlockNumber,
+	) -> StfResult<()> {
+		debug!(
+			"who.str = {:?}, identity = {:?}, bn = {:?}",
+			account_id_to_string(&who),
+			identity.clone(),
+			bn
+		);
+		ita_sgx_runtime::IdentityManagementCall::<Runtime>::verify_identity {
+			who,
+			identity,
+			verification_request_block: bn,
+		}
+		.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+		Ok(())
+	}
+
 	pub fn verify_ruleset1(who: AccountId) -> StfResult<()> {
 		let v_identity_context =
 		ita_sgx_runtime::pallet_identity_management::Pallet::<Runtime>::get_identity_and_identity_context(&who);
@@ -86,9 +99,9 @@ impl Stf {
 
 		for identity_ctx in &v_identity_context {
 			if identity_ctx.1.is_verified {
-				if Self::is_web2_account(identity_ctx.0.clone()) {
+				if identity_ctx.0.is_web2() {
 					web2_cnt = web2_cnt + 1;
-				} else if Self::is_web3_account(identity_ctx.0.clone()) {
+				} else if identity_ctx.0.is_web3() {
 					web3_cnt = web3_cnt + 1;
 				}
 			}

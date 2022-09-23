@@ -41,6 +41,7 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 substrate-api-client = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.28", default-features = false }
 
 # litentry
+pallet-imp = { package = "pallet-identity-management", git = "https://github.com/litentry/litentry-parachain.git", branch = "tee-dev", default-features = false }
 litentry-primitives = { path = "../../../litentry/primitives", default-features = false }
 ita-sgx-runtime = { path = "../../../app-libs/sgx-runtime", default-features = false }
 
@@ -75,6 +76,7 @@ std = [
     "thiserror",
     "litentry-primitives/std",
     "ita-sgx-runtime/std",
+    "pallet-imp/std",
 ]
 sgx = [
     "sgx_tstd",

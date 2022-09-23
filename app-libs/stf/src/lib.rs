@@ -34,7 +34,7 @@ pub use my_node_runtime::{Balance, BlockNumber, Index};
 #[cfg(feature = "evm")]
 use sp_core::{H160, U256};
 
-#[cfg(any(feature = "evm", feature = "std", feature = "sgx"))]
+#[cfg(feature = "evm")]
 use std::vec::Vec;
 
 use codec::{Compact, Decode, Encode};
@@ -45,7 +45,7 @@ use ita_sgx_runtime::{
 };
 use itp_node_api_metadata::Error as MetadataError;
 use itp_node_api_metadata_provider::Error as MetadataProviderError;
-use litentry_primitives::{ParentchainBlockNumber, UserShieldingKeyType};
+use litentry_primitives::{ParentchainBlockNumber, UserShieldingKeyType, ValidationData};
 use sp_core::{crypto::AccountId32, ed25519, sr25519, Pair, H256};
 use sp_runtime::{traits::Verify, MultiSignature};
 use std::string::String;
@@ -268,7 +268,7 @@ pub enum TrustedCall {
 		ParentchainBlockNumber,
 	), // (Root, Account, identity, metadata, blocknumber)
 	unlink_identity(AccountId, AccountId, Identity),                    // (Root, Account, identity)
-	verify_identity(AccountId, AccountId, Identity, Vec<u8>, ParentchainBlockNumber), // (Root, Account, identity, validation_data, blocknumber)
+	verify_identity(AccountId, AccountId, Identity, ValidationData, ParentchainBlockNumber), // (Root, Account, identity, validation_data, blocknumber)
 	query_credit(AccountId),
 }
 

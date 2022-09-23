@@ -19,6 +19,7 @@ sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "m
 
 # see the comment in src/lib.rs why it's optional
 my-node-runtime = { package = "litmus-parachain-runtime", git = "https://github.com/litentry/litentry-parachain.git", branch = "tee-dev", default-features = false, optional = true }
+pallet-imp = { package = "pallet-identity-management", git = "https://github.com/litentry/litentry-parachain.git", branch = "tee-dev", default-features = false }
 
 [features]
 default = ["std"]
@@ -30,6 +31,7 @@ std = [
     "sp-std/std",
 	"sp-runtime/std",
 	"my-node-runtime/std",
+	"pallet-imp/std",
 ]
 sgx = [
 	"sgx_tstd",

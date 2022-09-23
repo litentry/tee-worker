@@ -36,18 +36,12 @@ use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, Shieldin
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{CallWorkerFn, OpaqueCall, ShardIdentifier, ShieldFundsFn, H256};
-use litentry_primitives::Identity;
+use litentry_primitives::{Identity, UserShieldingKeyType, ValidationData};
 use log::*;
+use pallet_imp::{LinkIdentityFn, SetUserShieldingKeyFn, UnlinkIdentityFn, VerifyIdentityFn};
 use sp_core::blake2_256;
 use sp_runtime::traits::{AccountIdLookup, Block as ParentchainBlockTrait, Header, StaticLookup};
 use std::{sync::Arc, vec::Vec};
-
-// TODO: import from pallet_imp
-pub type UserShieldingKeyType = [u8; 32];
-pub type SetUserShieldingKeyFn = ([u8; 2], ShardIdentifier, Vec<u8>);
-pub type LinkIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>, Option<Vec<u8>>);
-pub type UnlinkIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>);
-pub type VerifyIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>, Vec<u8>);
 
 /// Trait to execute the indirect calls found in the extrinsics of a block.
 pub trait ExecuteIndirectCalls {
@@ -320,7 +314,7 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 			if let Ok(xt) = ParentchainUncheckedExtrinsic::<UnlinkIdentityFn>::decode(
 				&mut encoded_xt_opaque.as_slice(),
 			) {
-				if self.is_link_identity_funciton(&xt.function.0) {
+				if self.is_unlink_identity_funciton(&xt.function.0) {
 					let (_, shard, encrypted_identity) = xt.function;
 					let shielding_key = self.shielding_key_repo.retrieve_key()?;
 
@@ -349,14 +343,16 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 			if let Ok(xt) = ParentchainUncheckedExtrinsic::<VerifyIdentityFn>::decode(
 				&mut encoded_xt_opaque.as_slice(),
 			) {
-				if self.is_link_identity_funciton(&xt.function.0) {
+				if self.is_verify_identity_funciton(&xt.function.0) {
 					let (_, shard, encrypted_identity, encrypted_validation_data) = xt.function;
 					let shielding_key = self.shielding_key_repo.retrieve_key()?;
 
 					let identity: Identity = Identity::decode(
 						&mut shielding_key.decrypt(&encrypted_identity).unwrap().as_slice(),
 					)?;
-					let validation_data = shielding_key.decrypt(&encrypted_validation_data)?;
+					let validation_data = ValidationData::decode(
+						&mut shielding_key.decrypt(&encrypted_validation_data).unwrap().as_slice(),
+					)?;
 
 					if let Some((multiaddress_account, _, _)) = xt.signature {
 						let account = AccountIdLookup::lookup(multiaddress_account)?;
