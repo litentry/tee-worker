@@ -253,10 +253,6 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		pub fn get_user_shielding_key(who: &T::AccountId) -> Option<UserShieldingKeyType> {
-			Self::user_shielding_keys(who)
-		}
-
 		pub fn get_identity_and_identity_context(
 			who: &T::AccountId,
 		) -> Vec<(Identity, IdentityContext<T>)> {

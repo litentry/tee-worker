@@ -14,16 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{stf_sgx_primitives::types::*, AccountId, StfError, StfResult};
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
-use crate::{MetadataOf, Runtime};
+
+use crate::{stf_sgx_primitives::types::*, AccountId, MetadataOf, Runtime, StfError, StfResult};
 use codec::Encode;
-use ita_sgx_runtime::Runtime;
-use litentry_primitives::{Identity, IdentityWebType, UserShieldingKeyType};
+use litentry_primitives::{
+	Identity, IdentityWebType, ParentchainBlockNumber, UserShieldingKeyType,
+};
 use log::*;
 
-use std::{format, str, vec::Vec};
+use std::format;
 use support::traits::UnfilteredDispatchable;
 
 use itc_https_client_daemon::daemon_sender::SendHttpsRequest;
@@ -55,14 +56,14 @@ impl Stf {
 	pub fn link_identity(
 		who: AccountId,
 		identity: Identity,
-		metadta: Option<MetadataOf<Runtime>>,
-		bn: BlockNumberOf<Runtime>,
+		metadata: Option<MetadataOf<Runtime>>,
+		bn: ParentchainBlockNumber,
 	) -> StfResult<()> {
 		debug!(
 			"who.str = {:?}, identity = {:?}, metadata = {:?}, bn = {:?}",
 			account_id_to_string(&who),
-			key.clone(),
-			metadta,
+			identity.clone(),
+			metadata,
 			bn
 		);
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::link_identity {

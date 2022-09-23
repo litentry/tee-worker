@@ -41,8 +41,8 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 substrate-api-client = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.28", default-features = false }
 
 # litentry
-# TODO: change it to tee-dev branch
-# pallet-imp = { git = "https://github.com/litentry/litentry-parachain", package = "pallet-identity-management", branch = "830-discard-call-worker", default-features = false }
+litentry-primitives = { path = "../../../litentry/primitives", default-features = false }
+ita-sgx-runtime = { path = "../../../app-libs/sgx-runtime", default-features = false }
 
 [dev-dependencies]
 env_logger = "0.9.0"
@@ -73,6 +73,8 @@ std = [
     "sp-runtime/std",
     "substrate-api-client/std",
     "thiserror",
+    "litentry-primitives/std",
+    "ita-sgx-runtime/std",
 ]
 sgx = [
     "sgx_tstd",
@@ -84,4 +86,5 @@ sgx = [
     "itp-stf-executor/sgx",
     "itp-top-pool-author/sgx",
     "thiserror_sgx",
+    "litentry-primitives/sgx",
 ]

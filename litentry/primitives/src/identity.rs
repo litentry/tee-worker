@@ -20,7 +20,7 @@ extern crate sgx_tstd as std;
 #[cfg(any(feature = "std", feature = "sgx"))]
 use std::format;
 
-#[cfg(any(feature = "std", feature = "sgx"))]
+#[cfg(all(not(feature = "sgx"), feature = "std"))]
 use serde::{Deserialize, Serialize};
 #[cfg(any(feature = "std", feature = "sgx"))]
 use sp_core::hexdisplay::HexDisplay;

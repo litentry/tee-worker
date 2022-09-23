@@ -24,10 +24,7 @@ use crate::error::Result;
 use beefy_merkle_tree::{merkle_root, Keccak256};
 use codec::{Decode, Encode};
 use futures::executor;
-use ita_sgx_runtime::{
-	pallet_identity_management::{DidOf, MetadataOf},
-	Runtime,
-};
+use ita_sgx_runtime::{pallet_identity_management::MetadataOf, Runtime};
 use ita_stf::{AccountId, TrustedCall, TrustedOperation};
 use itp_node_api::{
 	api_client::ParentchainUncheckedExtrinsic,
@@ -39,6 +36,7 @@ use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, Shieldin
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{CallWorkerFn, OpaqueCall, ShardIdentifier, ShieldFundsFn, H256};
+use litentry_primitives::Identity;
 use log::*;
 use sp_core::blake2_256;
 use sp_runtime::traits::{AccountIdLookup, Block as ParentchainBlockTrait, Header, StaticLookup};
@@ -283,11 +281,16 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 					let (_, shard, encrypted_identity, encrypted_metadata) = xt.function;
 					let shielding_key = self.shielding_key_repo.retrieve_key()?;
 
-					// TODO: decode identity into struct once it's there
-					let identity: DidOf<Runtime> =
-						shielding_key.decrypt(&encrypted_identity)?.try_into().unwrap();
-					let metadata: Option<MetadataOf<Runtime>> =
-						encrypted_metadata.map(|m| shielding_key.decrypt(&m)?.try_into().unwrap());
+					let identity: Identity = Identity::decode(
+						&mut shielding_key.decrypt(&encrypted_identity).unwrap().as_slice(),
+					)?;
+					let metadata = match encrypted_metadata {
+						None => None,
+						Some(m) => {
+							let decrypted_metadata = shielding_key.decrypt(&m)?;
+							Some(MetadataOf::<Runtime>::decode(&mut decrypted_metadata.as_slice())?)
+						},
+					};
 
 					if let Some((multiaddress_account, _, _)) = xt.signature {
 						let account = AccountIdLookup::lookup(multiaddress_account)?;
@@ -297,7 +300,9 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 							account,
 							identity,
 							metadata,
-							block_number,
+							block_number
+								.try_into()
+								.map_err(|_| crate::error::Error::ConvertParentchainBlockNumber)?,
 						);
 						let signed_trusted_call =
 							self.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;
@@ -319,9 +324,9 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 					let (_, shard, encrypted_identity) = xt.function;
 					let shielding_key = self.shielding_key_repo.retrieve_key()?;
 
-					// TODO: decode identity into struct once it's there
-					let identity: DidOf<Runtime> =
-						shielding_key.decrypt(&encrypted_identity)?.try_into().unwrap();
+					let identity: Identity = Identity::decode(
+						&mut shielding_key.decrypt(&encrypted_identity).unwrap().as_slice(),
+					)?;
 
 					if let Some((multiaddress_account, _, _)) = xt.signature {
 						let account = AccountIdLookup::lookup(multiaddress_account)?;
@@ -348,9 +353,9 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 					let (_, shard, encrypted_identity, encrypted_validation_data) = xt.function;
 					let shielding_key = self.shielding_key_repo.retrieve_key()?;
 
-					// TODO: decode identity and validation_data into struct once it's there
-					let identity: DidOf<Runtime> =
-						shielding_key.decrypt(&encrypted_identity)?.try_into().unwrap();
+					let identity: Identity = Identity::decode(
+						&mut shielding_key.decrypt(&encrypted_identity).unwrap().as_slice(),
+					)?;
 					let validation_data = shielding_key.decrypt(&encrypted_validation_data)?;
 
 					if let Some((multiaddress_account, _, _)) = xt.signature {
@@ -361,7 +366,9 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 							account,
 							identity,
 							validation_data,
-							block_number,
+							block_number
+								.try_into()
+								.map_err(|_| crate::error::Error::ConvertParentchainBlockNumber)?,
 						);
 						let signed_trusted_call =
 							self.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;

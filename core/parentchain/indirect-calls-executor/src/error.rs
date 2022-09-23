@@ -41,6 +41,8 @@ pub enum Error {
 	Other(#[from] Box<dyn std::error::Error + Sync + Send + 'static>),
 	#[error("AccountId lookup error")]
 	AccountIdLookup,
+	#[error("convert parent chain block number error")]
+	ConvertParentchainBlockNumber,
 }
 
 impl From<sgx_status_t> for Error {

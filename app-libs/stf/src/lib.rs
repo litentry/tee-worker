@@ -34,7 +34,7 @@ pub use my_node_runtime::{Balance, BlockNumber, Index};
 #[cfg(feature = "evm")]
 use sp_core::{H160, U256};
 
-#[cfg(feature = "evm")]
+#[cfg(any(feature = "evm", feature = "std", feature = "sgx"))]
 use std::vec::Vec;
 
 use codec::{Compact, Decode, Encode};

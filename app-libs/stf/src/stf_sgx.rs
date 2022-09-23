@@ -19,16 +19,13 @@
 use crate::test_genesis::test_genesis_setup;
 
 use crate::{
-	helpers::{
-		aes_encrypt_default, enclave_signer_account, ensure_enclave_signer_account,
-		get_user_shielding_key,
-	},
+	helpers::{aes_encrypt_default, enclave_signer_account, ensure_enclave_signer_account},
 	AccountData, AccountId, Arc, Getter, Index, ParentchainHeader, PublicGetter, ShardIdentifier,
 	State, StateTypeDiff, Stf, StfError, StfResult, TrustedCall, TrustedCallSigned, TrustedGetter,
 	ENCLAVE_ACCOUNT_KEY,
 };
 use codec::Encode;
-use ita_sgx_runtime::{Runtime, Sudo, System};
+use ita_sgx_runtime::{IdentityManagement, Runtime, Sudo, System};
 use itp_node_api::metadata::{
 	pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata,
 };
@@ -152,7 +149,7 @@ impl Stf {
 					},
 				// litentry
 				TrustedGetter::user_shielding_key(who) =>
-					if let Some(key) = get_user_shielding_key(&who) {
+					if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
 						Some(key.encode())
 					} else {
 						None
@@ -389,7 +386,7 @@ impl Stf {
 					}
 					Ok(())
 				},
-				TrustedCall::link_identity(root, who, identity, metadata) => {
+				TrustedCall::link_identity(root, who, identity, metadata, bn) => {
 					ensure!(is_root(&root), StfError::MissingPrivileges(root));
 					debug!(
 						"link_identity, who: {}, identity: {:?}, metadata: {:?}",
@@ -398,15 +395,15 @@ impl Stf {
 						metadata.clone()
 					);
 					// set link
-					match Self::link_identity(who.clone(), identity.clone(), metadata) {
+					match Self::link_identity(who.clone(), identity.clone(), metadata, bn) {
 						Ok(()) => {
 							debug!("link_identity {} OK", account_id_to_string(&who));
-							if let Some(key) = get_user_shielding_key(&who) {
+							if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
 								calls.push(OpaqueCall::from_tuple(&(
 									node_metadata_repo
 										.get_from_metadata(|m| m.link_identity_call_indexes())??,
 									aes_encrypt_default(&key, &who.encode()),
-									aes_encrypt_default(&key, &identity),
+									aes_encrypt_default(&key, &identity.encode()),
 								)));
 							} else {
 								calls.push(OpaqueCall::from_tuple(&(
@@ -524,6 +521,8 @@ impl Stf {
 			// litentry
 			TrustedCall::set_user_shielding_key(..) => debug!("No storage updates needed..."),
 			TrustedCall::link_identity(..) => debug!("No storage updates needed..."),
+			TrustedCall::unlink_identity(..) => debug!("No storage updates needed..."),
+			TrustedCall::verify_identity(..) => debug!("No storage updates needed..."),
 			TrustedCall::query_credit(..) => debug!("No storage updates needed..."),
 			#[cfg(feature = "evm")]
 			_ => debug!("No storage updates needed..."),

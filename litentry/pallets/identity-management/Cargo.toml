@@ -42,7 +42,9 @@ std = [
   "frame-support/std",
   "frame-system/std",
   "frame-benchmarking/std",
+  "log/std",
   "serde/std",
   "serde_json/std",
   "pallet-balances/std",
+  "litentry-primitives/std",
 ]
