@@ -254,7 +254,7 @@ jobs:
         timeout-minutes: 30
         run: |
           cd docker
-          docker compose -f docker-compose.yml -f ${{ matrix.demo_name }}.yml up ${{ matrix.demo_name }} --no-build --exit-code-from ${{ matrix.demo_name }}
+          docker-compose -f docker-compose.yml -f ${{ matrix.demo_name }}.yml up --no-build --exit-code-from ${{ matrix.demo_name }} -- ${{ matrix.demo_name }}
 
       - name: Collect Docker Logs
         continue-on-error: true

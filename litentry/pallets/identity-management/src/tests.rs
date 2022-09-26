@@ -15,7 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	identity_context::IdentityContext, mock::*, BlockNumberOf, Error, MetadataOf,
+	identity_context::IdentityContext, mock::*, Error, MetadataOf, ParentchainBlockNumber,
 	UserShieldingKeyType,
 };
 use frame_support::{assert_noop, assert_ok};
@@ -113,7 +113,7 @@ fn verify_identity_works() {
 }
 
 #[test]
-fn get_did_and_identity_context_works() {
+fn get_identity_and_identity_context_works() {
 	new_test_ext().execute_with(|| {
 		let metadata3: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		assert_ok!(IMT::link_identity(
@@ -141,7 +141,7 @@ fn get_did_and_identity_context_works() {
 		));
 		assert_ok!(IMT::verify_identity(Origin::signed(1), 2, alice_web2_identity.clone(), 2));
 
-		let did_contex = IMT::get_did_and_identity_context(&2);
+		let did_contex = IMT::get_identity_and_identity_context(&2);
 		assert_eq!(did_contex.len(), 2);
 	});
 }
@@ -149,8 +149,8 @@ fn get_did_and_identity_context_works() {
 #[test]
 fn verify_identity_fails_when_too_early() {
 	new_test_ext().execute_with(|| {
-		const LINKNIG_REQUEST_BLOCK: BlockNumberOf<Test> = 2;
-		const VERIFICATION_REQUEST_BLOCK: BlockNumberOf<Test> = 1;
+		const LINKNIG_REQUEST_BLOCK: ParentchainBlockNumber = 2;
+		const VERIFICATION_REQUEST_BLOCK: ParentchainBlockNumber = 1;
 
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		assert_ok!(IMT::link_identity(
@@ -184,8 +184,8 @@ fn verify_identity_fails_when_too_early() {
 #[test]
 fn verify_identity_fails_when_too_late() {
 	new_test_ext().execute_with(|| {
-		const LINKNIG_REQUEST_BLOCK: BlockNumberOf<Test> = 1;
-		const VERIFICATION_REQUEST_BLOCK: BlockNumberOf<Test> = 5;
+		const LINKNIG_REQUEST_BLOCK: ParentchainBlockNumber = 1;
+		const VERIFICATION_REQUEST_BLOCK: ParentchainBlockNumber = 5;
 
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		assert_ok!(IMT::link_identity(

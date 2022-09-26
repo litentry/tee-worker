@@ -39,9 +39,13 @@ use std::vec::Vec;
 
 use codec::{Compact, Decode, Encode};
 use derive_more::Display;
+use ita_sgx_runtime::{
+	pallet_identity_management::{Identity, MetadataOf},
+	Runtime,
+};
 use itp_node_api_metadata::Error as MetadataError;
 use itp_node_api_metadata_provider::Error as MetadataProviderError;
-use litentry_primitives::UserShieldingKeyType;
+use litentry_primitives::{ParentchainBlockNumber, UserShieldingKeyType, ValidationData};
 use sp_core::{crypto::AccountId32, ed25519, sr25519, Pair, H256};
 use sp_runtime::{traits::Verify, MultiSignature};
 use std::string::String;
@@ -256,6 +260,15 @@ pub enum TrustedCall {
 	),
 	// litentry
 	set_user_shielding_key(AccountId, AccountId, UserShieldingKeyType), // (Root, AccountIncognito, Key)
+	link_identity(
+		AccountId,
+		AccountId,
+		Identity,
+		Option<MetadataOf<Runtime>>,
+		ParentchainBlockNumber,
+	), // (Root, Account, identity, metadata, blocknumber)
+	unlink_identity(AccountId, AccountId, Identity),                    // (Root, Account, identity)
+	verify_identity(AccountId, AccountId, Identity, ValidationData, ParentchainBlockNumber), // (Root, Account, identity, validation_data, blocknumber)
 	query_credit(AccountId),
 }
 
@@ -276,6 +289,9 @@ impl TrustedCall {
 			TrustedCall::evm_create2(sender_account, ..) => sender_account,
 			// litentry
 			TrustedCall::set_user_shielding_key(account, _, _) => account,
+			TrustedCall::link_identity(account, _, _, _, _) => account,
+			TrustedCall::unlink_identity(account, _, _) => account,
+			TrustedCall::verify_identity(account, _, _, _, _) => account,
 			TrustedCall::query_credit(account) => account,
 		}
 	}

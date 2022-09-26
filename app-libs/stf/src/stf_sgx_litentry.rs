@@ -14,12 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{stf_sgx_primitives::types::*, AccountId, StfError, StfResult};
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
+
+use crate::{stf_sgx_primitives::types::*, AccountId, MetadataOf, Runtime, StfError, StfResult};
 use codec::Encode;
-use ita_sgx_runtime::Runtime;
-use litentry_primitives::{Identity, IdentityWebType, UserShieldingKeyType};
+use litentry_primitives::{Identity, ParentchainBlockNumber, UserShieldingKeyType};
 use log::*;
 
 use std::format;
@@ -29,21 +29,6 @@ use itc_https_client_daemon::daemon_sender::SendHttpsRequest;
 use itp_utils::stringify::account_id_to_string;
 
 impl Stf {
-	// TODO: refactor the following two methods (is_web2_account & is_web3_account) later
-	fn is_web2_account(did: Identity) -> bool {
-		match did.web_type {
-			IdentityWebType::Web2(_) => true,
-			IdentityWebType::Web3(_) => false,
-		}
-	}
-
-	fn is_web3_account(did: Identity) -> bool {
-		match did.web_type {
-			IdentityWebType::Web2(_) => false,
-			IdentityWebType::Web3(_) => true,
-		}
-	}
-
 	pub fn set_user_shielding_key(who: AccountId, key: UserShieldingKeyType) -> StfResult<()> {
 		debug!("who.str = {:?}, key = {:?}", account_id_to_string(&who), key.clone());
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_user_shielding_key { who, key }
@@ -52,18 +37,73 @@ impl Stf {
 		Ok(())
 	}
 
+	pub fn link_identity(
+		who: AccountId,
+		identity: Identity,
+		metadata: Option<MetadataOf<Runtime>>,
+		bn: ParentchainBlockNumber,
+	) -> StfResult<()> {
+		debug!(
+			"who.str = {:?}, identity = {:?}, metadata = {:?}, bn = {:?}",
+			account_id_to_string(&who),
+			identity.clone(),
+			metadata,
+			bn
+		);
+		ita_sgx_runtime::IdentityManagementCall::<Runtime>::link_identity {
+			who,
+			identity,
+			metadata,
+			linking_request_block: bn,
+		}
+		.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+		// TODO: generate challenge code
+		Ok(())
+	}
+
+	pub fn unlink_identity(who: AccountId, identity: Identity) -> StfResult<()> {
+		debug!("who.str = {:?}, identity = {:?}", account_id_to_string(&who), identity.clone(),);
+		ita_sgx_runtime::IdentityManagementCall::<Runtime>::unlink_identity { who, identity }
+			.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+		Ok(())
+	}
+
+	pub fn verify_identity(
+		who: AccountId,
+		identity: Identity,
+		bn: ParentchainBlockNumber,
+	) -> StfResult<()> {
+		debug!(
+			"who.str = {:?}, identity = {:?}, bn = {:?}",
+			account_id_to_string(&who),
+			identity.clone(),
+			bn
+		);
+		ita_sgx_runtime::IdentityManagementCall::<Runtime>::verify_identity {
+			who,
+			identity,
+			verification_request_block: bn,
+		}
+		.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+		// TODO: remove challenge code
+		Ok(())
+	}
+
 	pub fn verify_ruleset1(who: AccountId) -> StfResult<()> {
-		let v_did_context =
-		ita_sgx_runtime::pallet_identity_management::Pallet::<Runtime>::get_did_and_identity_context(&who);
+		let v_identity_context =
+		ita_sgx_runtime::pallet_identity_management::Pallet::<Runtime>::get_identity_and_identity_context(&who);
 
 		let mut web2_cnt = 0;
 		let mut web3_cnt = 0;
 
-		for did_ctx in &v_did_context {
-			if did_ctx.1.is_verified {
-				if Self::is_web2_account(did_ctx.0.clone()) {
+		for identity_ctx in &v_identity_context {
+			if identity_ctx.1.is_verified {
+				if identity_ctx.0.is_web2() {
 					web2_cnt = web2_cnt + 1;
-				} else if Self::is_web3_account(did_ctx.0.clone()) {
+				} else if identity_ctx.0.is_web3() {
 					web3_cnt = web3_cnt + 1;
 				}
 			}

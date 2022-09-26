@@ -105,16 +105,6 @@ pub fn ensure_enclave_signer_account(account: &AccountId) -> StfResult<()> {
 }
 
 // Litentry
-// TODO: maybe directly access the pallet
-pub fn get_user_shielding_key(who: &AccountId) -> Option<UserShieldingKeyType> {
-	get_storage_map(
-		"IdentityManagement",
-		"UserShieldingKeys",
-		who,
-		&StorageHasher::Blake2_128Concat,
-	)
-}
-
 pub fn aes_encrypt_default(key: &UserShieldingKeyType, data: &[u8]) -> AesOutput {
 	// it requires "std" but it shouldn't be a problem
 	let nonce = Aes256Gcm::generate_nonce(&mut OsRng);

@@ -8,14 +8,18 @@ edition = "2021"
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 hex = { version = "0.4.3", default-features = false, optional = true }
 scale-info = { version = "2.1.1", default-features = false, features = ["derive"] }
-serde = { version = "1.0", default-features = false, features = ["alloc", "derive"], optional = true }
-serde_json = { version = "1.0", default-features = false, features = ["alloc"], optional = true }
+serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
+serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28", default-features = false }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28", default-features = false }
 
 # sgx dependencies
-sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true, features = ["net", "thread"] }
+sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "master", optional = true, features = ["net", "thread"] }
+
+# see the comment in src/lib.rs why it's optional
+my-node-runtime = { package = "litmus-parachain-runtime", git = "https://github.com/litentry/litentry-parachain.git", branch = "tee-dev", default-features = false, optional = true }
+pallet-imp = { package = "pallet-identity-management", git = "https://github.com/litentry/litentry-parachain.git", branch = "tee-dev", default-features = false }
 
 [features]
 default = ["std"]
@@ -26,10 +30,10 @@ std = [
 	"sp-core/std",
     "sp-std/std",
 	"sp-runtime/std",
+	"my-node-runtime/std",
+	"pallet-imp/std",
 ]
 sgx = [
 	"sgx_tstd",
-	"serde",
-	"serde_json"
 ]
 production = []
