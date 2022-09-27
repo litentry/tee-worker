@@ -17,7 +17,8 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 
-use crate::{BlockNumberOf, Config, MetadataOf};
+use crate::{Config, MetadataOf};
+use litentry_primitives::ParentchainBlockNumber;
 
 // The context associated with the (litentry-account, did) pair
 // TODO: maybe we have better naming
@@ -28,9 +29,9 @@ pub struct IdentityContext<T: Config> {
 	// the metadata
 	pub metadata: Option<MetadataOf<T>>,
 	// the block number (of parent chain) where the linking was intially requested
-	pub linking_request_block: Option<BlockNumberOf<T>>,
+	pub linking_request_block: Option<ParentchainBlockNumber>,
 	// the block number (of parent chain) where the verification was intially requested
-	pub verification_request_block: Option<BlockNumberOf<T>>,
+	pub verification_request_block: Option<ParentchainBlockNumber>,
 	// if this did is verified
 	pub is_verified: bool,
 }
@@ -50,8 +51,8 @@ impl<T: Config> Default for IdentityContext<T> {
 
 impl<T: Config> IdentityContext<T> {
 	pub fn new(
-		linking_request_block: BlockNumberOf<T>,
-		verification_request_block: BlockNumberOf<T>,
+		linking_request_block: ParentchainBlockNumber,
+		verification_request_block: ParentchainBlockNumber,
 	) -> Self {
 		Self {
 			metadata: None,

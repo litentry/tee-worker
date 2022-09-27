@@ -3,7 +3,8 @@ set -euo pipefail
 
 ROOTDIR=$(git rev-parse --show-toplevel)
 cd "$ROOTDIR"
-SHA=$(grep -F 'https://github.com/litentry/litentry-parachain' Cargo.lock | head -n1 | sed 's/.*#//;s/"$//')
+# with '#' so that it filters out the pallet dependency
+SHA=$(grep -F 'https://github.com/litentry/litentry-parachain.git?branch=tee-dev#' Cargo.lock | head -n1 | sed 's/.*#//;s/"$//')
 
 PARACHAIN_DIR=/tmp/litentry-parachain
 [ -d "$PARACHAIN_DIR" ] && rm -rf "$PARACHAIN_DIR"

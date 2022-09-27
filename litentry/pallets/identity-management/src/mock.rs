@@ -17,7 +17,7 @@
 use crate as pallet_tee_identity_management;
 use frame_support::{
 	ord_parameter_types, parameter_types,
-	traits::{ConstU128, ConstU16, ConstU32, ConstU64},
+	traits::{ConstU128, ConstU16, ConstU32},
 };
 use frame_system as system;
 use frame_system::EnsureSignedBy;
@@ -99,7 +99,7 @@ impl pallet_tee_identity_management::Config for Test {
 	type ManageOrigin = EnsureSignedBy<One, u64>;
 	type ChallengeCode = u32;
 	type MaxMetadataLength = ConstU32<128>;
-	type MaxVerificationDelay = ConstU64<2>;
+	type MaxVerificationDelay = ConstU32<2>;
 }
 
 // account id of Alice 0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d

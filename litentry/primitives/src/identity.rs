@@ -20,7 +20,7 @@ extern crate sgx_tstd as std;
 #[cfg(any(feature = "std", feature = "sgx"))]
 use std::format;
 
-#[cfg(any(feature = "std", feature = "sgx"))]
+#[cfg(all(not(feature = "sgx"), feature = "std"))]
 use serde::{Deserialize, Serialize};
 #[cfg(any(feature = "std", feature = "sgx"))]
 use sp_core::hexdisplay::HexDisplay;
@@ -111,6 +111,20 @@ impl Identity {
 		};
 		display.append(&mut suffix);
 		display
+	}
+
+	pub fn is_web2(&self) -> bool {
+		match &self.web_type {
+			IdentityWebType::Web2(_) => true,
+			IdentityWebType::Web3(_) => false,
+		}
+	}
+
+	pub fn is_web3(&self) -> bool {
+		match &self.web_type {
+			IdentityWebType::Web2(_) => false,
+			IdentityWebType::Web3(_) => true,
+		}
 	}
 }
 

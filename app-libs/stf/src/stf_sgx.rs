@@ -19,19 +19,15 @@
 use crate::test_genesis::test_genesis_setup;
 
 use crate::{
-	helpers::{
-		aes_encrypt_default, enclave_signer_account, ensure_enclave_signer_account,
-		get_user_shielding_key,
-	},
+	helpers::{aes_encrypt_default, enclave_signer_account, ensure_enclave_signer_account},
 	AccountData, AccountId, Arc, Getter, Index, ParentchainHeader, PublicGetter, ShardIdentifier,
 	State, StateTypeDiff, Stf, StfError, StfResult, TrustedCall, TrustedCallSigned, TrustedGetter,
 	ENCLAVE_ACCOUNT_KEY,
 };
 use codec::Encode;
-use ita_sgx_runtime::{Runtime, Sudo, System};
+use ita_sgx_runtime::{IdentityManagement, Runtime, Sudo, System};
 use itp_node_api::metadata::{
-	pallet_imp_mock::IMPMockCallIndexes, pallet_teerex::TeerexCallIndexes,
-	provider::AccessNodeMetadata,
+	pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata,
 };
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_storage::storage_value_key;
@@ -156,7 +152,7 @@ impl Stf {
 					},
 				// litentry
 				TrustedGetter::user_shielding_key(who) =>
-					if let Some(key) = get_user_shielding_key(&who) {
+					if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
 						Some(key.encode())
 					} else {
 						None
@@ -176,7 +172,7 @@ impl Stf {
 	) -> StfResult<()>
 	where
 		NodeMetadataRepository: AccessNodeMetadata,
-		NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPMockCallIndexes, // TODO: switch to IMPCallIndexes
+		NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPCallIndexes,
 	{
 		let call_hash = blake2_256(&call.encode());
 		ext.execute_with(|| {
@@ -248,43 +244,6 @@ impl Stf {
 					debug!("balance_shield({}, {})", account_id_to_string(&who), value);
 					Self::shield_funds(who, value)?;
 					Ok(())
-				},
-				// litentry
-				TrustedCall::set_user_shielding_key(root, who, key) => {
-					ensure!(is_root(&root), StfError::MissingPrivileges(root));
-					// TODO: switch to IMPCallIndexes
-					// TODO: we only checked if the extrinsic dispatch is successful,
-					//       is that enough? (i.e. is the state changed already?)
-					match Self::set_user_shielding_key(who.clone(), key) {
-						Ok(()) => {
-							debug!("set_user_shielding_key {} OK", account_id_to_string(&who));
-							calls.push(OpaqueCall::from_tuple(&(
-								node_metadata_repo.get_from_metadata(|m| {
-									m.user_shielding_key_set_call_indexes()
-								})??,
-								aes_encrypt_default(&key, &who.encode()),
-							)));
-						},
-						Err(err) => {
-							debug!(
-								"set_user_shielding_key {} error: {}",
-								account_id_to_string(&who),
-								err
-							);
-							calls.push(OpaqueCall::from_tuple(&(
-								node_metadata_repo
-									.get_from_metadata(|m| m.some_error_call_indexes())??,
-								"set_user_shielding_key".as_bytes(),
-								format!("{:?}", err).as_bytes(),
-							)));
-						},
-					}
-					Ok(())
-				},
-				TrustedCall::query_credit(account) => {
-					debug!("query_credit({:x?}", account.encode(),);
-
-					Self::query_credit(account)
 				},
 				#[cfg(feature = "evm")]
 				TrustedCall::evm_withdraw(from, address, value) => {
@@ -403,6 +362,155 @@ impl Stf {
 					info!("Trying to create evm contract with address {:?}", contract_address);
 					Ok(())
 				},
+				// litentry
+				TrustedCall::set_user_shielding_key(root, who, key) => {
+					ensure!(is_root(&root), StfError::MissingPrivileges(root));
+					// TODO: we only checked if the extrinsic dispatch is successful,
+					//       is that enough? (i.e. is the state changed already?)
+					match Self::set_user_shielding_key(who.clone(), key) {
+						Ok(()) => {
+							calls.push(OpaqueCall::from_tuple(&(
+								node_metadata_repo.get_from_metadata(|m| {
+									m.user_shielding_key_set_call_indexes()
+								})??,
+								aes_encrypt_default(&key, &who.encode()),
+							)));
+						},
+						Err(err) => {
+							debug!("set_user_shielding_key error: {}", err);
+							calls.push(OpaqueCall::from_tuple(&(
+								node_metadata_repo
+									.get_from_metadata(|m| m.some_error_call_indexes())??,
+								"set_user_shielding_key".as_bytes(),
+								format!("{:?}", err).as_bytes(),
+							)));
+						},
+					}
+					Ok(())
+				},
+				TrustedCall::link_identity(root, who, identity, metadata, bn) => {
+					ensure!(is_root(&root), StfError::MissingPrivileges(root));
+					debug!(
+						"link_identity, who: {}, identity: {:?}, metadata: {:?}",
+						account_id_to_string(&who),
+						identity.clone(),
+						metadata.clone()
+					);
+					match Self::link_identity(who.clone(), identity.clone(), metadata, bn) {
+						Ok(()) => {
+							debug!("link_identity {} OK", account_id_to_string(&who));
+							if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
+								calls.push(OpaqueCall::from_tuple(&(
+									node_metadata_repo
+										.get_from_metadata(|m| m.link_identity_call_indexes())??,
+									aes_encrypt_default(&key, &who.encode()),
+									aes_encrypt_default(&key, &identity.encode()),
+								)));
+							} else {
+								calls.push(OpaqueCall::from_tuple(&(
+									node_metadata_repo
+										.get_from_metadata(|m| m.some_error_call_indexes())??,
+									"get_user_shielding_key".as_bytes(),
+									"error".as_bytes(),
+								)));
+							}
+						},
+						Err(err) => {
+							debug!("link_identity {} error: {}", account_id_to_string(&who), err);
+							calls.push(OpaqueCall::from_tuple(&(
+								node_metadata_repo
+									.get_from_metadata(|m| m.some_error_call_indexes())??,
+								"link_identity".as_bytes(),
+								format!("{:?}", err).as_bytes(),
+							)));
+						},
+					}
+					Ok(())
+				},
+				TrustedCall::unlink_identity(root, who, identity) => {
+					ensure!(is_root(&root), StfError::MissingPrivileges(root));
+					debug!(
+						"link_identity, who: {}, identity: {:?}",
+						account_id_to_string(&who),
+						identity.clone(),
+					);
+					match Self::unlink_identity(who.clone(), identity.clone()) {
+						Ok(()) => {
+							debug!("unlink_identity {} OK", account_id_to_string(&who));
+							if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
+								calls.push(OpaqueCall::from_tuple(&(
+									node_metadata_repo.get_from_metadata(|m| {
+										m.unlink_identity_call_indexes()
+									})??,
+									aes_encrypt_default(&key, &who.encode()),
+									aes_encrypt_default(&key, &identity.encode()),
+								)));
+							} else {
+								calls.push(OpaqueCall::from_tuple(&(
+									node_metadata_repo
+										.get_from_metadata(|m| m.some_error_call_indexes())??,
+									"get_user_shielding_key".as_bytes(),
+									"error".as_bytes(),
+								)));
+							}
+						},
+						Err(err) => {
+							debug!("unlink_identity {} error: {}", account_id_to_string(&who), err);
+							calls.push(OpaqueCall::from_tuple(&(
+								node_metadata_repo
+									.get_from_metadata(|m| m.some_error_call_indexes())??,
+								"unlink_identity".as_bytes(),
+								format!("{:?}", err).as_bytes(),
+							)));
+						},
+					}
+					Ok(())
+				},
+				TrustedCall::verify_identity(root, who, identity, _validation_data, bn) => {
+					// TODO: the verification process
+					ensure!(is_root(&root), StfError::MissingPrivileges(root));
+					debug!(
+						"verify_identity, who: {}, identity: {:?}, bn: {:?}",
+						account_id_to_string(&who),
+						identity.clone(),
+						bn
+					);
+					match Self::verify_identity(who.clone(), identity.clone(), bn) {
+						Ok(()) => {
+							debug!("verify_identity {} OK", account_id_to_string(&who));
+							if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
+								calls.push(OpaqueCall::from_tuple(&(
+									node_metadata_repo.get_from_metadata(|m| {
+										m.verify_identity_call_indexes()
+									})??,
+									aes_encrypt_default(&key, &who.encode()),
+									aes_encrypt_default(&key, &identity.encode()),
+								)));
+							} else {
+								calls.push(OpaqueCall::from_tuple(&(
+									node_metadata_repo
+										.get_from_metadata(|m| m.some_error_call_indexes())??,
+									"get_user_shielding_key".as_bytes(),
+									"error".as_bytes(),
+								)));
+							}
+						},
+						Err(err) => {
+							debug!("link_identity {} error: {}", account_id_to_string(&who), err);
+							calls.push(OpaqueCall::from_tuple(&(
+								node_metadata_repo
+									.get_from_metadata(|m| m.some_error_call_indexes())??,
+								"verify_identity".as_bytes(),
+								format!("{:?}", err).as_bytes(),
+							)));
+						},
+					}
+					Ok(())
+				},
+				TrustedCall::query_credit(account) => {
+					debug!("query_credit({:x?}", account.encode(),);
+					Self::query_credit(account)
+				},
 				TrustedCall::link_identity(root, account, did) =>
 					Self::link_identity(root, account, did),
 				TrustedCall::set_challenge_code(root, account, did, challenge_code) =>
@@ -516,6 +624,9 @@ impl Stf {
 			TrustedCall::balance_shield(_, _, _) => debug!("No storage updates needed..."),
 			// litentry
 			TrustedCall::set_user_shielding_key(..) => debug!("No storage updates needed..."),
+			TrustedCall::link_identity(..) => debug!("No storage updates needed..."),
+			TrustedCall::unlink_identity(..) => debug!("No storage updates needed..."),
+			TrustedCall::verify_identity(..) => debug!("No storage updates needed..."),
 			TrustedCall::query_credit(..) => debug!("No storage updates needed..."),
 			#[cfg(feature = "evm")]
 			_ => debug!("No storage updates needed..."),
