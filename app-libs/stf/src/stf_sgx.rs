@@ -511,8 +511,6 @@ impl Stf {
 					debug!("query_credit({:x?}", account.encode(),);
 					Self::query_credit(account)
 				},
-				TrustedCall::link_identity(root, account, did) =>
-					Self::link_identity(root, account, did),
 				TrustedCall::set_challenge_code(root, account, did, challenge_code) =>
 					Self::set_challenge_code(root, account, did, challenge_code),
 				TrustedCall::prepare_verify_identity(root, account, did, validation_data) =>
@@ -534,8 +532,8 @@ impl Stf {
 							"validation_data only support Web2ValidationData::Twitter".to_string(),
 						))
 					},
-				TrustedCall::verify_identity(root, account, did) =>
-					Self::verify_identity(root, account, did),
+				// TrustedCall::verify_identity(root, account, did) =>
+				// 	Self::verify_identity(root, account, did),
 			}?;
 			System::inc_account_nonce(&sender);
 			Ok(())

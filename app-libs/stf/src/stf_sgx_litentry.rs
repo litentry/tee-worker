@@ -19,9 +19,9 @@ extern crate sgx_tstd as std;
 
 use crate::{stf_sgx_primitives::types::*, AccountId, MetadataOf, Runtime, StfError, StfResult};
 use codec::Encode;
-use litentry_primitives::{Identity, ParentchainBlockNumber, UserShieldingKeyType};
-use ita_sgx_runtime::Runtime;
-use litentry_primitives::{Identity, IdentityWebType, UserShieldingKeyType, Web2ValidationData};
+use litentry_primitives::{
+	Identity, IdentityWebType, ParentchainBlockNumber, UserShieldingKeyType, Web2ValidationData,
+};
 use log::*;
 
 use crate::helpers;
@@ -53,6 +53,8 @@ impl Stf {
 			metadata,
 			bn
 		);
+		// TODO read block_number from parachain
+		// let parentchain_number = ita_sgx_runtime::pallet_parentchain::Pallet::<Runtime>::block_number();
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::link_identity {
 			who,
 			identity,
@@ -84,6 +86,7 @@ impl Stf {
 			identity.clone(),
 			bn
 		);
+		// TODO read block_number from parachain
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::verify_identity {
 			who,
 			identity,
@@ -132,34 +135,17 @@ impl Stf {
 		Ok(())
 	}
 
-	pub fn link_identity(sender: AccountId, account: AccountId, did: Identity) -> StfResult<()> {
-		let origin = ita_sgx_runtime::Origin::signed(sender.clone());
-
-		let parentchain_number =
-			ita_sgx_runtime::pallet_parentchain::Pallet::<Runtime>::block_number();
-
-		ita_sgx_runtime::IdentityManagementCall::<Runtime>::link_identity {
-			who: account,
-			did,
-			metadata: None,
-			linking_request_block: parentchain_number,
-		}
-		.dispatch_bypass_filter(origin)
-		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
-		Ok(())
-	}
-
 	pub fn set_challenge_code(
 		sender: AccountId,
 		account: AccountId,
-		did: Identity,
+		identity: Identity,
 		challenge_code: u32,
 	) -> StfResult<()> {
 		let origin = ita_sgx_runtime::Origin::signed(sender.clone());
 
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_challenge_code {
 			who: account,
-			did,
+			identity,
 			code: challenge_code,
 		}
 		.dispatch_bypass_filter(origin)
@@ -191,22 +177,6 @@ impl Stf {
 		};
 		let http_sender = itc_https_client_daemon::daemon_sender::HttpRequestSender::new();
 		http_sender.send_https_request(request);
-		Ok(())
-	}
-
-	pub fn verify_identity(sender: AccountId, account: AccountId, did: Identity) -> StfResult<()> {
-		let origin = ita_sgx_runtime::Origin::signed(sender);
-
-		let parentchain_number =
-			ita_sgx_runtime::pallet_parentchain::Pallet::<Runtime>::block_number();
-
-		ita_sgx_runtime::IdentityManagementCall::<Runtime>::verify_identity {
-			who: account,
-			did,
-			verification_request_block: parentchain_number,
-		}
-		.dispatch_bypass_filter(origin)
-		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
 		Ok(())
 	}
 }

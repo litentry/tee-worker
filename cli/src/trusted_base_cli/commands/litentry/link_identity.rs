@@ -49,7 +49,8 @@ impl LinkIdentityCommand {
 			return
 		}
 		let top: TrustedOperation =
-			TrustedCall::link_identity(root.public().into(), who, identity.unwrap())
+			//TODO adjust link_identity
+			TrustedCall::link_identity(root.public().into(), who, identity.unwrap(), None, 32)
 				.sign(&KeyPair::Sr25519(root), nonce, &mrenclave, &shard)
 				.into_trusted_operation(trusted_args.direct);
 		let _ = perform_trusted_operation(cli, trusted_args, &top);

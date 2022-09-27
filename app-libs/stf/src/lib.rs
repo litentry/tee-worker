@@ -34,8 +34,8 @@ pub use my_node_runtime::{Balance, BlockNumber, Index};
 #[cfg(feature = "evm")]
 use sp_core::{H160, U256};
 
-#[cfg(feature = "evm")]
-use std::vec::Vec;
+// #[cfg(feature = "evm")]
+// use std::vec::Vec;
 
 use codec::{Compact, Decode, Encode};
 use derive_more::Display;
@@ -45,7 +45,6 @@ use ita_sgx_runtime::{
 };
 use itp_node_api_metadata::Error as MetadataError;
 use itp_node_api_metadata_provider::Error as MetadataProviderError;
-use litentry_primitives::{Identity, UserShieldingKeyType, ValidationData};
 use litentry_primitives::{ParentchainBlockNumber, UserShieldingKeyType, ValidationData};
 use sp_core::{crypto::AccountId32, ed25519, sr25519, Pair, H256};
 use sp_runtime::{traits::Verify, MultiSignature};
@@ -271,10 +270,8 @@ pub enum TrustedCall {
 	unlink_identity(AccountId, AccountId, Identity),                    // (Root, Account, identity)
 	verify_identity(AccountId, AccountId, Identity, ValidationData, ParentchainBlockNumber), // (Root, Account, identity, validation_data, blocknumber)
 	query_credit(AccountId),
-	link_identity(AccountId, AccountId, Identity), // (Root, Account, DID)
 	set_challenge_code(AccountId, AccountId, Identity, u32), // (Root, Account, Code)
 	prepare_verify_identity(AccountId, AccountId, Identity, ValidationData), // (Root, Account, tweetId)
-	verify_identity(AccountId, AccountId, Identity), // (Root/Sender, Account/Target, DID)
 }
 
 impl TrustedCall {
@@ -298,10 +295,8 @@ impl TrustedCall {
 			TrustedCall::unlink_identity(account, _, _) => account,
 			TrustedCall::verify_identity(account, _, _, _, _) => account,
 			TrustedCall::query_credit(account) => account,
-			TrustedCall::link_identity(account, _, _) => account,
 			TrustedCall::set_challenge_code(account, _, _, _) => account,
 			TrustedCall::prepare_verify_identity(account, _, _, _) => account,
-			TrustedCall::verify_identity(account, _, _) => account,
 		}
 	}
 

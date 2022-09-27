@@ -259,6 +259,8 @@ pub trait RequestHandler<
 			.enclave_signer
 			.get_enclave_account()
 			.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
+		// TODO adjust code!!!!! verify_identity require 5 paramters
+		/*
 		let trusted_call =
 			TrustedCall::verify_identity(enclave_account_id, request.target, request.identity);
 		let signed_trusted_call = verification_context
@@ -280,6 +282,7 @@ pub trait RequestHandler<
 		executor::block_on(top_submit_future).map_err(|e| {
 			Error::OtherError(format!("Error adding indirect trusted call to TOP pool: {:?}", e))
 		})?;
+		*/
 		Ok(())
 	}
 }
