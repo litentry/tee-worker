@@ -64,7 +64,7 @@ pub unsafe extern "C" fn run_https_client_daemon() -> sgx_status_t {
 ///
 /// Runs an https client inside the enclave, opening a channel and waiting for
 /// senders to send requests.
-fn run_https_client_daemon_internal(url: &str) -> Result<()> {
+fn run_https_client_daemon_internal(_url: &str) -> Result<()> {
 	let receiver = daemon_sender::init_https_daemon_sender_storage()?;
 
 	let validator_access = GLOBAL_PARENTCHAIN_BLOCK_VALIDATOR_ACCESS_COMPONENT.get()?;
@@ -94,21 +94,22 @@ fn run_https_client_daemon_internal(url: &str) -> Result<()> {
 
 	// For debug purposes, list shards. no problem to panic if fails.
 	let shards = state_handler.list_shards().unwrap();
-	let default_shard_identifier = shards.get(0).unwrap().clone();
+	let default_shard_identifier = if let Some(shard) = shards.get(0) {
+		Ok(sp_core::H256::from_slice(shard.as_bytes()))
+	} else {
+		Err(Error::Stf("Could not retrieve shard".to_string()))
+	}?;
 
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 	let shielding_key = Rsa3072Seal::unseal_from_static_file().unwrap();
 
 	let twitter_authorization_token: Option<String> =
-		std::env::var("TWITTER_AUTHORIZATION_TOKEN").map_or_else(|_| None, |v| Some(v.to_string()));
+		std::env::var("TWITTER_AUTHORIZATION_TOKEN").map_or_else(|_| None, |v| Some(v));
 
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 
-	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
-		state_observer,
-		ocall_api,
-		shielding_key_repository.clone(),
-	));
+	let stf_enclave_signer =
+		Arc::new(EnclaveStfEnclaveSigner::new(state_observer, ocall_api, shielding_key_repository));
 
 	// let base_url = Url::parse("https://api.twitter.com")?;
 	// let mut daemon = HttpsRestClient::new(

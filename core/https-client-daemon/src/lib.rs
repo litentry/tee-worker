@@ -31,13 +31,10 @@ pub mod sgx_reexport_prelude {
 	pub use url_sgx as url;
 }
 
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use http_req_sgx as http_req;
-
 use itp_types::AccountId;
 pub mod daemon_sender;
 pub mod error;
-pub mod https_client;
+// pub mod https_client;
 pub use error::Result;
 
 use codec::{Decode, Encode, MaxEncodedLen};

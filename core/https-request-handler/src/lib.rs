@@ -57,7 +57,7 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_top_pool_author::traits::AuthorApi;
 use litentry_primitives::{
 	Identity, IdentityHandle, IdentityString, IdentityWebType, TwitterValidationData,
-	ValidationData, Web2Network, Web2ValidationData, Web2ValidationData::Twitter,
+	ValidationData, Web2Network, Web2ValidationData,
 };
 use serde::{Deserialize, Serialize};
 use sp_core::ByteArray;
