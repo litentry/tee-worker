@@ -40,6 +40,9 @@ pub mod sgx_reexport_prelude {
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
+pub mod discord;
+pub mod twitter;
+
 use codec::Encode;
 use futures::executor;
 use http::header::{AUTHORIZATION, CONNECTION};
@@ -121,10 +124,11 @@ pub fn build_client(base_url: Url, headers: Headers) -> RestClient<HttpClient<De
 	RestClient::new(http_client, base_url)
 }
 
-pub fn build_twitter_client(
+pub fn build_client_with_authorization(
+	base_url: String,
 	authorization_token: Option<String>,
 ) -> RestClient<HttpClient<DefaultSend>> {
-	let base_url = Url::parse("https://api.twitter.com").unwrap();
+	let base_url = Url::parse(base_url.as_str()).unwrap();
 	let mut headers = Headers::new();
 	headers.insert(CONNECTION.as_str(), "close");
 	if let Some(authorization_token) = authorization_token {
@@ -137,58 +141,8 @@ pub trait DecryptionVerificationPayload<K: ShieldingCryptoDecrypt> {
 	fn decrypt_ciphertext(&self, key: K) -> Result<VerificationPayload, Error>;
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct TwitterResponse {
-	pub data: Vec<Tweet>,
-	pub includes: TweetExpansions,
-}
-
-impl RestPath<String> for TwitterResponse {
-	fn get_path(path: String) -> core::result::Result<String, HttpError> {
-		Ok(path)
-	}
-}
-
-impl<K: ShieldingCryptoDecrypt> DecryptionVerificationPayload<K> for TwitterResponse {
-	fn decrypt_ciphertext(&self, _key: K) -> Result<VerificationPayload, Error> {
-		// TODO decrypt
-		// if self.data.len() > 0 {
-		// 	key.decrypt(self.data.get(0).unwrap().text.as_bytes());
-		// }
-
-		// mock data
-		let payload = VerificationPayload {
-			owner: "d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d".to_string(), // alice public key
-			code: 1134,
-			//identiy json: {"web_type":{"Web2":"Twitter"},"handle":{"String":[108,105,116,101,110,116,114,121]}}
-			identity: Identity {
-				web_type: IdentityWebType::Web2(Web2Network::Twitter),
-				handle: IdentityHandle::String(
-					IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
-				),
-			},
-		};
-		Ok(payload)
-	}
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Tweet {
-	pub author_id: String,
-	pub id: String,
-	pub text: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct TweetExpansions {
-	pub users: Vec<TweetAuthor>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct TweetAuthor {
-	pub id: String,
-	pub name: String,
-	pub username: String,
+pub trait UserInfo {
+	fn get_user_id(&self) -> Option<String>;
 }
 
 pub trait RequestHandler<
@@ -198,7 +152,11 @@ pub trait RequestHandler<
 >
 {
 	fn send_request<
-		R: DecryptionVerificationPayload<K> + Debug + serde::de::DeserializeOwned + RestPath<String>,
+		R: UserInfo
+			+ DecryptionVerificationPayload<K>
+			+ Debug
+			+ serde::de::DeserializeOwned
+			+ RestPath<String>,
 	>(
 		&self,
 		verification_context: &VerificationContext<K, A, S>,
@@ -214,7 +172,6 @@ pub trait RequestHandler<
 				]
 			},
 			Web2ValidationData::Discord(_) => {
-				//todo
 				vec![]
 			},
 		};
@@ -222,21 +179,39 @@ pub trait RequestHandler<
 			.get_with::<String, R>(path, query.as_slice())
 			.map_err(|e| Error::RquestError(format!("{:?}", e)))?;
 		log::warn!("response:{:?}", response);
-
-		let payload = response.decrypt_ciphertext(verification_context.shielding_key.clone());
-		if let Ok(payload) = payload {
-			return self.response_handler(verification_context, request, payload)
-		}
-		Err(Error::OtherError("decrypt payload error".to_string()))
+		self.response_handler(verification_context, request, response)
 	}
 
-	fn response_handler(
+	fn response_handler<
+		R: UserInfo
+			+ DecryptionVerificationPayload<K>
+			+ Debug
+			+ serde::de::DeserializeOwned
+			+ RestPath<String>,
+	>(
 		&self,
 		verification_context: &VerificationContext<K, A, S>,
 		request: Request,
-		payload: VerificationPayload,
+		response: R,
 	) -> Result<(), Error> {
-		//TODO verify author
+		let payload = response
+			.decrypt_ciphertext(verification_context.shielding_key.clone())
+			.map_err(|_| Error::OtherError("decrypt payload error".to_string()))?;
+
+		let user_id = response
+			.get_user_id()
+			.ok_or_else(|| Error::OtherError("can not find user_id".to_string()))?;
+
+		match payload.identity.handle {
+			IdentityHandle::String(ref handle) => {
+				let handle = std::str::from_utf8(handle.as_slice())
+					.map_err(|_| Error::OtherError("convert IdentityHandle error".to_string()))?;
+				if !user_id.eq(handle) {
+					return Err(Error::OtherError("user_id is not the same".to_string()))
+				}
+			},
+			_ => return Err(Error::OtherError("IdentityHandle not support".to_string())),
+		}
 
 		if !payload.identity.eq(&request.identity) {
 			return Err(Error::OtherError("identity is not the same".to_string()))
@@ -258,7 +233,7 @@ pub trait RequestHandler<
 			.enclave_signer
 			.get_enclave_account()
 			.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
-		// TODO adjust code!!!!! verify_identity require 5 paramters
+
 		let trusted_call = TrustedCall::verify_identity_step2(
 			enclave_account_id,
 			request.target,
