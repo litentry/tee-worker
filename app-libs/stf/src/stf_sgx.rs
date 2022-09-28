@@ -35,12 +35,10 @@ use itp_types::OpaqueCall;
 use itp_utils::stringify::account_id_to_string;
 use its_primitives::types::{BlockHash, BlockNumber as SidechainBlockNumber, Timestamp};
 use its_state::SidechainSystemExt;
-use litentry_primitives::{
-	TwitterValidationData, ValidationData, ValidationString, Web2ValidationData,
-};
+use litentry_primitives::{TwitterValidationData, ValidationData, Web2ValidationData};
 use log::*;
 use sp_io::hashing::blake2_256;
-use sp_runtime::{BoundedVec, MultiAddress};
+use sp_runtime::MultiAddress;
 use std::{format, prelude::v1::*, vec};
 use support::{ensure, traits::UnfilteredDispatchable};
 

@@ -18,9 +18,8 @@
 extern crate sgx_tstd as std;
 
 use crate::{stf_sgx_primitives::types::*, AccountId, MetadataOf, Runtime, StfError, StfResult};
-use codec::Encode;
 use litentry_primitives::{
-	Identity, IdentityWebType, ParentchainBlockNumber, UserShieldingKeyType, Web2ValidationData,
+	Identity, ParentchainBlockNumber, UserShieldingKeyType, Web2ValidationData,
 };
 use log::*;
 
@@ -176,7 +175,8 @@ impl Stf {
 			bn,
 		};
 		let http_sender = itc_https_client_daemon::daemon_sender::HttpRequestSender::new();
-		http_sender.send_https_request(request);
-		Ok(())
+		http_sender
+			.send_https_request(request)
+			.map_err(|e| StfError::Dispatch(format!("send https error:{:?}", e)))
 	}
 }
