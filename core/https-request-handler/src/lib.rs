@@ -150,11 +150,11 @@ impl RestPath<String> for TwitterResponse {
 }
 
 impl<K: ShieldingCryptoDecrypt> DecryptionVerificationPayload<K> for TwitterResponse {
-	fn decrypt_ciphertext(&self, key: K) -> Result<VerificationPayload, ()> {
+	fn decrypt_ciphertext(&self, _key: K) -> Result<VerificationPayload, ()> {
 		// TODO decrypt
-		if self.data.len() > 0 {
-			key.decrypt(self.data.get(0).unwrap().text.as_bytes());
-		}
+		// if self.data.len() > 0 {
+		// 	key.decrypt(self.data.get(0).unwrap().text.as_bytes());
+		// }
 
 		// mock data
 		let payload = VerificationPayload {

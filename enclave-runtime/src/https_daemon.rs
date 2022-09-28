@@ -104,7 +104,11 @@ fn run_https_client_daemon_internal(_url: &str) -> Result<()> {
 	let shielding_key = Rsa3072Seal::unseal_from_static_file().unwrap();
 
 	let twitter_authorization_token: Option<String> =
-		std::env::var("TWITTER_AUTHORIZATION_TOKEN").map_or_else(|_| None, |v| Some(v));
+		if let Ok(token) = std::env::var("TWITTER_AUTHORIZATION_TOKEN") {
+			Some(token)
+		} else {
+			None
+		};
 
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 

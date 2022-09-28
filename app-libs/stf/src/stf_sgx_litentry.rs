@@ -120,7 +120,7 @@ impl Stf {
 		}
 	}
 
-	pub fn query_credit(account_id: AccountId) -> StfResult<()> {
+	pub fn query_credit(_account_id: AccountId) -> StfResult<()> {
 		// info!("query_credit({:x?})", account_id.encode(),);
 		// let tweet_id: Vec<u8> = "1569510747084050432".as_bytes().to_vec();
 		// // let request_str = format!("{}", "https://httpbin.org/anything");
