@@ -118,7 +118,7 @@ impl<
 
 pub fn build_client(base_url: Url, headers: Headers) -> RestClient<HttpClient<DefaultSend>> {
 	let http_client = HttpClient::new(DefaultSend {}, true, Some(TIMEOUT), Some(headers), None);
-	RestClient::new(http_client, base_url.clone())
+	RestClient::new(http_client, base_url)
 }
 
 pub fn build_twitter_client(
@@ -134,7 +134,7 @@ pub fn build_twitter_client(
 }
 
 pub trait DecryptionVerificationPayload<K: ShieldingCryptoDecrypt> {
-	fn decrypt_ciphertext(&self, key: K) -> Result<VerificationPayload, ()>;
+	fn decrypt_ciphertext(&self, key: K) -> Result<VerificationPayload, Error>;
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -150,7 +150,7 @@ impl RestPath<String> for TwitterResponse {
 }
 
 impl<K: ShieldingCryptoDecrypt> DecryptionVerificationPayload<K> for TwitterResponse {
-	fn decrypt_ciphertext(&self, _key: K) -> Result<VerificationPayload, ()> {
+	fn decrypt_ciphertext(&self, _key: K) -> Result<VerificationPayload, Error> {
 		// TODO decrypt
 		// if self.data.len() > 0 {
 		// 	key.decrypt(self.data.get(0).unwrap().text.as_bytes());
@@ -219,15 +219,15 @@ pub trait RequestHandler<
 			},
 		};
 		let response: R = client
-			.get_with::<String, R>(path.to_string(), query.as_slice())
+			.get_with::<String, R>(path, query.as_slice())
 			.map_err(|e| Error::RquestError(format!("{:?}", e)))?;
 		log::warn!("response:{:?}", response);
 
 		let payload = response.decrypt_ciphertext(verification_context.shielding_key.clone());
 		if let Ok(payload) = payload {
-			return self.response_handler(&verification_context, request, payload).clone()
+			return self.response_handler(verification_context, request, payload)
 		}
-		return Err(Error::OtherError("decrypt payload error".to_string()))
+		Err(Error::OtherError("decrypt payload error".to_string()))
 	}
 
 	fn response_handler(
@@ -279,7 +279,7 @@ pub trait RequestHandler<
 		let top_submit_future = async {
 			verification_context
 				.author
-				.submit_top(encrypted_trusted_call, verification_context.shard_identifier.clone())
+				.submit_top(encrypted_trusted_call, verification_context.shard_identifier)
 				.await
 		};
 		executor::block_on(top_submit_future).map_err(|e| {

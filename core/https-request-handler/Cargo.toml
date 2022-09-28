@@ -33,7 +33,7 @@ sp-core = { default-features = false, features = ["full_crypto"], git = "https:/
 # internal dependencies
 ita-stf = { path = "../../app-libs/stf", default-features = false }
 itc-rest-client = { path = "../rest-client", default-features = false }
-itc-https-client-daemon = { path = "../https-client-daemon", default-features = false, features = ["sgx"] }
+itc-https-client-daemon = { path = "../https-client-daemon", default-features = false}
 itp-types = { path = "../../core-primitives/types", default-features = false }
 
 itp-ocall-api = { path = "../../core-primitives/ocall-api", default-features = false }
@@ -45,7 +45,7 @@ itp-top-pool-author = { path = "../../core-primitives/top-pool-author", default-
 itp-utils = { path = "../../core-primitives/utils",default-features = false }
 
 # litentry
-litentry-primitives = { path = "../../litentry/primitives", default-features = false, features = ["sgx"] }
+litentry-primitives = { path = "../../litentry/primitives", default-features = false }
 
 [features]
 default = ["std"]
@@ -55,7 +55,7 @@ std = [
     "http",
     "http_req",
     "itc-rest-client/std",
-    "itc-https-client-daemon/sgx",
+    "itc-https-client-daemon/std",
     "log/std",
     "serde/std",
     "serde_json/std",
@@ -67,6 +67,7 @@ std = [
     "itp-top-pool-author/std",
     "itp-storage/std",
     "sp-core/std",
+	"litentry-primitives/std",
 ]
 sgx = [
     "futures_sgx",
@@ -77,7 +78,11 @@ sgx = [
     "sgx_tstd",
     "thiserror_sgx",
     "url_sgx",
+	"ita-stf/sgx",
     "itp-stf-executor/sgx",
+	"itc-https-client-daemon/sgx",
     "itp-top-pool-author/sgx",
-    "sp-core/full_crypto"
+	"itp-utils/sgx",
+	"sp-core/full_crypto",
+	"litentry-primitives/sgx"
 ]
