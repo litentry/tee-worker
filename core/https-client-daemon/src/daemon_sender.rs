@@ -13,10 +13,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
-use crate::{
-	error::{Error, Result},
-	Request,
-};
+use crate::error::{Error, Result};
 use lazy_static::lazy_static;
 use std::sync::{
 	mpsc::{channel, Receiver, Sender},
@@ -26,10 +23,11 @@ use std::sync::{
 #[cfg(feature = "sgx")]
 use std::sync::SgxMutex as Mutex;
 
+use crate::RequestType;
 #[cfg(feature = "std")]
 use std::sync::Mutex;
 
-pub type HttpsSender = Sender<Request>;
+pub type HttpsSender = Sender<RequestType>;
 
 // Global storage of the sender. Should not be accessed directly.
 lazy_static! {
@@ -39,7 +37,7 @@ lazy_static! {
 
 /// Trait to send an https request to the https client daemon.
 pub trait SendHttpsRequest {
-	fn send_https_request(&self, request: Request) -> Result<()>;
+	fn send_https_request(&self, request: RequestType) -> Result<()>;
 }
 
 /// Struct to access the `send_https_request` function.
@@ -57,7 +55,7 @@ impl Default for HttpRequestSender {
 }
 
 impl SendHttpsRequest for HttpRequestSender {
-	fn send_https_request(&self, request: Request) -> Result<()> {
+	fn send_https_request(&self, request: RequestType) -> Result<()> {
 		// Acquire lock on https sender
 		let mutex_guard = GLOBAL_HTTPS_DAEMON.lock().map_err(|_| Error::MutexAccess)?;
 
@@ -72,7 +70,7 @@ impl SendHttpsRequest for HttpRequestSender {
 }
 
 /// Initialization of the https sender. Needs to be called before any sender access.
-pub fn init_https_daemon_sender_storage() -> Result<Receiver<Request>> {
+pub fn init_https_daemon_sender_storage() -> Result<Receiver<RequestType>> {
 	let (sender, receiver) = channel();
 	let mut https_daemon_storage = GLOBAL_HTTPS_DAEMON.lock().map_err(|_| Error::MutexAccess)?;
 	*https_daemon_storage = Some(HttpsDaemonSender::new(sender));
@@ -90,7 +88,7 @@ impl HttpsDaemonSender {
 		Self { sender }
 	}
 
-	fn send(&self, request: Request) -> Result<()> {
+	fn send(&self, request: RequestType) -> Result<()> {
 		self.sender.send(request).map_err(|e| Error::Other(e.into()))?;
 		Ok(())
 	}

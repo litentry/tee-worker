@@ -16,17 +16,14 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(all(feature = "std", feature = "sgx"))]
-compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
-
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
-use http_sgx as http;
+use http_req_sgx as http_req;
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
-use http_req_sgx as http_req;
+use http_sgx as http;
 
 // re-export module to properly feature gate sgx and regular std environment
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
@@ -40,30 +37,9 @@ pub mod sgx_reexport_prelude {
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-pub mod discord;
-pub mod twitter;
-
-use codec::Encode;
-use futures::executor;
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
-use ita_stf::{Hash, TrustedCall, TrustedOperation};
-use itc_https_client_daemon::Request;
-use itc_rest_client::{
-	error::Error as HttpError,
-	http_client::{DefaultSend, HttpClient},
-	rest_client::RestClient,
-	RestGet, RestPath,
-};
-use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
-use itp_stf_executor::traits::StfEnclaveSigning;
-use itp_top_pool_author::traits::AuthorApi;
-use litentry_primitives::{
-	Identity, IdentityHandle, IdentityString, IdentityWebType, TwitterValidationData,
-	ValidationData, Web2Network, Web2ValidationData,
-};
 use serde::{Deserialize, Serialize};
-use sp_core::ByteArray;
 use std::{
 	fmt::Debug,
 	format, str,
@@ -74,6 +50,23 @@ use std::{
 	vec::Vec,
 };
 use url::Url;
+
+use ita_stf::Hash;
+use itc_rest_client::{
+	error::Error as HttpError,
+	http_client::{DefaultSend, HttpClient},
+	rest_client::RestClient,
+	RestPath,
+};
+use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
+use itp_stf_executor::traits::StfEnclaveSigning;
+use itp_top_pool_author::traits::AuthorApi;
+use litentry_primitives::{Identity, IdentityHandle, IdentityString, IdentityWebType};
+
+#[cfg(all(feature = "std", feature = "sgx"))]
+compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
+
+pub mod web2_identity;
 
 const TIMEOUT: Duration = Duration::from_secs(3u64);
 
@@ -92,7 +85,7 @@ pub struct VerificationPayload {
 	pub identity: Identity,
 }
 
-pub struct VerificationContext<
+pub struct RequestContext<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
 	A: AuthorApi<Hash, Hash>,
 	S: StfEnclaveSigning,
@@ -107,7 +100,7 @@ impl<
 		K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
 		A: AuthorApi<Hash, Hash>,
 		S: StfEnclaveSigning,
-	> VerificationContext<K, A, S>
+	> RequestContext<K, A, S>
 {
 	pub fn new(
 		shard_identifier: sp_core::H256,
@@ -151,126 +144,19 @@ pub trait RequestHandler<
 	S: StfEnclaveSigning,
 >
 {
-	fn send_request<
-		R: UserInfo
-			+ DecryptionVerificationPayload<K>
-			+ Debug
-			+ serde::de::DeserializeOwned
-			+ RestPath<String>,
-	>(
+	type Response: Debug + serde::de::DeserializeOwned + RestPath<String>;
+	// fn make_https_request(&self, context: &RequestContext<K,A,S>)->
+
+	fn send_request(
 		&self,
-		verification_context: &VerificationContext<K, A, S>,
-		mut client: RestClient<HttpClient<DefaultSend>>,
-		request: Request,
+		verification_context: &RequestContext<K, A, S>,
+		client: RestClient<HttpClient<DefaultSend>>,
 		path: String,
-	) -> Result<(), Error> {
-		let query: Vec<(&str, &str)> = match request.validation_data {
-			Web2ValidationData::Twitter(TwitterValidationData { ref tweet_id }) => {
-				vec![
-					("ids", str::from_utf8(tweet_id.as_slice()).unwrap()),
-					("expansions", "author_id"),
-				]
-			},
-			Web2ValidationData::Discord(_) => {
-				vec![]
-			},
-		};
-		let response: R = client
-			.get_with::<String, R>(path, query.as_slice())
-			.map_err(|e| Error::RquestError(format!("{:?}", e)))?;
-		log::warn!("response:{:?}", response);
-		self.response_handler(verification_context, request, response)
-	}
+	) -> Result<(), Error>;
 
-	fn response_handler<
-		R: UserInfo
-			+ DecryptionVerificationPayload<K>
-			+ Debug
-			+ serde::de::DeserializeOwned
-			+ RestPath<String>,
-	>(
+	fn handle_response(
 		&self,
-		verification_context: &VerificationContext<K, A, S>,
-		request: Request,
-		response: R,
-	) -> Result<(), Error> {
-		let payload = response
-			.decrypt_ciphertext(verification_context.shielding_key.clone())
-			.map_err(|_| Error::OtherError("decrypt payload error".to_string()))?;
-
-		let user_id = response
-			.get_user_id()
-			.ok_or_else(|| Error::OtherError("can not find user_id".to_string()))?;
-
-		match payload.identity.handle {
-			IdentityHandle::String(ref handle) => {
-				let handle = std::str::from_utf8(handle.as_slice())
-					.map_err(|_| Error::OtherError("convert IdentityHandle error".to_string()))?;
-				if !user_id.eq(handle) {
-					return Err(Error::OtherError("user_id is not the same".to_string()))
-				}
-			},
-			_ => return Err(Error::OtherError("IdentityHandle not support".to_string())),
-		}
-
-		if !payload.identity.eq(&request.identity) {
-			return Err(Error::OtherError("identity is not the same".to_string()))
-		}
-
-		let target_hex = hex::encode(request.target.as_slice());
-		if !payload.owner.eq_ignore_ascii_case(target_hex.as_str()) {
-			return Err(Error::OtherError(format!(
-				"owner is not the same as target:{:?}",
-				target_hex
-			)))
-		}
-
-		if !request.challenge_code.eq(&payload.code) {
-			return Err(Error::OtherError("challenge code is not the same".to_string()))
-		}
-
-		let enclave_account_id = verification_context
-			.enclave_signer
-			.get_enclave_account()
-			.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
-
-		let trusted_call = TrustedCall::verify_identity_step2(
-			enclave_account_id,
-			request.target,
-			request.identity,
-			ValidationData::Web2(request.validation_data),
-			request.bn,
-		);
-		let signed_trusted_call = verification_context
-			.enclave_signer
-			.sign_call_with_self(&trusted_call, &verification_context.shard_identifier)
-			.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
-		let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
-		let encrypted_trusted_call = verification_context
-			.shielding_key
-			.encrypt(&trusted_operation.encode())
-			.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
-
-		let top_submit_future = async {
-			verification_context
-				.author
-				.submit_top(encrypted_trusted_call, verification_context.shard_identifier)
-				.await
-		};
-		executor::block_on(top_submit_future).map_err(|e| {
-			Error::OtherError(format!("Error adding indirect trusted call to TOP pool: {:?}", e))
-		})?;
-
-		Ok(())
-	}
-}
-
-pub struct CommonHandler {}
-
-impl<
-		A: AuthorApi<Hash, Hash>,
-		S: StfEnclaveSigning,
-		K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-	> RequestHandler<K, A, S> for CommonHandler
-{
+		verification_context: &RequestContext<K, A, S>,
+		response: Self::Response,
+	) -> Result<(), Error>;
 }

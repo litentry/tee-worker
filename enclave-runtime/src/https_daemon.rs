@@ -23,7 +23,7 @@ use crate::{
 	},
 	GLOBAL_STATE_HANDLER_COMPONENT,
 };
-use itc_https_client_daemon::daemon_sender;
+use itc_https_client_daemon::{daemon_sender, RequestType, Web2IdentityVerificationRequest};
 use log::*;
 use sgx_types::sgx_status_t;
 use std::{format, string::ToString, sync::Arc};
@@ -34,16 +34,21 @@ use crate::global_components::{
 	EnclaveStfEnclaveSigner, GLOBAL_OCALL_API_COMPONENT, GLOBAL_STATE_OBSERVER_COMPONENT,
 	GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 };
+
+use ita_stf::Hash;
 use itc_https_request_handler::{
-	build_client_with_authorization, discord, twitter, CommonHandler, RequestHandler,
-	VerificationContext,
+	build_client_with_authorization,
+	web2_identity::{discord, twitter},
+	RequestContext, RequestHandler,
 };
 use itp_component_container::ComponentGetter;
 use itp_extrinsics_factory::ExtrinsicsFactory;
 use itp_nonce_cache::GLOBAL_NONCE_CACHE;
-use itp_sgx_crypto::{Ed25519Seal, Rsa3072Seal};
+use itp_sgx_crypto::{Ed25519Seal, Rsa3072Seal, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_io::StaticSealedIO;
+use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::query_shard_state::QueryShardState;
+use itp_top_pool_author::traits::AuthorApi;
 use litentry_primitives::Web2ValidationData;
 
 const HTTPS_ADDRESS: &str = "https://api.coingecko.com";
@@ -101,57 +106,84 @@ fn run_https_client_daemon_internal(_url: &str) -> Result<()> {
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 	let shielding_key = Rsa3072Seal::unseal_from_static_file().unwrap();
 
-	let twitter_authorization_token = std::env::var("TWITTER_AUTHORIZATION_TOKEN").ok();
-
-	let discord_authorization_token = std::env::var("DISCORD_AUTHORIZATION_TOKEN").ok();
-
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 
 	let stf_enclave_signer =
 		Arc::new(EnclaveStfEnclaveSigner::new(state_observer, ocall_api, shielding_key_repository));
 
-	let verification_context = VerificationContext::new(
+	let request_context = RequestContext::new(
 		default_shard_identifier,
 		shielding_key,
 		stf_enclave_signer,
 		author_api,
 	);
-	let handler = CommonHandler {};
 	loop {
-		let request = receiver.recv().map_err(|e| Error::Other(e.into()))?;
-		if let Err(e) = match &request.validation_data {
-			Web2ValidationData::Twitter(_) => {
-				let client = build_client_with_authorization(
-					"https://api.twitter.com".to_string(),
-					twitter_authorization_token.clone(),
-				);
-				handler.send_request::<twitter::TwitterResponse>(
-					&verification_context,
-					client,
-					request,
-					"/2/tweets".to_string(),
-				)
+		let request_type = receiver.recv().map_err(|e| Error::Other(e.into()))?;
+
+		match request_type {
+			RequestType::Web2IdentityVerification(ref request) => {
+				if let Err(e) = web2_identity_verification(&request_context, request) {
+					error!("Could not retrieve data from https server due to: {:?}", e);
+				}
 			},
-			Web2ValidationData::Discord(ref validation_data) => {
-				let client = build_client_with_authorization(
-					"https://discordapp.com".to_string(),
-					discord_authorization_token.clone(),
-				);
-				let channel_id = validation_data.channel_id.to_vec();
-				let message_id = validation_data.message_id.to_vec();
-				handler.send_request::<discord::DiscordResponse>(
-					&verification_context,
-					client,
-					request,
-					format!(
-						"/api/channels/{}/messages/{}",
-						std::str::from_utf8(channel_id.as_slice()).unwrap(),
-						std::str::from_utf8(message_id.as_slice()).unwrap()
-					),
-				)
+			RequestType::RuleSet => {
+				//TODO
+				error!("ruleset don't support yet");
 			},
-		} {
-			error!("Could not retrieve data from https server due to: {:?}", e);
+			RequestType::Web3IndentityVerification => {
+				error!("web3 don't support yet");
+			},
 		}
+	}
+}
+
+fn web2_identity_verification<
+	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
+	A: AuthorApi<Hash, Hash>,
+	S: StfEnclaveSigning,
+>(
+	verification_context: &RequestContext<K, A, S>,
+	request: &Web2IdentityVerificationRequest,
+) -> core::result::Result<(), itc_https_request_handler::Error> {
+	match &request.validation_data {
+		Web2ValidationData::Twitter(_) => {
+			let twitter_authorization_token = std::env::var("TWITTER_AUTHORIZATION_TOKEN").ok();
+			let handler = itc_https_request_handler::web2_identity::Web2IdentityVerification::<
+				twitter::TwitterResponse,
+			> {
+				verification_request: (*request).clone(),
+				_marker: Default::default(),
+			};
+
+			let mut client = build_client_with_authorization(
+				"https://api.twitter.com".to_string(),
+				twitter_authorization_token.clone(),
+			);
+			handler.send_request(&verification_context, client, "/2/tweets".to_string())
+		},
+		Web2ValidationData::Discord(ref validation_data) => {
+			let discord_authorization_token = std::env::var("DISCORD_AUTHORIZATION_TOKEN").ok();
+			let handler = itc_https_request_handler::web2_identity::Web2IdentityVerification::<
+				discord::DiscordResponse,
+			> {
+				verification_request: (*request).clone(),
+				_marker: Default::default(),
+			};
+			let client = build_client_with_authorization(
+				"https://discordapp.com".to_string(),
+				discord_authorization_token.clone(),
+			);
+			let channel_id = validation_data.channel_id.to_vec();
+			let message_id = validation_data.message_id.to_vec();
+			handler.send_request(
+				&verification_context,
+				client,
+				format!(
+					"/api/channels/{}/messages/{}",
+					std::str::from_utf8(channel_id.as_slice()).unwrap(),
+					std::str::from_utf8(message_id.as_slice()).unwrap()
+				),
+			)
+		},
 	}
 }

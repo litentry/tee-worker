@@ -15,6 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::*;
+use litentry_primitives::{Identity, Web2Network};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DiscordResponse {
