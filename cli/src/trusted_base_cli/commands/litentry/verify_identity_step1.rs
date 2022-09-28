@@ -33,6 +33,7 @@ pub struct PrepareVerifyIdentityCommand {
 	account: String,
 	did: String,
 	validation_data: String,
+	parent_block_number: u32,
 }
 
 impl PrepareVerifyIdentityCommand {
@@ -53,11 +54,12 @@ impl PrepareVerifyIdentityCommand {
 			warn!("Deserialize Identity error: {:?}", e.to_string());
 			return
 		}
-		let top: TrustedOperation = TrustedCall::prepare_verify_identity(
+		let top: TrustedOperation = TrustedCall::verify_identity_step1(
 			root.public().into(),
 			who,
 			identity.unwrap(),
 			validation_data.unwrap(),
+			self.parent_block_number,
 		)
 		.sign(&KeyPair::Sr25519(root), nonce, &mrenclave, &shard)
 		.into_trusted_operation(trusted_args.direct);

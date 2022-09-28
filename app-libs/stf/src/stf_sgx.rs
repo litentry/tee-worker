@@ -466,7 +466,34 @@ impl Stf {
 					}
 					Ok(())
 				},
-				TrustedCall::verify_identity(root, who, identity, _validation_data, bn) => {
+				TrustedCall::verify_identity_step1(
+					root,
+					account,
+					identity,
+					validation_data,
+					bn,
+				) => {
+					// TODO support other validation_data
+					if let ValidationData::Web2(Web2ValidationData::Twitter(
+						TwitterValidationData { ref tweet_id },
+					)) = validation_data
+					{
+						Self::verify_identity_step1(
+							root,
+							account,
+							identity,
+							Web2ValidationData::Twitter(TwitterValidationData {
+								tweet_id: tweet_id.clone(),
+							}),
+							bn,
+						)
+					} else {
+						Err(StfError::Dispatch(
+							"validation_data only support Web2ValidationData::Twitter".to_string(),
+						))
+					}
+				},
+				TrustedCall::verify_identity_step2(root, who, identity, _validation_data, bn) => {
 					// TODO: the verification process
 					ensure!(is_root(&root), StfError::MissingPrivileges(root));
 					debug!(
@@ -513,27 +540,6 @@ impl Stf {
 				},
 				TrustedCall::set_challenge_code(root, account, did, challenge_code) =>
 					Self::set_challenge_code(root, account, did, challenge_code),
-				TrustedCall::prepare_verify_identity(root, account, did, validation_data) =>
-				// TODO support other validation_data
-					if let ValidationData::Web2(Web2ValidationData::Twitter(
-						TwitterValidationData { ref tweet_id },
-					)) = validation_data
-					{
-						Self::prepare_verify_identity(
-							root,
-							account,
-							did,
-							Web2ValidationData::Twitter(TwitterValidationData {
-								tweet_id: tweet_id.clone(),
-							}),
-						)
-					} else {
-						Err(StfError::Dispatch(
-							"validation_data only support Web2ValidationData::Twitter".to_string(),
-						))
-					},
-				// TrustedCall::verify_identity(root, account, did) =>
-				// 	Self::verify_identity(root, account, did),
 			}?;
 			System::inc_account_nonce(&sender);
 			Ok(())
@@ -624,14 +630,12 @@ impl Stf {
 			TrustedCall::set_user_shielding_key(..) => debug!("No storage updates needed..."),
 			TrustedCall::link_identity(..) => debug!("No storage updates needed..."),
 			TrustedCall::unlink_identity(..) => debug!("No storage updates needed..."),
-			TrustedCall::verify_identity(..) => debug!("No storage updates needed..."),
+			TrustedCall::verify_identity_step2(..) => debug!("No storage updates needed..."),
+			TrustedCall::verify_identity_step1(..) => debug!("No storage updates needed..."),
 			TrustedCall::query_credit(..) => debug!("No storage updates needed..."),
+			TrustedCall::set_challenge_code(..) => debug!("No storage updates needed..."),
 			#[cfg(feature = "evm")]
 			_ => debug!("No storage updates needed..."),
-			TrustedCall::link_identity(..) => debug!("No storage updates needed..."),
-			TrustedCall::set_challenge_code(..) => debug!("No storage updates needed..."),
-			TrustedCall::prepare_verify_identity(..) => debug!("No storage updates needed..."),
-			TrustedCall::verify_identity(..) => debug!("No storage updates needed..."),
 		};
 		key_hashes
 	}

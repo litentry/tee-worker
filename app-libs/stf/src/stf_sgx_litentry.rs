@@ -53,7 +53,6 @@ impl Stf {
 			metadata,
 			bn
 		);
-		// TODO read block_number from parachain
 		// let parentchain_number = ita_sgx_runtime::pallet_parentchain::Pallet::<Runtime>::block_number();
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::link_identity {
 			who,
@@ -86,7 +85,6 @@ impl Stf {
 			identity.clone(),
 			bn
 		);
-		// TODO read block_number from parachain
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::verify_identity {
 			who,
 			identity,
@@ -153,27 +151,29 @@ impl Stf {
 		Ok(())
 	}
 
-	pub fn prepare_verify_identity(
+	pub fn verify_identity_step1(
 		_sender: AccountId,
 		target: AccountId,
-		did: Identity,
+		identity: Identity,
 		validation_data: Web2ValidationData,
+		bn: ParentchainBlockNumber,
 	) -> StfResult<()> {
 		let code: Option<u32> = helpers::get_storage_double_map(
 			"IdentityManagement",
 			"ChallengeCodes",
 			&target,
 			&StorageHasher::Blake2_128Concat,
-			&did,
+			&identity,
 			&StorageHasher::Blake2_128Concat,
 		);
 		//TODO change error type
 		code.ok_or_else(|| StfError::Dispatch(format!("code not found")))?;
 		let request = itc_https_client_daemon::Request {
 			target,
-			identity: did,
+			identity,
 			challenge_code: code.unwrap(),
 			validation_data,
+			bn,
 		};
 		let http_sender = itc_https_client_daemon::daemon_sender::HttpRequestSender::new();
 		http_sender.send_https_request(request);

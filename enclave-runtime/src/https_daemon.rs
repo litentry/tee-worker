@@ -46,7 +46,7 @@ use itp_nonce_cache::GLOBAL_NONCE_CACHE;
 use itp_sgx_crypto::{Ed25519Seal, Rsa3072Seal};
 use itp_sgx_io::StaticSealedIO;
 use itp_stf_state_handler::query_shard_state::QueryShardState;
-use litentry_primitives::{TwitterValidationData, Web2ValidationData};
+use litentry_primitives::Web2ValidationData;
 
 const HTTPS_ADDRESS: &str = "https://api.coingecko.com";
 

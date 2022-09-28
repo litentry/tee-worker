@@ -49,4 +49,5 @@ pub struct Request {
 	pub identity: Identity,
 	pub challenge_code: u32,
 	pub validation_data: Web2ValidationData,
+	pub bn: litentry_primitives::ParentchainBlockNumber, //Parentchain BlockNumber
 }

@@ -19,9 +19,8 @@ use crate::{
 	trusted_base_cli::commands::{
 		balance::BalanceCommand,
 		litentry::{
-			link_identity::LinkIdentityCommand,
-			prepare_verify_identity::PrepareVerifyIdentityCommand,
-			set_challenge_code::SetChallengeCodeCommand,
+			link_identity::LinkIdentityCommand, set_challenge_code::SetChallengeCodeCommand,
+			verify_identity_step1::PrepareVerifyIdentityCommand,
 		},
 		query_credit::QueryCreditCommand,
 		set_balance::SetBalanceCommand,

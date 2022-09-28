@@ -34,8 +34,8 @@ pub use my_node_runtime::{Balance, BlockNumber, Index};
 #[cfg(feature = "evm")]
 use sp_core::{H160, U256};
 
-// #[cfg(feature = "evm")]
-// use std::vec::Vec;
+#[cfg(feature = "evm")]
+use std::vec::Vec;
 
 use codec::{Compact, Decode, Encode};
 use derive_more::Display;
@@ -48,8 +48,8 @@ use itp_node_api_metadata_provider::Error as MetadataProviderError;
 use litentry_primitives::{ParentchainBlockNumber, UserShieldingKeyType, ValidationData};
 use sp_core::{crypto::AccountId32, ed25519, sr25519, Pair, H256};
 use sp_runtime::{traits::Verify, MultiSignature};
+use std::string::String;
 pub use std::sync::Arc;
-use std::{string::String, vec::Vec};
 
 pub type Signature = MultiSignature;
 pub type AuthorityId = <Signature as Verify>::Signer;
@@ -268,10 +268,10 @@ pub enum TrustedCall {
 		ParentchainBlockNumber,
 	), // (Root, Account, identity, metadata, blocknumber)
 	unlink_identity(AccountId, AccountId, Identity),                    // (Root, Account, identity)
-	verify_identity(AccountId, AccountId, Identity, ValidationData, ParentchainBlockNumber), // (Root, Account, identity, validation_data, blocknumber)
+	verify_identity_step1(AccountId, AccountId, Identity, ValidationData, ParentchainBlockNumber), //
+	verify_identity_step2(AccountId, AccountId, Identity, ValidationData, ParentchainBlockNumber), // (Root, Account, identity, validation_data, blocknumber)
 	query_credit(AccountId),
 	set_challenge_code(AccountId, AccountId, Identity, u32), // (Root, Account, Code)
-	prepare_verify_identity(AccountId, AccountId, Identity, ValidationData), // (Root, Account, tweetId)
 }
 
 impl TrustedCall {
@@ -293,10 +293,10 @@ impl TrustedCall {
 			TrustedCall::set_user_shielding_key(account, _, _) => account,
 			TrustedCall::link_identity(account, _, _, _, _) => account,
 			TrustedCall::unlink_identity(account, _, _) => account,
-			TrustedCall::verify_identity(account, _, _, _, _) => account,
+			TrustedCall::verify_identity_step1(account, _, _, _, _) => account,
+			TrustedCall::verify_identity_step2(account, _, _, _, _) => account,
 			TrustedCall::query_credit(account) => account,
 			TrustedCall::set_challenge_code(account, _, _, _) => account,
-			TrustedCall::prepare_verify_identity(account, _, _, _) => account,
 		}
 	}
 

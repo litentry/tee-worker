@@ -56,13 +56,12 @@ use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_top_pool_author::traits::AuthorApi;
 use litentry_primitives::{
-	Identity, IdentityHandle, IdentityString, IdentityWebType, TwitterValidationData, Web2Network,
-	Web2ValidationData, Web2ValidationData::Twitter,
+	Identity, IdentityHandle, IdentityString, IdentityWebType, TwitterValidationData,
+	ValidationData, Web2Network, Web2ValidationData, Web2ValidationData::Twitter,
 };
 use serde::{Deserialize, Serialize};
 use sp_core::ByteArray;
 use std::{
-	boxed::Box,
 	fmt::Debug,
 	format, str,
 	string::{String, ToString},
@@ -260,9 +259,13 @@ pub trait RequestHandler<
 			.get_enclave_account()
 			.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
 		// TODO adjust code!!!!! verify_identity require 5 paramters
-		/*
-		let trusted_call =
-			TrustedCall::verify_identity(enclave_account_id, request.target, request.identity);
+		let trusted_call = TrustedCall::verify_identity_step2(
+			enclave_account_id,
+			request.target,
+			request.identity,
+			ValidationData::Web2(request.validation_data),
+			request.bn,
+		);
 		let signed_trusted_call = verification_context
 			.enclave_signer
 			.sign_call_with_self(&trusted_call, &verification_context.shard_identifier)
@@ -282,7 +285,7 @@ pub trait RequestHandler<
 		executor::block_on(top_submit_future).map_err(|e| {
 			Error::OtherError(format!("Error adding indirect trusted call to TOP pool: {:?}", e))
 		})?;
-		*/
+
 		Ok(())
 	}
 }
