@@ -357,7 +357,7 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 					if let Some((multiaddress_account, _, _)) = xt.signature {
 						let account = AccountIdLookup::lookup(multiaddress_account)?;
 						let enclave_account_id = self.stf_enclave_signer.get_enclave_account()?;
-						let trusted_call = TrustedCall::verify_identity(
+						let trusted_call = TrustedCall::verify_identity_step1(
 							enclave_account_id,
 							account,
 							identity,

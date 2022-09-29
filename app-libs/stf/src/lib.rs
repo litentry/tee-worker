@@ -268,8 +268,10 @@ pub enum TrustedCall {
 		ParentchainBlockNumber,
 	), // (Root, Account, identity, metadata, blocknumber)
 	unlink_identity(AccountId, AccountId, Identity),                    // (Root, Account, identity)
-	verify_identity(AccountId, AccountId, Identity, ValidationData, ParentchainBlockNumber), // (Root, Account, identity, validation_data, blocknumber)
+	verify_identity_step1(AccountId, AccountId, Identity, ValidationData, ParentchainBlockNumber), //
+	verify_identity_step2(AccountId, AccountId, Identity, ValidationData, ParentchainBlockNumber), // (Root, Account, identity, validation_data, blocknumber)
 	query_credit(AccountId),
+	set_challenge_code(AccountId, AccountId, Identity, u32), // (Root, Account, Code)
 }
 
 impl TrustedCall {
@@ -291,8 +293,10 @@ impl TrustedCall {
 			TrustedCall::set_user_shielding_key(account, _, _) => account,
 			TrustedCall::link_identity(account, _, _, _, _) => account,
 			TrustedCall::unlink_identity(account, _, _) => account,
-			TrustedCall::verify_identity(account, _, _, _, _) => account,
+			TrustedCall::verify_identity_step1(account, _, _, _, _) => account,
+			TrustedCall::verify_identity_step2(account, _, _, _, _) => account,
 			TrustedCall::query_credit(account) => account,
+			TrustedCall::set_challenge_code(account, _, _, _) => account,
 		}
 	}
 

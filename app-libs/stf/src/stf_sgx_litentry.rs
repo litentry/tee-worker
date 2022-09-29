@@ -18,15 +18,15 @@
 extern crate sgx_tstd as std;
 
 use crate::{stf_sgx_primitives::types::*, AccountId, MetadataOf, Runtime, StfError, StfResult};
-use codec::Encode;
-use litentry_primitives::{Identity, ParentchainBlockNumber, UserShieldingKeyType};
+use litentry_primitives::{
+	Identity, ParentchainBlockNumber, UserShieldingKeyType, Web2ValidationData,
+};
 use log::*;
-
-use std::format;
-use support::traits::UnfilteredDispatchable;
 
 use itc_https_client_daemon::daemon_sender::SendHttpsRequest;
 use itp_utils::stringify::account_id_to_string;
+use std::format;
+use support::traits::UnfilteredDispatchable;
 
 impl Stf {
 	pub fn set_user_shielding_key(who: AccountId, key: UserShieldingKeyType) -> StfResult<()> {
@@ -50,6 +50,7 @@ impl Stf {
 			metadata,
 			bn
 		);
+		// let parentchain_number = ita_sgx_runtime::pallet_parentchain::Pallet::<Runtime>::block_number();
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::link_identity {
 			who,
 			identity,
@@ -117,15 +118,54 @@ impl Stf {
 		}
 	}
 
-	pub fn query_credit(account_id: AccountId) -> StfResult<()> {
-		info!("query_credit({:x?})", account_id.encode(),);
-
-		let request_str = format!("{}", "https://httpbin.org/anything");
-		let request = itc_https_client_daemon::Request { account_id, request_str };
-		let sender = itc_https_client_daemon::daemon_sender::HttpRequestSender::new();
-		let result = sender.send_https_request(request);
-		info!("send https request, get result as {:?}", result);
+	pub fn query_credit(_account_id: AccountId) -> StfResult<()> {
+		// info!("query_credit({:x?})", account_id.encode(),);
+		// let tweet_id: Vec<u8> = "1569510747084050432".as_bytes().to_vec();
+		// // let request_str = format!("{}", "https://httpbin.org/anything");
+		// let request = itc_https_client_daemon::Request { tweet_id };
+		// let sender = itc_https_client_daemon::daemon_sender::HttpRequestSender::new();
+		// let result = sender.send_https_request(request);
+		// info!("send https request, get result as {:?}", result);
 
 		Ok(())
+	}
+
+	pub fn set_challenge_code(
+		account: AccountId,
+		identity: Identity,
+		challenge_code: u32,
+	) -> StfResult<()> {
+		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_challenge_code {
+			who: account,
+			identity,
+			code: challenge_code,
+		}
+		.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+		Ok(())
+	}
+
+	pub fn verify_web2_identity_step1(
+		target: AccountId,
+		identity: Identity,
+		validation_data: Web2ValidationData,
+		bn: ParentchainBlockNumber,
+	) -> StfResult<()> {
+		let code: Option<u32> = ita_sgx_runtime::pallet_identity_management::ChallengeCodes::<
+			Runtime,
+		>::get(&target, &identity);
+		//TODO change error type
+		code.ok_or_else(|| StfError::Dispatch(format!("code not found")))?;
+		let request = itc_https_client_daemon::Request {
+			target,
+			identity,
+			challenge_code: code.unwrap(),
+			validation_data,
+			bn,
+		};
+		let http_sender = itc_https_client_daemon::daemon_sender::HttpRequestSender::new();
+		http_sender
+			.send_https_request(request)
+			.map_err(|e| StfError::Dispatch(format!("send https error:{:?}", e)))
 	}
 }

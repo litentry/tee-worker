@@ -34,13 +34,17 @@ pub mod sgx_reexport_prelude {
 use itp_types::AccountId;
 pub mod daemon_sender;
 pub mod error;
-pub mod https_client;
-
+// pub mod https_client;
 pub use error::Result;
 
-use std::string::String;
+use codec::{Decode, Encode, MaxEncodedLen};
+use litentry_primitives::{Identity, Web2ValidationData};
 
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen)]
 pub struct Request {
-	pub account_id: AccountId,
-	pub request_str: String,
+	pub target: AccountId,
+	pub identity: Identity,
+	pub challenge_code: u32,
+	pub validation_data: Web2ValidationData,
+	pub bn: litentry_primitives::ParentchainBlockNumber, //Parentchain BlockNumber
 }

@@ -1,4 +1,5 @@
 pub mod balance;
+pub mod litentry;
 pub mod query_credit;
 pub mod set_balance;
 pub mod set_user_shielding_key;

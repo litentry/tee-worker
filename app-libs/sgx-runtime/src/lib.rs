@@ -63,7 +63,7 @@ pub use frame_support::{
 	StorageValue,
 };
 pub use pallet_balances::Call as BalancesCall;
-pub use pallet_parentchain::Call as ParentchainCall;
+pub use pallet_parentchain::{self, Call as ParentchainCall};
 pub use pallet_timestamp::Call as TimestampCall;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -299,7 +299,7 @@ impl pallet_identity_management::Config for Runtime {
 	type ManageOrigin = EnsureRoot<AccountId>;
 	type ChallengeCode = u32;
 	type MaxMetadataLength = ConstU32<128>;
-	type MaxVerificationDelay = ConstU32<2>;
+	type MaxVerificationDelay = ConstU32<20>;
 }
 
 // The plain sgx-runtime without the `evm-pallet`

@@ -35,6 +35,7 @@ use itp_types::OpaqueCall;
 use itp_utils::stringify::account_id_to_string;
 use its_primitives::types::{BlockHash, BlockNumber as SidechainBlockNumber, Timestamp};
 use its_state::SidechainSystemExt;
+use litentry_primitives::{TwitterValidationData, ValidationData, Web2ValidationData};
 use log::*;
 use sp_io::hashing::blake2_256;
 use sp_runtime::MultiAddress;
@@ -463,9 +464,40 @@ impl Stf {
 					}
 					Ok(())
 				},
-				TrustedCall::verify_identity(root, who, identity, _validation_data, bn) => {
-					// TODO: the verification process
+				TrustedCall::verify_identity_step1(
+					root,
+					account,
+					identity,
+					validation_data,
+					bn,
+				) => {
 					ensure!(is_root(&root), StfError::MissingPrivileges(root));
+					// TODO support other validation_data
+					if let ValidationData::Web2(Web2ValidationData::Twitter(
+						TwitterValidationData { ref tweet_id },
+					)) = validation_data
+					{
+						Self::verify_web2_identity_step1(
+							account,
+							identity,
+							Web2ValidationData::Twitter(TwitterValidationData {
+								tweet_id: tweet_id.clone(),
+							}),
+							bn,
+						)
+					} else {
+						Err(StfError::Dispatch(
+							"validation_data only support Web2ValidationData::Twitter".to_string(),
+						))
+					}
+				},
+				TrustedCall::verify_identity_step2(root, who, identity, _validation_data, bn) => {
+					// TODO: the verification process
+
+					// TrustedCall::verify_identity_step2 call by mrenclave(shielding key account)
+					// see trait: StfEnclaveSigning
+					// maybe it is more reasonable to call by the enclave account
+					// ensure!(is_root(&root), StfError::MissingPrivileges(root));
 					debug!(
 						"verify_identity, who: {}, identity: {:?}, bn: {:?}",
 						account_id_to_string(&who),
@@ -507,6 +539,10 @@ impl Stf {
 				TrustedCall::query_credit(account) => {
 					debug!("query_credit({:x?}", account.encode(),);
 					Self::query_credit(account)
+				},
+				TrustedCall::set_challenge_code(root, account, did, challenge_code) => {
+					ensure!(is_root(&root), StfError::MissingPrivileges(root));
+					Self::set_challenge_code(account, did, challenge_code)
 				},
 			}?;
 			System::inc_account_nonce(&sender);
@@ -598,8 +634,10 @@ impl Stf {
 			TrustedCall::set_user_shielding_key(..) => debug!("No storage updates needed..."),
 			TrustedCall::link_identity(..) => debug!("No storage updates needed..."),
 			TrustedCall::unlink_identity(..) => debug!("No storage updates needed..."),
-			TrustedCall::verify_identity(..) => debug!("No storage updates needed..."),
+			TrustedCall::verify_identity_step2(..) => debug!("No storage updates needed..."),
+			TrustedCall::verify_identity_step1(..) => debug!("No storage updates needed..."),
 			TrustedCall::query_credit(..) => debug!("No storage updates needed..."),
+			TrustedCall::set_challenge_code(..) => debug!("No storage updates needed..."),
 			#[cfg(feature = "evm")]
 			_ => debug!("No storage updates needed..."),
 		};
