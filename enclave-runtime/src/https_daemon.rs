@@ -26,7 +26,7 @@ use crate::{
 use itc_https_client_daemon::{daemon_sender, RequestType, Web2IdentityVerificationRequest};
 use log::*;
 use sgx_types::sgx_status_t;
-use std::{format, string::ToString, sync::Arc};
+use std::{string::ToString, sync::Arc};
 
 use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, LightClientState};
 
@@ -37,7 +37,6 @@ use crate::global_components::{
 
 use ita_stf::Hash;
 use itc_https_request_handler::{
-	build_client_with_authorization,
 	web2_identity::{discord, twitter},
 	RequestContext, RequestHandler,
 };
@@ -122,7 +121,7 @@ fn run_https_client_daemon_internal(_url: &str) -> Result<()> {
 
 		match request_type {
 			RequestType::Web2IdentityVerification(ref request) => {
-				if let Err(e) = web2_identity_verification(&request_context, request) {
+				if let Err(e) = web2_identity_verification(&request_context, request.clone()) {
 					error!("Could not retrieve data from https server due to: {:?}", e);
 				}
 			},
@@ -142,48 +141,27 @@ fn web2_identity_verification<
 	A: AuthorApi<Hash, Hash>,
 	S: StfEnclaveSigning,
 >(
-	verification_context: &RequestContext<K, A, S>,
-	request: &Web2IdentityVerificationRequest,
+	request_context: &RequestContext<K, A, S>,
+	request: Web2IdentityVerificationRequest,
 ) -> core::result::Result<(), itc_https_request_handler::Error> {
 	match &request.validation_data {
 		Web2ValidationData::Twitter(_) => {
-			let twitter_authorization_token = std::env::var("TWITTER_AUTHORIZATION_TOKEN").ok();
 			let handler = itc_https_request_handler::web2_identity::Web2IdentityVerification::<
 				twitter::TwitterResponse,
 			> {
-				verification_request: (*request).clone(),
+				verification_request: request,
 				_marker: Default::default(),
 			};
-
-			let mut client = build_client_with_authorization(
-				"https://api.twitter.com".to_string(),
-				twitter_authorization_token.clone(),
-			);
-			handler.send_request(&verification_context, client, "/2/tweets".to_string())
+			handler.send_request(request_context)
 		},
-		Web2ValidationData::Discord(ref validation_data) => {
-			let discord_authorization_token = std::env::var("DISCORD_AUTHORIZATION_TOKEN").ok();
+		Web2ValidationData::Discord(_) => {
 			let handler = itc_https_request_handler::web2_identity::Web2IdentityVerification::<
 				discord::DiscordResponse,
 			> {
-				verification_request: (*request).clone(),
+				verification_request: request,
 				_marker: Default::default(),
 			};
-			let client = build_client_with_authorization(
-				"https://discordapp.com".to_string(),
-				discord_authorization_token.clone(),
-			);
-			let channel_id = validation_data.channel_id.to_vec();
-			let message_id = validation_data.message_id.to_vec();
-			handler.send_request(
-				&verification_context,
-				client,
-				format!(
-					"/api/channels/{}/messages/{}",
-					std::str::from_utf8(channel_id.as_slice()).unwrap(),
-					std::str::from_utf8(message_id.as_slice()).unwrap()
-				),
-			)
+			handler.send_request(request_context)
 		},
 	}
 }

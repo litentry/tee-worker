@@ -147,16 +147,11 @@ pub trait RequestHandler<
 	type Response: Debug + serde::de::DeserializeOwned + RestPath<String>;
 	// fn make_https_request(&self, context: &RequestContext<K,A,S>)->
 
-	fn send_request(
-		&self,
-		verification_context: &RequestContext<K, A, S>,
-		client: RestClient<HttpClient<DefaultSend>>,
-		path: String,
-	) -> Result<(), Error>;
+	fn send_request(&self, request_context: &RequestContext<K, A, S>) -> Result<(), Error>;
 
 	fn handle_response(
 		&self,
-		verification_context: &RequestContext<K, A, S>,
+		request_context: &RequestContext<K, A, S>,
 		response: Self::Response,
 	) -> Result<(), Error>;
 }

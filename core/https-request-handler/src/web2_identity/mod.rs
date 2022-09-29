@@ -23,8 +23,8 @@ extern crate sgx_tstd as std;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 use crate::{
-	format, str, vec, DecryptionVerificationPayload, Error, RequestContext, RequestHandler, String,
-	ToString, UserInfo, Vec,
+	build_client_with_authorization, format, str, vec, DecryptionVerificationPayload, Error,
+	RequestContext, RequestHandler, String, ToString, UserInfo, Vec,
 };
 use codec::{Decode, Encode};
 use core::fmt::Debug;
@@ -55,6 +55,55 @@ pub struct Web2IdentityVerification<T> {
 	pub _marker: PhantomData<T>,
 }
 
+struct Web2HttpsClient<'a> {
+	client: RestClient<HttpClient<DefaultSend>>,
+	path: String,
+	query: Vec<(&'a str, &'a str)>,
+}
+
+impl<R> Web2IdentityVerification<R> {
+	fn make_client(&self) -> Web2HttpsClient {
+		let request = &self.verification_request;
+		match request.validation_data {
+			Web2ValidationData::Twitter(TwitterValidationData { ref tweet_id }) => {
+				let twitter_authorization_token = std::env::var("TWITTER_AUTHORIZATION_TOKEN").ok();
+
+				let client = build_client_with_authorization(
+					"https://api.twitter.com".to_string(),
+					twitter_authorization_token,
+				);
+				Web2HttpsClient {
+					client,
+					path: "/2/tweets".to_string(),
+					query: vec![
+						("ids", str::from_utf8(tweet_id.as_slice()).unwrap()),
+						("expansions", "author_id"),
+					],
+				}
+			},
+			Web2ValidationData::Discord(ref validation_data) => {
+				let discord_authorization_token = std::env::var("DISCORD_AUTHORIZATION_TOKEN").ok();
+
+				let client = build_client_with_authorization(
+					"https://discordapp.com".to_string(),
+					discord_authorization_token,
+				);
+				let channel_id = validation_data.channel_id.to_vec();
+				let message_id = validation_data.message_id.to_vec();
+				Web2HttpsClient {
+					client,
+					path: format!(
+						"/api/channels/{}/messages/{}",
+						std::str::from_utf8(channel_id.as_slice()).unwrap(),
+						std::str::from_utf8(message_id.as_slice()).unwrap()
+					),
+					query: vec![],
+				}
+			},
+		}
+	}
+}
+
 impl<
 		A: AuthorApi<Hash, Hash>,
 		S: StfEnclaveSigning,
@@ -64,27 +113,13 @@ impl<
 {
 	type Response = R;
 
-	fn send_request(
-		&self,
-		request_context: &RequestContext<K, A, S>,
-		mut client: RestClient<HttpClient<DefaultSend>>,
-		path: String,
-	) -> Result<(), Error> {
-		let request = &self.verification_request;
-		let query: Vec<(&str, &str)> = match request.validation_data {
-			Web2ValidationData::Twitter(TwitterValidationData { ref tweet_id }) => {
-				vec![
-					("ids", str::from_utf8(tweet_id.as_slice()).unwrap()),
-					("expansions", "author_id"),
-				]
-			},
-			Web2ValidationData::Discord(_) => {
-				vec![]
-			},
-		};
+	fn send_request(&self, request_context: &RequestContext<K, A, S>) -> Result<(), Error> {
+		let mut client = self.make_client();
 		let response: Self::Response = client
-			.get_with::<String, R>(path, query.as_slice())
+			.client
+			.get_with::<String, R>(client.path, client.query.as_slice())
 			.map_err(|e| Error::RquestError(format!("{:?}", e)))?;
+		//TODO log level
 		log::warn!("response:{:?}", response);
 		self.handle_response(request_context, response)
 	}
