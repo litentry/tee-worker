@@ -51,7 +51,7 @@ use std::{
 };
 use url::Url;
 
-use ita_stf::Hash;
+use ita_stf::{Hash, ShardIdentifier};
 use itc_rest_client::{
 	error::Error as HttpError,
 	http_client::{DefaultSend, HttpClient},
@@ -91,7 +91,7 @@ pub struct RequestContext<
 	S: StfEnclaveSigning,
 > {
 	shielding_key: K,
-	shard_identifier: sp_core::H256,
+	shard_identifier: ShardIdentifier,
 	enclave_signer: Arc<S>,
 	author: Arc<A>,
 }
@@ -103,7 +103,7 @@ impl<
 	> RequestContext<K, A, S>
 {
 	pub fn new(
-		shard_identifier: sp_core::H256,
+		shard_identifier: ShardIdentifier,
 		shielding_key: K,
 		enclave_signer: Arc<S>,
 		author: Arc<A>,

@@ -29,7 +29,7 @@ use crate::{
 use codec::{Decode, Encode};
 use core::fmt::Debug;
 use futures::executor;
-use ita_stf::{Hash, TrustedCall, TrustedOperation};
+use ita_stf::{Hash, ShardIdentifier, TrustedCall, TrustedOperation};
 use itc_https_client_daemon::Web2IdentityVerificationRequest;
 use itc_rest_client::{
 	http_client::{DefaultSend, HttpClient},
@@ -66,7 +66,7 @@ impl<
 
 	fn send_request(
 		&self,
-		verification_context: &RequestContext<K, A, S>,
+		request_context: &RequestContext<K, A, S>,
 		mut client: RestClient<HttpClient<DefaultSend>>,
 		path: String,
 	) -> Result<(), Error> {
@@ -86,17 +86,17 @@ impl<
 			.get_with::<String, R>(path, query.as_slice())
 			.map_err(|e| Error::RquestError(format!("{:?}", e)))?;
 		log::warn!("response:{:?}", response);
-		self.handle_response(verification_context, response)
+		self.handle_response(request_context, response)
 	}
 
 	fn handle_response(
 		&self,
-		verification_context: &RequestContext<K, A, S>,
+		request_context: &RequestContext<K, A, S>,
 		response: Self::Response,
 	) -> Result<(), Error> {
 		let request = &self.verification_request;
 		let payload = response
-			.decrypt_ciphertext(verification_context.shielding_key.clone())
+			.decrypt_ciphertext(request_context.shielding_key.clone())
 			.map_err(|_| Error::OtherError("decrypt payload error".to_string()))?;
 
 		let user_id = response
@@ -130,7 +130,7 @@ impl<
 			return Err(Error::OtherError("challenge code is not the same".to_string()))
 		}
 
-		let enclave_account_id = verification_context
+		let enclave_account_id = request_context
 			.enclave_signer
 			.get_enclave_account()
 			.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
@@ -142,26 +142,42 @@ impl<
 			ValidationData::Web2(request.validation_data.clone()),
 			request.bn,
 		);
-		let signed_trusted_call = verification_context
-			.enclave_signer
-			.sign_call_with_self(&trusted_call, &verification_context.shard_identifier)
-			.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
-		let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
-		let encrypted_trusted_call = verification_context
-			.shielding_key
-			.encrypt(&trusted_operation.encode())
-			.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
-
-		let top_submit_future = async {
-			verification_context
-				.author
-				.submit_top(encrypted_trusted_call, verification_context.shard_identifier)
-				.await
-		};
-		executor::block_on(top_submit_future).map_err(|e| {
-			Error::OtherError(format!("Error adding indirect trusted call to TOP pool: {:?}", e))
-		})?;
-
-		Ok(())
+		submit_call(
+			request_context.enclave_signer.as_ref(),
+			&request_context.shielding_key,
+			request_context.author.as_ref(),
+			request_context.shard_identifier,
+			&trusted_call,
+		)
 	}
+}
+
+fn submit_call<
+	K: ShieldingCryptoEncrypt + Clone,
+	A: AuthorApi<Hash, Hash>,
+	S: StfEnclaveSigning,
+>(
+	enclave_signer: &S,
+	shielding_key: &K,
+	author_api: &A,
+	shard_identifier: ShardIdentifier,
+	trusted_call: &TrustedCall,
+) -> Result<(), Error> {
+	let signed_trusted_call = enclave_signer
+		.sign_call_with_self(trusted_call, &shard_identifier)
+		.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
+
+	let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
+
+	let encrypted_trusted_call = shielding_key
+		.encrypt(&trusted_operation.encode())
+		.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
+
+	let top_submit_future =
+		async { author_api.submit_top(encrypted_trusted_call, shard_identifier).await };
+	executor::block_on(top_submit_future).map_err(|e| {
+		Error::OtherError(format!("Error adding indirect trusted call to TOP pool: {:?}", e))
+	})?;
+
+	Ok(())
 }
