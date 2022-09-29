@@ -23,9 +23,7 @@ use litentry_primitives::{
 };
 use log::*;
 
-use crate::helpers;
 use itc_https_client_daemon::daemon_sender::SendHttpsRequest;
-use itp_storage::StorageHasher;
 use itp_utils::stringify::account_id_to_string;
 use std::format;
 use support::traits::UnfilteredDispatchable;
@@ -133,38 +131,29 @@ impl Stf {
 	}
 
 	pub fn set_challenge_code(
-		sender: AccountId,
 		account: AccountId,
 		identity: Identity,
 		challenge_code: u32,
 	) -> StfResult<()> {
-		let origin = ita_sgx_runtime::Origin::signed(sender.clone());
-
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_challenge_code {
 			who: account,
 			identity,
 			code: challenge_code,
 		}
-		.dispatch_bypass_filter(origin)
+		.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
 		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
 		Ok(())
 	}
 
-	pub fn verify_identity_step1(
-		_sender: AccountId,
+	pub fn verify_web2_identity_step1(
 		target: AccountId,
 		identity: Identity,
 		validation_data: Web2ValidationData,
 		bn: ParentchainBlockNumber,
 	) -> StfResult<()> {
-		let code: Option<u32> = helpers::get_storage_double_map(
-			"IdentityManagement",
-			"ChallengeCodes",
-			&target,
-			&StorageHasher::Blake2_128Concat,
-			&identity,
-			&StorageHasher::Blake2_128Concat,
-		);
+		let code: Option<u32> = ita_sgx_runtime::pallet_identity_management::ChallengeCodes::<
+			Runtime,
+		>::get(&target, &identity);
 		//TODO change error type
 		code.ok_or_else(|| StfError::Dispatch(format!("code not found")))?;
 		let request = itc_https_client_daemon::Request {

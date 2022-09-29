@@ -471,13 +471,13 @@ impl Stf {
 					validation_data,
 					bn,
 				) => {
+					ensure!(is_root(&root), StfError::MissingPrivileges(root));
 					// TODO support other validation_data
 					if let ValidationData::Web2(Web2ValidationData::Twitter(
 						TwitterValidationData { ref tweet_id },
 					)) = validation_data
 					{
-						Self::verify_identity_step1(
-							root,
+						Self::verify_web2_identity_step1(
 							account,
 							identity,
 							Web2ValidationData::Twitter(TwitterValidationData {
@@ -493,7 +493,11 @@ impl Stf {
 				},
 				TrustedCall::verify_identity_step2(root, who, identity, _validation_data, bn) => {
 					// TODO: the verification process
-					ensure!(is_root(&root), StfError::MissingPrivileges(root));
+
+					// TrustedCall::verify_identity_step2 call by mrenclave(shielding key account)
+					// see trait: StfEnclaveSigning
+					// maybe it is more reasonable to call by the enclave account
+					// ensure!(is_root(&root), StfError::MissingPrivileges(root));
 					debug!(
 						"verify_identity, who: {}, identity: {:?}, bn: {:?}",
 						account_id_to_string(&who),
@@ -536,8 +540,10 @@ impl Stf {
 					debug!("query_credit({:x?}", account.encode(),);
 					Self::query_credit(account)
 				},
-				TrustedCall::set_challenge_code(root, account, did, challenge_code) =>
-					Self::set_challenge_code(root, account, did, challenge_code),
+				TrustedCall::set_challenge_code(root, account, did, challenge_code) => {
+					ensure!(is_root(&root), StfError::MissingPrivileges(root));
+					Self::set_challenge_code(account, did, challenge_code)
+				},
 			}?;
 			System::inc_account_nonce(&sender);
 			Ok(())

@@ -27,7 +27,7 @@ use log::*;
 use sp_core::Pair;
 
 #[derive(Parser)]
-pub struct PrepareVerifyIdentityCommand {
+pub struct VerifyIdentityStep1Command {
 	/// AccountId in ss58check format
 	account: String,
 	did: String,
@@ -35,7 +35,7 @@ pub struct PrepareVerifyIdentityCommand {
 	parent_block_number: u32,
 }
 
-impl PrepareVerifyIdentityCommand {
+impl VerifyIdentityStep1Command {
 	pub(crate) fn run(&self, cli: &Cli, trusted_args: &TrustedArgs) {
 		let who = get_accountid_from_str(&self.account);
 		let root = get_pair_from_str(trusted_args, "//Alice");
