@@ -18,6 +18,7 @@
 extern crate sgx_tstd as std;
 
 use crate::{stf_sgx_primitives::types::*, AccountId, MetadataOf, Runtime, StfError, StfResult};
+use itc_https_client_daemon::RequestType;
 use litentry_primitives::{
 	Identity, ParentchainBlockNumber, UserShieldingKeyType, Web2ValidationData,
 };
