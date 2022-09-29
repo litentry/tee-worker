@@ -20,7 +20,7 @@ use crate::{
 		balance::BalanceCommand,
 		litentry::{
 			link_identity::LinkIdentityCommand, set_challenge_code::SetChallengeCodeCommand,
-			verify_identity_step1::PrepareVerifyIdentityCommand,
+			verify_identity_step1::VerifyIdentityStep1Command,
 		},
 		query_credit::QueryCreditCommand,
 		set_balance::SetBalanceCommand,
@@ -74,7 +74,7 @@ pub enum TrustedBaseCli {
 
 	SetChallengeCode(SetChallengeCodeCommand),
 
-	PrepareVerifyIdentity(PrepareVerifyIdentityCommand),
+	VerifyIdentityStep1(VerifyIdentityStep1Command),
 }
 
 impl TrustedBaseCli {
@@ -91,7 +91,7 @@ impl TrustedBaseCli {
 			TrustedBaseCli::QueryCredit(cmd) => cmd.run(cli, trusted_args),
 			TrustedBaseCli::LinkIdentity(cmd) => cmd.run(cli, trusted_args),
 			TrustedBaseCli::SetChallengeCode(cmd) => cmd.run(cli, trusted_args),
-			TrustedBaseCli::PrepareVerifyIdentity(cmd) => cmd.run(cli, trusted_args),
+			TrustedBaseCli::VerifyIdentityStep1(cmd) => cmd.run(cli, trusted_args),
 		}
 	}
 }
