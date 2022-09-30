@@ -89,10 +89,9 @@ fn feedback_via_ocall<F: CreateExtrinsics>(
 	let call = OpaqueCall::from_tuple(&([module_id, method_id],));
 	let calls = std::vec![call];
 	let tx = extrinsics_factory
-		.create_extrinsics(calls.as_slice(), None)
-		.map_err(|e| Error::ExtrinsicsFactory(e))?;
+		.create_extrinsics(calls.as_slice(), None)?;
 
-	let result = ocall_api.send_to_parentchain(tx).map_err(|e| Error::Sgx(e))?;
+	let result = ocall_api.send_to_parentchain(tx)?;
 	debug!("https daemon send tx result as ( {:?},)", result);
 
 	Ok(())
@@ -111,9 +110,9 @@ fn verify_assertion1<F: CreateExtrinsics>(
 	for did_ctx in &v_did_context {
 		if did_ctx.1.is_verified {
 			if did_ctx.0.is_web2() {
-				web2_cnt = web2_cnt + 1;
+				web2_cnt += 1;
 			} else if did_ctx.0.is_web3() {
-				web3_cnt = web3_cnt + 1;
+				web3_cnt += 1;
 			}
 		}
 	}
@@ -122,7 +121,7 @@ fn verify_assertion1<F: CreateExtrinsics>(
 		// TODO: align with Parachain pallet module_id and method_id
 		let module_id = 64u8;
 		let method_id = 0u8;
-		feedback_via_ocall(module_id, method_id, extrinsics_factory);
+		let _err = feedback_via_ocall(module_id, method_id, extrinsics_factory);
 	}
 }
 
