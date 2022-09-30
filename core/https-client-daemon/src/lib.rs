@@ -40,8 +40,14 @@ pub use error::Result;
 use codec::{Decode, Encode, MaxEncodedLen};
 use litentry_primitives::{Identity, Web2ValidationData};
 
+pub enum RequestType {
+	Web2IdentityVerification(Web2IdentityVerificationRequest),
+	Web3IndentityVerification,
+	RuleSet,
+}
+
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen)]
-pub struct Request {
+pub struct Web2IdentityVerificationRequest {
 	pub target: AccountId,
 	pub identity: Identity,
 	pub challenge_code: u32,

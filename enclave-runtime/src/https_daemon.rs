@@ -23,13 +23,10 @@ use crate::{
 	},
 	GLOBAL_STATE_HANDLER_COMPONENT,
 };
-use itc_https_client_daemon::daemon_sender;
+use itc_https_client_daemon::{daemon_sender, RequestType, Web2IdentityVerificationRequest};
 use log::*;
 use sgx_types::sgx_status_t;
-use std::{
-	string::{String, ToString},
-	sync::Arc,
-};
+use std::{string::ToString, sync::Arc};
 
 use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, LightClientState};
 
@@ -37,15 +34,20 @@ use crate::global_components::{
 	EnclaveStfEnclaveSigner, GLOBAL_OCALL_API_COMPONENT, GLOBAL_STATE_OBSERVER_COMPONENT,
 	GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 };
+
+use ita_stf::Hash;
 use itc_https_request_handler::{
-	build_twitter_client, CommonHandler, RequestHandler, TwitterResponse, VerificationContext,
+	web2_identity::{discord, twitter},
+	RequestContext, RequestHandler,
 };
 use itp_component_container::ComponentGetter;
 use itp_extrinsics_factory::ExtrinsicsFactory;
 use itp_nonce_cache::GLOBAL_NONCE_CACHE;
-use itp_sgx_crypto::{Ed25519Seal, Rsa3072Seal};
+use itp_sgx_crypto::{Ed25519Seal, Rsa3072Seal, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_io::StaticSealedIO;
+use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::query_shard_state::QueryShardState;
+use itp_top_pool_author::traits::AuthorApi;
 use litentry_primitives::Web2ValidationData;
 
 const HTTPS_ADDRESS: &str = "https://api.coingecko.com";
@@ -103,54 +105,63 @@ fn run_https_client_daemon_internal(_url: &str) -> Result<()> {
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 	let shielding_key = Rsa3072Seal::unseal_from_static_file().unwrap();
 
-	let twitter_authorization_token: Option<String> =
-		if let Ok(token) = std::env::var("TWITTER_AUTHORIZATION_TOKEN") {
-			Some(token)
-		} else {
-			None
-		};
-
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 
 	let stf_enclave_signer =
 		Arc::new(EnclaveStfEnclaveSigner::new(state_observer, ocall_api, shielding_key_repository));
 
-	// let base_url = Url::parse("https://api.twitter.com")?;
-	// let mut daemon = HttpsRestClient::new(
-	// 	base_url,
-	// 	// Some("Bearer AAAAAAAAAAAAAAAAAAAAALJEfQEAAAAAGv1Jyd%2FkYo3fN4CepxeZMUl8k2g%3D8MnYYQSGpDH8EcvGz7AB2H7hlLP14v1mDKtkqbam1s7itBXC7K".as_bytes().to_vec()),
-	// 	authorization_token,
-	// 	OcallApi {},
-	// 	extrinsics_factory,
-	// 	Rsa3072Seal::unseal_from_static_file().unwrap(),
-	// 	// author_api,
-	// );
-
-	let verification_context = VerificationContext::new(
+	let request_context = RequestContext::new(
 		default_shard_identifier,
 		shielding_key,
 		stf_enclave_signer,
 		author_api,
 	);
-	let handler = CommonHandler {};
 	loop {
-		let request = receiver.recv().map_err(|e| Error::Other(e.into()))?;
-		if let Err(e) = match &request.validation_data {
-			Web2ValidationData::Twitter(_) => {
-				let client = build_twitter_client(twitter_authorization_token.clone());
-				handler.send_request::<TwitterResponse>(
-					&verification_context,
-					client,
-					request,
-					"/2/tweets".to_string(),
-				)
+		let request_type = receiver.recv().map_err(|e| Error::Other(e.into()))?;
+
+		match request_type {
+			RequestType::Web2IdentityVerification(ref request) => {
+				if let Err(e) = web2_identity_verification(&request_context, request.clone()) {
+					error!("Could not retrieve data from https server due to: {:?}", e);
+				}
 			},
-			Web2ValidationData::Discord(_) => {
-				// todo!()
-				Ok(())
+			RequestType::RuleSet => {
+				//TODO
+				error!("ruleset don't support yet");
 			},
-		} {
-			error!("Could not retrieve data from https server due to: {:?}", e);
+			RequestType::Web3IndentityVerification => {
+				error!("web3 don't support yet");
+			},
 		}
+	}
+}
+
+fn web2_identity_verification<
+	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
+	A: AuthorApi<Hash, Hash>,
+	S: StfEnclaveSigning,
+>(
+	request_context: &RequestContext<K, A, S>,
+	request: Web2IdentityVerificationRequest,
+) -> core::result::Result<(), itc_https_request_handler::Error> {
+	match &request.validation_data {
+		Web2ValidationData::Twitter(_) => {
+			let handler = itc_https_request_handler::web2_identity::Web2IdentityVerification::<
+				twitter::TwitterResponse,
+			> {
+				verification_request: request,
+				_marker: Default::default(),
+			};
+			handler.send_request(request_context)
+		},
+		Web2ValidationData::Discord(_) => {
+			let handler = itc_https_request_handler::web2_identity::Web2IdentityVerification::<
+				discord::DiscordResponse,
+			> {
+				verification_request: request,
+				_marker: Default::default(),
+			};
+			handler.send_request(request_context)
+		},
 	}
 }

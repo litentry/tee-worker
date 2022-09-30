@@ -18,13 +18,13 @@
 extern crate sgx_tstd as std;
 
 use crate::{stf_sgx_primitives::types::*, AccountId, MetadataOf, Runtime, StfError, StfResult};
+use itc_https_client_daemon::RequestType;
 use litentry_primitives::{
 	Identity, ParentchainBlockNumber, UserShieldingKeyType, Web2ValidationData,
 };
 use log::*;
 
 use itc_https_client_daemon::daemon_sender::SendHttpsRequest;
-use itp_storage::StorageHasher;
 use itp_utils::stringify::account_id_to_string;
 use std::format;
 use support::traits::UnfilteredDispatchable;
@@ -157,7 +157,7 @@ impl Stf {
 		>::get(&target, &identity);
 		//TODO change error type
 		code.ok_or_else(|| StfError::Dispatch(format!("code not found")))?;
-		let request = itc_https_client_daemon::Request {
+		let request = itc_https_client_daemon::Web2IdentityVerificationRequest {
 			target,
 			identity,
 			challenge_code: code.unwrap(),
@@ -166,7 +166,7 @@ impl Stf {
 		};
 		let http_sender = itc_https_client_daemon::daemon_sender::HttpRequestSender::new();
 		http_sender
-			.send_https_request(request)
+			.send_https_request(RequestType::Web2IdentityVerification(request))
 			.map_err(|e| StfError::Dispatch(format!("send https error:{:?}", e)))
 	}
 }
