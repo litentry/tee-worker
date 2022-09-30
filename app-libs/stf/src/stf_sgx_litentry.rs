@@ -152,9 +152,25 @@ impl Stf {
 		validation_data: Web2ValidationData,
 		bn: ParentchainBlockNumber,
 	) -> StfResult<()> {
-		let code: Option<u32> = ita_sgx_runtime::pallet_identity_management::ChallengeCodes::<
-			Runtime,
-		>::get(&target, &identity);
+		// testing.. remove later
+		let key = itp_storage::storage_double_map_key(
+			"IdentityManagement",
+			"ChallengeCodes",
+			&target,
+			&itp_storage::StorageHasher::Blake2_128Concat,
+			&identity,
+			&itp_storage::StorageHasher::Blake2_128Concat,
+		);
+
+		let value: Option<u32> = crate::helpers::get_storage_by_key_hash(key.clone());
+
+		// let code: Option<u32> = ita_sgx_runtime::pallet_identity_management::ChallengeCodes::<
+		// 	Runtime,
+		// >::get(&target, &identity);
+		let code = Some(1134);
+
+		log::warn!("storage key:{:?}, value:{:?}, pallet:{:?}", key, value, code);
+
 		//TODO change error type
 		code.ok_or_else(|| StfError::Dispatch(format!("code not found")))?;
 		let request = itc_https_client_daemon::Web2IdentityVerificationRequest {

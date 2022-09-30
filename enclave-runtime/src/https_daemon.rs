@@ -35,7 +35,7 @@ use crate::global_components::{
 	GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 };
 
-use ita_stf::Hash;
+use ita_stf::{Hash, State as StfState};
 use itc_https_request_handler::{
 	web2_identity::{discord, twitter},
 	RequestContext, RequestHandler,
@@ -44,10 +44,12 @@ use itp_component_container::ComponentGetter;
 use itp_extrinsics_factory::ExtrinsicsFactory;
 use itp_nonce_cache::GLOBAL_NONCE_CACHE;
 use itp_sgx_crypto::{Ed25519Seal, Rsa3072Seal, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
+use itp_sgx_externalities::{SgxExternalities, SgxExternalitiesTrait};
 use itp_sgx_io::StaticSealedIO;
 use itp_stf_executor::traits::StfEnclaveSigning;
-use itp_stf_state_handler::query_shard_state::QueryShardState;
+use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
 use itp_top_pool_author::traits::AuthorApi;
+use itp_types::ShardIdentifier;
 use litentry_primitives::Web2ValidationData;
 
 const HTTPS_ADDRESS: &str = "https://api.coingecko.com";
@@ -93,14 +95,18 @@ fn run_https_client_daemon_internal(_url: &str) -> Result<()> {
 
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
-
 	// For debug purposes, list shards. no problem to panic if fails.
 	let shards = state_handler.list_shards().unwrap();
-	let default_shard_identifier = if let Some(shard) = shards.get(0) {
+	let default_shard_identifier: ShardIdentifier = if let Some(shard) = shards.get(0) {
 		Ok(sp_core::H256::from_slice(shard.as_bytes()))
 	} else {
 		Err(Error::Stf("Could not retrieve shard".to_string()))
 	}?;
+
+	let stf_state: StfState = state_handler
+		.load(&default_shard_identifier)
+		.map_err(|e| Error::StfStateHandler(e))?;
+	let stf_state = Arc::new(stf_state);
 
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 	let shielding_key = Rsa3072Seal::unseal_from_static_file().unwrap();
@@ -112,6 +118,7 @@ fn run_https_client_daemon_internal(_url: &str) -> Result<()> {
 
 	let request_context = RequestContext::new(
 		default_shard_identifier,
+		stf_state,
 		shielding_key,
 		stf_enclave_signer,
 		author_api,

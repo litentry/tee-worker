@@ -4186,6 +4186,7 @@ dependencies = [
  "itp-extrinsics-factory",
  "itp-ocall-api",
  "itp-sgx-crypto",
+ "itp-sgx-externalities",
  "itp-stf-executor",
  "itp-storage",
  "itp-top-pool-author",

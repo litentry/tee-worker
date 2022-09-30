@@ -51,7 +51,7 @@ use std::{
 };
 use url::Url;
 
-use ita_stf::{Hash, ShardIdentifier};
+use ita_stf::{Hash, ShardIdentifier, State as StfState};
 use itc_rest_client::{
 	error::Error as HttpError,
 	http_client::{DefaultSend, HttpClient},
@@ -91,6 +91,7 @@ pub struct RequestContext<
 	S: StfEnclaveSigning,
 > {
 	shielding_key: K,
+	stf_state: Arc<StfState>,
 	shard_identifier: ShardIdentifier,
 	enclave_signer: Arc<S>,
 	author: Arc<A>,
@@ -104,11 +105,12 @@ impl<
 {
 	pub fn new(
 		shard_identifier: ShardIdentifier,
+		stf_state: Arc<StfState>,
 		shielding_key: K,
 		enclave_signer: Arc<S>,
 		author: Arc<A>,
 	) -> Self {
-		Self { shard_identifier, shielding_key, enclave_signer, author }
+		Self { shard_identifier, stf_state, shielding_key, enclave_signer, author }
 	}
 }
 
@@ -118,15 +120,13 @@ pub fn build_client(base_url: Url, headers: Headers) -> RestClient<HttpClient<De
 }
 
 pub fn build_client_with_authorization(
-	base_url: String,
-	authorization_token: Option<String>,
+	base_url: &str,
+	authorization_token: &str,
 ) -> RestClient<HttpClient<DefaultSend>> {
-	let base_url = Url::parse(base_url.as_str()).unwrap();
+	let base_url = Url::parse(base_url).unwrap();
 	let mut headers = Headers::new();
 	headers.insert(CONNECTION.as_str(), "close");
-	if let Some(authorization_token) = authorization_token {
-		headers.insert(AUTHORIZATION.as_str(), authorization_token.as_str());
-	}
+	headers.insert(AUTHORIZATION.as_str(), authorization_token);
 	build_client(base_url, headers)
 }
 
