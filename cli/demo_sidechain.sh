@@ -115,6 +115,8 @@ echo "* Second transfer: Send ${AMOUNTTRANSFER} funds from Alice's incognito acc
 $CLIENTWORKER2 trusted --mrenclave ${MRENCLAVE} --direct transfer ${ICGACCOUNTALICE} ${ICGACCOUNTBOB} ${AMOUNTTRANSFER}
 echo ""
 
+sleep 12s
+
 echo "* Get balance of Alice's incognito account (on worker 1)"
 ALICE_BALANCE=$(${CLIENTWORKER1} trusted --mrenclave ${MRENCLAVE} balance ${ICGACCOUNTALICE} | xargs)
 echo "$ALICE_BALANCE"
