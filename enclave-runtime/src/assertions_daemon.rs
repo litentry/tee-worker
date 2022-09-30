@@ -88,8 +88,7 @@ fn feedback_via_ocall<F: CreateExtrinsics>(
 
 	let call = OpaqueCall::from_tuple(&([module_id, method_id],));
 	let calls = std::vec![call];
-	let tx = extrinsics_factory
-		.create_extrinsics(calls.as_slice(), None)?;
+	let tx = extrinsics_factory.create_extrinsics(calls.as_slice(), None)?;
 
 	let result = ocall_api.send_to_parentchain(tx)?;
 	debug!("https daemon send tx result as ( {:?},)", result);
