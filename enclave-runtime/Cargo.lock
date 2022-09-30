@@ -733,6 +733,7 @@ dependencies = [
  "ita-exchange-oracle",
  "ita-sgx-runtime",
  "ita-stf",
+ "itc-assertions-verify-daemon",
  "itc-direct-rpc-server",
  "itc-https-client-daemon",
  "itc-https-request-handler",
@@ -1589,6 +1590,7 @@ dependencies = [
  "frame-system",
  "hex 0.4.0",
  "ita-sgx-runtime",
+ "itc-assertions-verify-daemon",
  "itc-https-client-daemon",
  "itp-hashing",
  "itp-node-api",
@@ -1611,6 +1613,19 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
+]
+
+[[package]]
+name = "itc-assertions-verify-daemon"
+version = "0.1.0"
+dependencies = [
+ "itp-types",
+ "lazy_static",
+ "litentry-primitives",
+ "log",
+ "sgx_tstd",
+ "sgx_types",
+ "thiserror 1.0.9",
 ]
 
 [[package]]

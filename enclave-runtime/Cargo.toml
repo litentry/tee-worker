@@ -130,6 +130,7 @@ sp-io = { optional = true, default-features = false, features = ["disable_oom", 
 itc-https-client-daemon = { path = "../core/https-client-daemon", default-features = false, features = ["sgx"] }
 litentry-primitives = { path = "../litentry/primitives", default-features = false, features = ["sgx"] }
 itc-https-request-handler = { path = "../core/https-request-handler", default-features = false, features = ["sgx"] }
+itc-assertions-verify-daemon = { path = "../core/assertions-verify-daemon", default-features = false, features = ["sgx"] }
 
 # substrate deps
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }

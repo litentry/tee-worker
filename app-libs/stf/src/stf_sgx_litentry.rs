@@ -24,6 +24,9 @@ use litentry_primitives::{
 };
 use log::*;
 
+use itc_assertions_verify_daemon::{
+	verify_daemon_sender::SendVerifyRequest, AssertionVerifyRequest,
+};
 use itc_https_client_daemon::daemon_sender::SendHttpsRequest;
 use itp_utils::stringify::account_id_to_string;
 use std::format;
@@ -127,6 +130,15 @@ impl Stf {
 		// let sender = itc_https_client_daemon::daemon_sender::HttpRequestSender::new();
 		// let result = sender.send_https_request(request);
 		// info!("send https request, get result as {:?}", result);
+
+		info!("verify daemon send request");
+		let request = itc_assertions_verify_daemon::AssertionVerifyRequest {
+			who: _account_id,
+			assertion_idx: itc_assertions_verify_daemon::AssertionIndex::Assertion1,
+		};
+		let sender = itc_assertions_verify_daemon::verify_daemon_sender::VerifyRequestSender::new();
+		let result = sender.send_verify_request(request);
+		info!("send verify request, get result as {:?}", result);
 
 		Ok(())
 	}

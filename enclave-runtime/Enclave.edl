@@ -116,6 +116,8 @@ enclave {
 		public size_t test_main_entrance();
 
 		public size_t run_https_client_daemon();
+
+		public size_t run_assertions_verify_daemon();
 	};
 
 	untrusted {

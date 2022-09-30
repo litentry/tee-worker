@@ -5,6 +5,7 @@ members = [
     "app-libs/sgx-runtime",
     "app-libs/stf",
     "cli",
+    "core/assertions-verify-daemon",
     "core/direct-rpc-server",
 	"core/https-request-handler",
     "core/offchain-worker-executor",
