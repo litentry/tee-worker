@@ -253,7 +253,7 @@ pub mod storage {
 	/// Get the next key in storage after the given one in lexicographic order.
 	pub fn next_key(key: &[u8]) -> Option<Vec<u8>> {
 		debug!("next_key('{}')", encode_hex(key));
-		with_externalities(|ext| ext.next_storage_key(&key.to_vec()))
+		with_externalities(|ext| ext.next_storage_key(key))
 			.expect("`next_key` cannot be called outside of an Externalities-provided environment.")
 	}
 
@@ -974,8 +974,14 @@ mod tests {
 
 		ext.execute_with(|| {
 			assert_eq!(storage::next_key(b"d".to_vec().as_slice()), Some(b"doe".to_vec()));
-			assert_eq!(storage::next_key(b"dog".to_vec().as_slice()), Some(b"dogglesworth".to_vec()));
-			assert_eq!(storage::next_key(b"doga".to_vec().as_slice()), Some(b"dogglesworth".to_vec()));
+			assert_eq!(
+				storage::next_key(b"dog".to_vec().as_slice()),
+				Some(b"dogglesworth".to_vec())
+			);
+			assert_eq!(
+				storage::next_key(b"doga".to_vec().as_slice()),
+				Some(b"dogglesworth".to_vec())
+			);
 			assert_eq!(storage::next_key(b"dogglesworth".to_vec().as_slice()), None);
 			assert_eq!(storage::next_key(b"e".to_vec().as_slice()), None);
 		});
