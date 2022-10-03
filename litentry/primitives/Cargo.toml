@@ -29,7 +29,7 @@ std = [
 	"sp-core/std",
     "sp-std/std",
 	"sp-runtime/std",
-	# "parentchain-primitives/std",
+	"parentchain-primitives/std",
 	"pallet-imp/std",
 ]
 sgx = [
