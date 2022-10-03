@@ -29,7 +29,7 @@ extern crate sgx_tstd as std;
 #[cfg(feature = "sgx")]
 pub use ita_sgx_runtime::{Balance, BlockNumber, Index};
 #[cfg(feature = "std")]
-pub use my_node_runtime::{Balance, BlockNumber, Index};
+pub use parentchain_primitives::{Balance, BlockNumber, Index};
 
 #[cfg(feature = "evm")]
 use sp_core::{H160, U256};
