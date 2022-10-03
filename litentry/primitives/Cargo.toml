@@ -17,8 +17,7 @@ sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkad
 # sgx dependencies
 sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "master", optional = true, features = ["net", "thread"] }
 
-# see the comment in src/lib.rs why it's optional
-my-node-runtime = { package = "litmus-parachain-runtime", git = "https://github.com/litentry/litentry-parachain.git", branch = "tee-dev", default-features = false, optional = true }
+parentchain-primitives = { package = "primitives", git = "https://github.com/litentry/litentry-parachain.git", branch = "tee-dev", default-features = false }
 pallet-imp = { package = "pallet-identity-management", git = "https://github.com/litentry/litentry-parachain.git", branch = "tee-dev", default-features = false }
 
 [features]
@@ -30,7 +29,7 @@ std = [
 	"sp-core/std",
     "sp-std/std",
 	"sp-runtime/std",
-	"my-node-runtime/std",
+	# "parentchain-primitives/std",
 	"pallet-imp/std",
 ]
 sgx = [
