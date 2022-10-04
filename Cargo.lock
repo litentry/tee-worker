@@ -4105,10 +4105,10 @@ dependencies = [
  "its-primitives",
  "its-state",
  "litentry-primitives 0.1.0",
- "litmus-parachain-runtime",
  "log 0.4.17",
  "pallet-balances",
  "parity-scale-codec",
+ "primitives",
  "rlp",
  "sc-keystore",
  "sgx_tstd",
@@ -6301,9 +6301,9 @@ name = "litentry-primitives"
 version = "0.1.0"
 dependencies = [
  "hex 0.4.3",
- "litmus-parachain-runtime",
  "pallet-identity-management 0.1.0 (git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev)",
  "parity-scale-codec",
+ "primitives",
  "scale-info",
  "serde 1.0.145",
  "serde_json 1.0.85",
