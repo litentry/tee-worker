@@ -53,13 +53,13 @@ NODEURL=${NODEURL:-"ws://127.0.0.1"}
 WORKER1PORT=${WORKER1PORT:-2000}
 WORKER1URL=${WORKER1URL:-"wss://127.0.0.1"}
 
-CLIENT=${CLIENT_BIN:-"./../bin/integritee-cli"}
+CLIENT=${CLIENT_BIN:-"../bin/integritee-cli"}
 
 echo "Using node-port ${NPORT}"
 echo "Using trusted-worker-port ${RPORT}"
 echo ""
 
-CLIENT="$CLIENT_BIN -p $NPORT -P $WORKER1PORT -u $NODEURL -U $WORKER1URL"
+CLIENT="$CLIENT -p $NPORT -P $WORKER1PORT -u $NODEURL -U $WORKER1URL"
 echo "CLIENT is $CLIENT"
 
 echo "* Query on-chain enclave registry:"
