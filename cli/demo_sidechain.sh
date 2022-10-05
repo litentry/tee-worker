@@ -62,7 +62,7 @@ WORKER1URL=${WORKER1URL:-"wss://127.0.0.1"}
 WORKER2PORT=${WORKER2PORT:-3000}
 WORKER2URL=${WORKER2URL:-"wss://127.0.0.1"}
 
-CLIENT_BIN=${CLIENT_BIN:-"./bin/integritee-cli"}
+CLIENT_BIN=${CLIENT_BIN:-"./../bin/integritee-cli"}
 
 echo "Using client binary ${CLIENT_BIN}"
 echo "Using node uri ${NODEURL}:${NPORT}"
@@ -101,9 +101,6 @@ echo "* Issue ${INITIALFUNDS} tokens to Alice's incognito account (on worker 1)"
 ${CLIENTWORKER1} trusted --mrenclave ${MRENCLAVE} --direct set-balance ${ICGACCOUNTALICE} ${INITIALFUNDS}
 echo ""
 
-${CLIENTWORKER1} trusted --mrenclave ${MRENCLAVE} --direct set-balance ${ICGACCOUNTBOB} 0
-
-
 echo "Get balance of Alice's incognito account (on worker 1)"
 ${CLIENTWORKER1} trusted --mrenclave ${MRENCLAVE} balance ${ICGACCOUNTALICE}
 echo ""
@@ -113,27 +110,17 @@ echo "* First transfer: Send ${AMOUNTTRANSFER} funds from Alice's incognito acco
 $CLIENTWORKER1 trusted --mrenclave ${MRENCLAVE} --direct transfer ${ICGACCOUNTALICE} ${ICGACCOUNTBOB} ${AMOUNTTRANSFER}
 echo ""
 
-echo "Get balance of Alice's incognito account (on worker 1)"
-${CLIENTWORKER1} trusted --mrenclave ${MRENCLAVE} balance ${ICGACCOUNTALICE}
-echo ""
-
 # Send funds from Alice to Bobs account, on worker 2.
 echo "* Second transfer: Send ${AMOUNTTRANSFER} funds from Alice's incognito account to Bob's incognito account (on worker 2)"
 $CLIENTWORKER2 trusted --mrenclave ${MRENCLAVE} --direct transfer ${ICGACCOUNTALICE} ${ICGACCOUNTBOB} ${AMOUNTTRANSFER}
 echo ""
 
-sleep 3s
+sleep 12s
 
 echo "* Get balance of Alice's incognito account (on worker 1)"
 ALICE_BALANCE=$(${CLIENTWORKER1} trusted --mrenclave ${MRENCLAVE} balance ${ICGACCOUNTALICE} | xargs)
 echo "$ALICE_BALANCE"
 echo ""
-
-echo "* Get balance of Alice's incognito account (on worker 2)"
-ALICE_BALANCE=$(${CLIENTWORKER2} trusted --mrenclave ${MRENCLAVE} balance ${ICGACCOUNTALICE} | xargs)
-echo "$ALICE_BALANCE"
-echo ""
-
 
 echo "* Get balance of Bob's incognito account (on worker 2)"
 BOB_BALANCE=$(${CLIENTWORKER2} trusted --mrenclave ${MRENCLAVE} balance ${ICGACCOUNTBOB} | xargs)
