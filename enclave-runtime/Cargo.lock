@@ -2925,7 +2925,7 @@ dependencies = [
 [[package]]
 name = "pallet-identity-management"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#2a9cbb85270d68bde3b5cf121612d98ac80b498b"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#d621d1daaccfa53fa8eacdef6873b34964285682"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3188,7 +3188,7 @@ dependencies = [
 [[package]]
 name = "primitives"
 version = "0.9.10"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#2a9cbb85270d68bde3b5cf121612d98ac80b498b"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#d621d1daaccfa53fa8eacdef6873b34964285682"
 dependencies = [
  "parity-scale-codec",
  "scale-info",

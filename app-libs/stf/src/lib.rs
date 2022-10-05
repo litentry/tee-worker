@@ -259,19 +259,19 @@ pub enum TrustedCall {
 		Vec<(H160, Vec<H256>)>,
 	),
 	// litentry
-	set_user_shielding_key(AccountId, AccountId, UserShieldingKeyType), // (Root, AccountIncognito, Key)
+	set_user_shielding_key(AccountId, AccountId, UserShieldingKeyType), // (EnclaveSigner, AccountIncognito, Key)
 	link_identity(
 		AccountId,
 		AccountId,
 		Identity,
 		Option<MetadataOf<Runtime>>,
 		ParentchainBlockNumber,
-	), // (Root, Account, identity, metadata, blocknumber)
-	unlink_identity(AccountId, AccountId, Identity),                    // (Root, Account, identity)
+	), // (EnclaveSigner, Account, identity, metadata, blocknumber)
+	unlink_identity(AccountId, AccountId, Identity),                    // (EnclaveSigner, Account, identity)
 	verify_identity_step1(AccountId, AccountId, Identity, ValidationData, ParentchainBlockNumber), //
-	verify_identity_step2(AccountId, AccountId, Identity, ValidationData, ParentchainBlockNumber), // (Root, Account, identity, validation_data, blocknumber)
+	verify_identity_step2(AccountId, AccountId, Identity, ValidationData, ParentchainBlockNumber), // (EnclaveSigner, Account, identity, validation_data, blocknumber)
 	query_credit(AccountId),
-	set_challenge_code(AccountId, AccountId, Identity, u32), // (Root, Account, Code)
+	set_challenge_code(AccountId, AccountId, Identity, u32), // (EnclaveSigner, Account, Code)
 }
 
 impl TrustedCall {
