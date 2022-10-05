@@ -491,7 +491,13 @@ impl Stf {
 						))
 					}
 				},
-				TrustedCall::verify_identity_step2(_enclave_account, who, identity, _validation_data, bn) => {
+				TrustedCall::verify_identity_step2(
+					_enclave_account,
+					who,
+					identity,
+					_validation_data,
+					bn,
+				) => {
 					// TODO: the verification process
 
 					// TrustedCall::verify_identity_step2 call by mrenclave(shielding key account)

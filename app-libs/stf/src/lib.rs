@@ -267,7 +267,7 @@ pub enum TrustedCall {
 		Option<MetadataOf<Runtime>>,
 		ParentchainBlockNumber,
 	), // (EnclaveSigner, Account, identity, metadata, blocknumber)
-	unlink_identity(AccountId, AccountId, Identity),                    // (EnclaveSigner, Account, identity)
+	unlink_identity(AccountId, AccountId, Identity), // (EnclaveSigner, Account, identity)
 	verify_identity_step1(AccountId, AccountId, Identity, ValidationData, ParentchainBlockNumber), //
 	verify_identity_step2(AccountId, AccountId, Identity, ValidationData, ParentchainBlockNumber), // (EnclaveSigner, Account, identity, validation_data, blocknumber)
 	query_credit(AccountId),
