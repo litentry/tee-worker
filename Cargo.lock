@@ -13451,7 +13451,7 @@ dependencies = [
 [[package]]
 name = "sp-std"
 version = "4.0.0"
-source = "git+https://github.com/paritytech/substrate.git?branch=master#87224cf2cdafbacd0acac33c43a1063c02e02147"
+source = "git+https://github.com/paritytech/substrate.git?branch=master#eefba93cf62ff80e1011dbe1cd3a543b711f7bb9"
 
 [[package]]
 name = "sp-std"
