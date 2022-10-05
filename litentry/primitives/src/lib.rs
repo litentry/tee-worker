@@ -18,15 +18,13 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-pub use parentchain_primitives::BlockNumber as ParentchainBlockNumber;
-
 mod ethereum_signature;
 mod identity;
 mod validation_data;
 pub use ethereum_signature::*;
 pub use identity::*;
-pub use pallet_imp::{
-	AesOutput, UserShieldingKeyType, USER_SHIELDING_KEY_LEN, USER_SHIELDING_KEY_NONCE_LEN,
-	USER_SHIELDING_KEY_TAG_LEN,
+pub use parentchain_primitives::{
+	AesOutput, BlockNumber as ParentchainBlockNumber, UserShieldingKeyType, USER_SHIELDING_KEY_LEN,
+	USER_SHIELDING_KEY_NONCE_LEN, USER_SHIELDING_KEY_TAG_LEN,
 };
 pub use validation_data::*;

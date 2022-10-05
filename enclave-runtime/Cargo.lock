@@ -2569,7 +2569,6 @@ dependencies = [
 name = "litentry-primitives"
 version = "0.1.0"
 dependencies = [
- "pallet-identity-management 0.1.0 (git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev)",
  "parity-scale-codec",
  "primitives",
  "scale-info",

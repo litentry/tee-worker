@@ -361,8 +361,8 @@ impl Stf {
 					Ok(())
 				},
 				// litentry
-				TrustedCall::set_user_shielding_key(root, who, key) => {
-					ensure!(is_root(&root), StfError::MissingPrivileges(root));
+				TrustedCall::set_user_shielding_key(enclave_account, who, key) => {
+					ensure_enclave_signer_account(&enclave_account)?;
 					// TODO: we only checked if the extrinsic dispatch is successful,
 					//       is that enough? (i.e. is the state changed already?)
 					match Self::set_user_shielding_key(who.clone(), key) {
@@ -386,8 +386,8 @@ impl Stf {
 					}
 					Ok(())
 				},
-				TrustedCall::link_identity(root, who, identity, metadata, bn) => {
-					ensure!(is_root(&root), StfError::MissingPrivileges(root));
+				TrustedCall::link_identity(enclave_account, who, identity, metadata, bn) => {
+					ensure_enclave_signer_account(&enclave_account)?;
 					debug!(
 						"link_identity, who: {}, identity: {:?}, metadata: {:?}",
 						account_id_to_string(&who),
@@ -425,8 +425,8 @@ impl Stf {
 					}
 					Ok(())
 				},
-				TrustedCall::unlink_identity(root, who, identity) => {
-					ensure!(is_root(&root), StfError::MissingPrivileges(root));
+				TrustedCall::unlink_identity(enclave_account, who, identity) => {
+					ensure_enclave_signer_account(&enclave_account)?;
 					debug!(
 						"link_identity, who: {}, identity: {:?}",
 						account_id_to_string(&who),
@@ -465,13 +465,13 @@ impl Stf {
 					Ok(())
 				},
 				TrustedCall::verify_identity_step1(
-					root,
+					enclave_account,
 					account,
 					identity,
 					validation_data,
 					bn,
 				) => {
-					ensure!(is_root(&root), StfError::MissingPrivileges(root));
+					ensure_enclave_signer_account(&enclave_account)?;
 					// TODO support other validation_data
 					if let ValidationData::Web2(web2) = validation_data {
 						Self::verify_web2_identity_step1(account, identity, web2, bn)
@@ -481,7 +481,13 @@ impl Stf {
 						))
 					}
 				},
-				TrustedCall::verify_identity_step2(_root, who, identity, _validation_data, bn) => {
+				TrustedCall::verify_identity_step2(
+					_enclave_account,
+					who,
+					identity,
+					_validation_data,
+					bn,
+				) => {
 					// TODO: the verification process
 
 					// TrustedCall::verify_identity_step2 call by mrenclave(shielding key account)
@@ -530,8 +536,8 @@ impl Stf {
 					debug!("query_credit({:x?}", account.encode(),);
 					Self::query_credit(account)
 				},
-				TrustedCall::set_challenge_code(root, account, did, challenge_code) => {
-					ensure!(is_root(&root), StfError::MissingPrivileges(root));
+				TrustedCall::set_challenge_code(enclave_account, account, did, challenge_code) => {
+					ensure_enclave_signer_account(&enclave_account)?;
 					Self::set_challenge_code(account, did, challenge_code)
 				},
 			}?;
