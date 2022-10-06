@@ -735,7 +735,7 @@ dependencies = [
  "ita-stf",
  "itc-assertions-verify-daemon",
  "itc-direct-rpc-server",
- "itc-https-client-daemon",
+ "itc-extrinsic-request-daemon",
  "itc-https-request-handler",
  "itc-offchain-worker-executor",
  "itc-parentchain",
@@ -1591,7 +1591,7 @@ dependencies = [
  "hex 0.4.0",
  "ita-sgx-runtime",
  "itc-assertions-verify-daemon",
- "itc-https-client-daemon",
+ "itc-extrinsic-request-daemon",
  "itp-hashing",
  "itp-node-api",
  "itp-node-api-metadata",
@@ -1647,7 +1647,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "itc-https-client-daemon"
+name = "itc-extrinsic-request-daemon"
 version = "0.1.0"
 dependencies = [
  "http",
@@ -1678,7 +1678,7 @@ dependencies = [
  "http",
  "http_req",
  "ita-stf",
- "itc-https-client-daemon",
+ "itc-extrinsic-request-daemon",
  "itc-rest-client",
  "itp-extrinsics-factory",
  "itp-ocall-api",

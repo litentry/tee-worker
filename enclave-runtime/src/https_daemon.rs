@@ -23,7 +23,7 @@ use crate::{
 	},
 	GLOBAL_STATE_HANDLER_COMPONENT,
 };
-use itc_https_client_daemon::{
+use itc_extrinsic_request_daemon::{
 	daemon_sender, Assertion1Request, Assertion2Request, AssertionType, RequestType,
 	SetChallengeCodeRequest, Web2IdentityVerificationRequest, Web3IdentityVerificationRequest,
 };

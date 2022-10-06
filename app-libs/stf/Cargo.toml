@@ -45,7 +45,7 @@ substrate-client-keystore = { optional = true, git = "https://github.com/scs/sub
 # litentry
 litentry-primitives = { path = "../../litentry/primitives", default-features = false }
 parentchain-primitives = { package = "primitives", git = "https://github.com/litentry/litentry-parachain.git", branch = "tee-dev", default-features = false, optional = true }
-itc-https-client-daemon = { path = "../../core/https-client-daemon", default-features = false, features = ["sgx"], optional = true }
+itc-extrinsic-request-daemon = { path = "../../core/extrinsic-request-daemon", default-features = false, features = ["sgx"], optional = true }
 itc-assertions-verify-daemon = { path = "../../core/assertions-verify-daemon", default-features = false, features = ["sgx"], optional = true }
 hex-sgx = { package = "hex", git = "https://github.com/mesalock-linux/rust-hex-sgx", tag = "sgx_1.1.3", features = ["sgx_tstd"] }
 aes-gcm = { git = "https://github.com/RustCrypto/AEADs" }
@@ -67,7 +67,7 @@ sgx = [
     "its-state/sgx",
     "itp-utils/sgx",
     "sp-io/sgx",
-    "itc-https-client-daemon/sgx",
+    "itc-extrinsic-request-daemon/sgx",
     "itc-assertions-verify-daemon/sgx",
     "itp-node-api/sgx",
     "litentry-primitives/sgx",

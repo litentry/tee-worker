@@ -4091,7 +4091,7 @@ dependencies = [
  "hex 0.4.0",
  "ita-sgx-runtime",
  "itc-assertions-verify-daemon",
- "itc-https-client-daemon",
+ "itc-extrinsic-request-daemon",
  "itp-hashing",
  "itp-node-api",
  "itp-node-api-metadata",
@@ -4155,7 +4155,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "itc-https-client-daemon"
+name = "itc-extrinsic-request-daemon"
 version = "0.1.0"
 dependencies = [
  "http 0.2.1",
@@ -4194,7 +4194,7 @@ dependencies = [
  "http_req 0.8.1 (git+https://github.com/integritee-network/http_req?branch=master)",
  "http_req 0.8.1 (git+https://github.com/integritee-network/http_req)",
  "ita-stf",
- "itc-https-client-daemon",
+ "itc-extrinsic-request-daemon",
  "itc-rest-client",
  "itp-extrinsics-factory",
  "itp-ocall-api",

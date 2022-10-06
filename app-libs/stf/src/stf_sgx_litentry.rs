@@ -18,7 +18,7 @@
 extern crate sgx_tstd as std;
 
 use crate::{stf_sgx_primitives::types::*, AccountId, MetadataOf, Runtime, StfError, StfResult};
-use itc_https_client_daemon::RequestType;
+use itc_extrinsic_request_daemon::RequestType;
 use litentry_primitives::{
 	Identity, ParentchainBlockNumber, UserShieldingKeyType, Web2ValidationData,
 };
@@ -27,7 +27,7 @@ use log::*;
 use itc_assertions_verify_daemon::{
 	verify_daemon_sender::SendVerifyRequest, AssertionVerifyRequest,
 };
-use itc_https_client_daemon::daemon_sender::SendHttpsRequest;
+use itc_extrinsic_request_daemon::daemon_sender::SendHttpsRequest;
 use itp_utils::stringify::account_id_to_string;
 use std::format;
 use support::traits::UnfilteredDispatchable;
@@ -126,8 +126,8 @@ impl Stf {
 		// info!("query_credit({:x?})", account_id.encode(),);
 		// let tweet_id: Vec<u8> = "1569510747084050432".as_bytes().to_vec();
 		// // let request_str = format!("{}", "https://httpbin.org/anything");
-		// let request = itc_https_client_daemon::Request { tweet_id };
-		// let sender = itc_https_client_daemon::daemon_sender::HttpRequestSender::new();
+		// let request = itc_extrinsic_request_daemon::Request { tweet_id };
+		// let sender = itc_extrinsic_request_daemon::daemon_sender::HttpRequestSender::new();
 		// let result = sender.send_https_request(request);
 		// info!("send https request, get result as {:?}", result);
 
@@ -157,12 +157,12 @@ impl Stf {
 		// .map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
 		// Ok(())
 
-		let request = itc_https_client_daemon::SetChallengeCodeRequest {
+		let request = itc_extrinsic_request_daemon::SetChallengeCodeRequest {
 			target: account,
 			identity,
 			challenge_code,
 		};
-		let http_sender = itc_https_client_daemon::daemon_sender::HttpRequestSender::new();
+		let http_sender = itc_extrinsic_request_daemon::daemon_sender::HttpRequestSender::new();
 		http_sender
 			.send_https_request(RequestType::SetChallengeCode(request))
 			.map_err(|e| StfError::Dispatch(format!("send SetChallengeCodeRequest error:{:?}", e)))
@@ -195,35 +195,35 @@ impl Stf {
 
 		//TODO change error type
 		code.ok_or_else(|| StfError::Dispatch(format!("code not found")))?;
-		let request = itc_https_client_daemon::Web2IdentityVerificationRequest {
+		let request = itc_extrinsic_request_daemon::Web2IdentityVerificationRequest {
 			target,
 			identity,
 			challenge_code: code.unwrap(),
 			validation_data,
 			bn,
 		};
-		let http_sender = itc_https_client_daemon::daemon_sender::HttpRequestSender::new();
+		let http_sender = itc_extrinsic_request_daemon::daemon_sender::HttpRequestSender::new();
 		http_sender
 			.send_https_request(RequestType::Web2IdentityVerification(request))
 			.map_err(|e| StfError::Dispatch(format!("send https error:{:?}", e)))
 	}
 
 	pub fn verify_assertion1(target: AccountId) -> StfResult<()> {
-		let request = itc_https_client_daemon::Assertion1Request { target };
-		let http_sender = itc_https_client_daemon::daemon_sender::HttpRequestSender::new();
+		let request = itc_extrinsic_request_daemon::Assertion1Request { target };
+		let http_sender = itc_extrinsic_request_daemon::daemon_sender::HttpRequestSender::new();
 		http_sender
 			.send_https_request(RequestType::Assertion(
-				itc_https_client_daemon::AssertionType::AssertionType1(request),
+				itc_extrinsic_request_daemon::AssertionType::AssertionType1(request),
 			))
 			.map_err(|e| StfError::Dispatch(format!("send verify_assertion1 error:{:?}", e)))
 	}
 
 	pub fn verify_assertion2(target: AccountId, identity: Identity) -> StfResult<()> {
-		let request = itc_https_client_daemon::Assertion2Request { target, identity };
-		let http_sender = itc_https_client_daemon::daemon_sender::HttpRequestSender::new();
+		let request = itc_extrinsic_request_daemon::Assertion2Request { target, identity };
+		let http_sender = itc_extrinsic_request_daemon::daemon_sender::HttpRequestSender::new();
 		http_sender
 			.send_https_request(RequestType::Assertion(
-				itc_https_client_daemon::AssertionType::AssertionType2(request),
+				itc_extrinsic_request_daemon::AssertionType::AssertionType2(request),
 			))
 			.map_err(|e| StfError::Dispatch(format!("send verify_assertion2 error:{:?}", e)))
 	}
