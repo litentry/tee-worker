@@ -23,11 +23,15 @@ use crate::{
 	},
 	GLOBAL_STATE_HANDLER_COMPONENT,
 };
-use itc_https_client_daemon::{daemon_sender, RequestType, Web2IdentityVerificationRequest};
+use itc_https_client_daemon::{
+	daemon_sender, Assertion1Request, Assertion2Request, AssertionType, RequestType,
+	SetChallengeCodeRequest, Web2IdentityVerificationRequest, Web3IdentityVerificationRequest,
+};
 use log::*;
 use sgx_types::sgx_status_t;
 use std::{string::ToString, sync::Arc};
 
+use ita_sgx_runtime::Runtime;
 use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, LightClientState};
 
 use crate::global_components::{
@@ -35,28 +39,28 @@ use crate::global_components::{
 	GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 };
 
+use frame_support::dispatch::UnfilteredDispatchable;
 use ita_stf::{Hash, State as StfState};
 use itc_https_request_handler::{
 	web2_identity::{discord, twitter},
 	RequestContext, RequestHandler,
 };
 use itp_component_container::ComponentGetter;
-use itp_extrinsics_factory::ExtrinsicsFactory;
+use itp_extrinsics_factory::{CreateExtrinsics, ExtrinsicsFactory};
 use itp_nonce_cache::GLOBAL_NONCE_CACHE;
+use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_sgx_crypto::{Ed25519Seal, Rsa3072Seal, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::{SgxExternalities, SgxExternalitiesTrait};
 use itp_sgx_io::StaticSealedIO;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::ShardIdentifier;
+use itp_types::{OpaqueCall, ShardIdentifier};
 use litentry_primitives::Web2ValidationData;
-
-const HTTPS_ADDRESS: &str = "https://api.coingecko.com";
 
 #[no_mangle]
 pub unsafe extern "C" fn run_https_client_daemon() -> sgx_status_t {
-	if let Err(e) = run_https_client_daemon_internal(HTTPS_ADDRESS) {
+	if let Err(e) = run_https_client_daemon_internal() {
 		error!("Error while running https client daemon: {:?}", e);
 		return e.into()
 	}
@@ -68,7 +72,7 @@ pub unsafe extern "C" fn run_https_client_daemon() -> sgx_status_t {
 ///
 /// Runs an https client inside the enclave, opening a channel and waiting for
 /// senders to send requests.
-fn run_https_client_daemon_internal(_url: &str) -> Result<()> {
+fn run_https_client_daemon_internal() -> Result<()> {
 	let receiver = daemon_sender::init_https_daemon_sender_storage()?;
 
 	let validator_access = GLOBAL_PARENTCHAIN_BLOCK_VALIDATOR_ACCESS_COMPONENT.get()?;
@@ -84,7 +88,7 @@ fn run_https_client_daemon_internal(_url: &str) -> Result<()> {
 	let authority = Ed25519Seal::unseal_from_static_file()?;
 	let node_metadata_repository = GLOBAL_NODE_METADATA_REPOSITORY_COMPONENT.get()?;
 
-	let _extrinsics_factory = ExtrinsicsFactory::new(
+	let extrinsics_factory = ExtrinsicsFactory::new(
 		genesis_hash,
 		authority,
 		GLOBAL_NONCE_CACHE.clone(),
@@ -132,12 +136,20 @@ fn run_https_client_daemon_internal(_url: &str) -> Result<()> {
 					error!("Could not retrieve data from https server due to: {:?}", e);
 				}
 			},
-			RequestType::RuleSet => {
-				//TODO
-				error!("ruleset don't support yet");
-			},
-			RequestType::Web3IndentityVerification => {
+			RequestType::Web3IndentityVerification(ref _request) => {
 				error!("web3 don't support yet");
+			},
+			RequestType::Assertion(AssertionType::AssertionType1(ref request)) => {
+				verify_assertion1(&request, &extrinsics_factory);
+			},
+			RequestType::Assertion(AssertionType::AssertionType2(ref request)) => {
+				verify_assertion2(&request, &extrinsics_factory);
+			},
+			RequestType::SetChallengeCode(ref request) => {
+				set_challenge_code(&request);
+			},
+			_ => {
+				error!("request_type not matched.");
 			},
 		}
 	}
@@ -171,4 +183,58 @@ fn web2_identity_verification<
 			handler.send_request(request_context)
 		},
 	}
+}
+
+fn feedback_via_ocall<F: CreateExtrinsics>(
+	module_id: u8,
+	method_id: u8,
+	extrinsics_factory: &F,
+) -> Result<()> {
+	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
+
+	let call = OpaqueCall::from_tuple(&([module_id, method_id],));
+	let calls = std::vec![call];
+	let tx = extrinsics_factory.create_extrinsics(calls.as_slice(), None)?;
+
+	let result = ocall_api.send_to_parentchain(tx)?;
+	debug!("https daemon send tx result as ( {:?},)", result);
+
+	Ok(())
+}
+
+fn verify_assertion1<F: CreateExtrinsics>(request: &Assertion1Request, extrinsics_factory: &F) {
+	let v_did_context =
+	ita_sgx_runtime::pallet_identity_management::Pallet::<Runtime>::get_identity_and_identity_context(&request.target);
+
+	let mut web2_cnt = 0;
+	let mut web3_cnt = 0;
+
+	for did_ctx in &v_did_context {
+		if did_ctx.1.is_verified {
+			if did_ctx.0.is_web2() {
+				web2_cnt += 1;
+			} else if did_ctx.0.is_web3() {
+				web3_cnt += 1;
+			}
+		}
+	}
+
+	if web2_cnt > 0 && web3_cnt > 0 {
+		// TODO: align with Parachain pallet module_id and method_id
+		let module_id = 64u8;
+		let method_id = 0u8;
+		let _err = feedback_via_ocall(module_id, method_id, extrinsics_factory);
+	}
+}
+
+fn verify_assertion2<F: CreateExtrinsics>(request: &Assertion2Request, extrinsics_factory: &F) {
+	// TODO
+}
+
+fn set_challenge_code(request: &SetChallengeCodeRequest) {
+	ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_challenge_code {
+		who: request.target.clone(),
+		identity: request.identity.clone(),
+		code: request.challenge_code.clone(),
+	};
 }
