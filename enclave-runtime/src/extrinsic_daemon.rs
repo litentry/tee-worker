@@ -59,8 +59,8 @@ use itp_types::{OpaqueCall, ShardIdentifier};
 use litentry_primitives::Web2ValidationData;
 
 #[no_mangle]
-pub unsafe extern "C" fn run_https_client_daemon() -> sgx_status_t {
-	if let Err(e) = run_https_client_daemon_internal() {
+pub unsafe extern "C" fn run_extrinsic_request_daemon() -> sgx_status_t {
+	if let Err(e) = run_extrinsic_request_daemon_internal() {
 		error!("Error while running https client daemon: {:?}", e);
 		return e.into()
 	}
@@ -68,11 +68,11 @@ pub unsafe extern "C" fn run_https_client_daemon() -> sgx_status_t {
 	sgx_status_t::SGX_SUCCESS
 }
 
-/// Internal [`run_https_client_daemon`] function to be able to use the `?` operator.
+/// Internal [`run_extrinsic_request_daemon`] function to be able to use the `?` operator.
 ///
 /// Runs an https client inside the enclave, opening a channel and waiting for
 /// senders to send requests.
-fn run_https_client_daemon_internal() -> Result<()> {
+fn run_extrinsic_request_daemon_internal() -> Result<()> {
 	let receiver = daemon_sender::init_https_daemon_sender_storage()?;
 
 	let validator_access = GLOBAL_PARENTCHAIN_BLOCK_VALIDATOR_ACCESS_COMPONENT.get()?;

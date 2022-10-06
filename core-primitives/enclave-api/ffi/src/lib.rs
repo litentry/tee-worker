@@ -156,7 +156,7 @@ extern "C" {
 		skip_ra: c_int,
 	) -> sgx_status_t;
 
-	pub fn run_https_client_daemon(
+	pub fn run_extrinsic_request_daemon(
 		eid: sgx_enclave_id_t,
 		retval: *mut sgx_status_t,
 	) -> sgx_status_t;

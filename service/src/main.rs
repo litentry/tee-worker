@@ -51,7 +51,7 @@ use itp_enclave_api::{
 	assertions_verify_daemon::AssertionVerifyDaemon,
 	direct_request::DirectRequest,
 	enclave_base::EnclaveBase,
-	https_client_daemon::HttpsClientDaemon,
+	extrinsic_request_daemon::HttpsClientDaemon,
 	remote_attestation::{RemoteAttestation, TlsRemoteAttestation},
 	sidechain::Sidechain,
 	teeracle_api::TeeracleApi,
@@ -458,7 +458,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	// Start https client daemon
 	let enclave_api_https_client = enclave.clone();
 	thread::spawn(move || {
-		enclave_api_https_client.run_https_client_daemon().unwrap();
+		enclave_api_https_client.run_extrinsic_request_daemon().unwrap();
 	});
 
 	// ------------------------------------------------------------------------
