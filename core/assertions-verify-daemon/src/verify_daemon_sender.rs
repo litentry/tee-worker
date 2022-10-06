@@ -63,13 +63,13 @@ impl SendVerifyRequest for VerifyRequestSender {
 		// Acquire lock on https sender
 		let mutex_guard = GLOBAL_VERIFY_DAEMON.lock().map_err(|_| Error::MutexAccess)?;
 
-		let daemon_sender = mutex_guard.clone().ok_or(Error::ComponentNotInitialized)?;
+		let xt_daemon_sender = mutex_guard.clone().ok_or(Error::ComponentNotInitialized)?;
 
 		// Release mutex lock, so we don't block the lock longer than necessary.
 		drop(mutex_guard);
 
 		// Send the request to the receiver loop.
-		daemon_sender.send(request)
+		xt_daemon_sender.send(request)
 	}
 }
 

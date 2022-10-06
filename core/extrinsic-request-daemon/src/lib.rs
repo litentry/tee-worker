@@ -32,8 +32,8 @@ pub mod sgx_reexport_prelude {
 }
 
 use itp_types::AccountId;
-pub mod daemon_sender;
 pub mod error;
+pub mod xt_daemon_sender;
 // pub mod https_client;
 pub use error::Result;
 

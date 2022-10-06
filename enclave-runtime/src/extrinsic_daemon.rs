@@ -24,7 +24,7 @@ use crate::{
 	GLOBAL_STATE_HANDLER_COMPONENT,
 };
 use itc_extrinsic_request_daemon::{
-	daemon_sender, Assertion1Request, Assertion2Request, AssertionType, RequestType,
+	xt_daemon_sender, Assertion1Request, Assertion2Request, AssertionType, RequestType,
 	SetChallengeCodeRequest, Web2IdentityVerificationRequest, Web3IdentityVerificationRequest,
 };
 use log::*;
@@ -61,7 +61,7 @@ use litentry_primitives::Web2ValidationData;
 #[no_mangle]
 pub unsafe extern "C" fn run_extrinsic_request_daemon() -> sgx_status_t {
 	if let Err(e) = run_extrinsic_request_daemon_internal() {
-		error!("Error while running https client daemon: {:?}", e);
+		error!("Error while running extrinsic request daemon: {:?}", e);
 		return e.into()
 	}
 
@@ -70,10 +70,10 @@ pub unsafe extern "C" fn run_extrinsic_request_daemon() -> sgx_status_t {
 
 /// Internal [`run_extrinsic_request_daemon`] function to be able to use the `?` operator.
 ///
-/// Runs an https client inside the enclave, opening a channel and waiting for
+/// Runs an extrinsic request inside the enclave, opening a channel and waiting for
 /// senders to send requests.
 fn run_extrinsic_request_daemon_internal() -> Result<()> {
-	let receiver = daemon_sender::init_https_daemon_sender_storage()?;
+	let receiver = xt_daemon_sender::init_xt_daemon_sender_storage()?;
 
 	let validator_access = GLOBAL_PARENTCHAIN_BLOCK_VALIDATOR_ACCESS_COMPONENT.get()?;
 
@@ -197,7 +197,7 @@ fn feedback_via_ocall<F: CreateExtrinsics>(
 	let tx = extrinsics_factory.create_extrinsics(calls.as_slice(), None)?;
 
 	let result = ocall_api.send_to_parentchain(tx)?;
-	debug!("https daemon send tx result as ( {:?},)", result);
+	debug!("extrinsic daemon send tx result as ( {:?},)", result);
 
 	Ok(())
 }

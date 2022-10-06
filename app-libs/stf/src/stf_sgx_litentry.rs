@@ -27,7 +27,7 @@ use log::*;
 use itc_assertions_verify_daemon::{
 	verify_daemon_sender::SendVerifyRequest, AssertionVerifyRequest,
 };
-use itc_extrinsic_request_daemon::daemon_sender::SendHttpsRequest;
+use itc_extrinsic_request_daemon::xt_daemon_sender::SendXTRequest;
 use itp_utils::stringify::account_id_to_string;
 use std::format;
 use support::traits::UnfilteredDispatchable;
@@ -127,8 +127,8 @@ impl Stf {
 		// let tweet_id: Vec<u8> = "1569510747084050432".as_bytes().to_vec();
 		// // let request_str = format!("{}", "https://httpbin.org/anything");
 		// let request = itc_extrinsic_request_daemon::Request { tweet_id };
-		// let sender = itc_extrinsic_request_daemon::daemon_sender::HttpRequestSender::new();
-		// let result = sender.send_https_request(request);
+		// let sender = itc_extrinsic_request_daemon::xt_daemon_sender::XTRequestSender::new();
+		// let result = sender.send_xt_request(request);
 		// info!("send https request, get result as {:?}", result);
 
 		info!("verify daemon send request");
@@ -162,9 +162,9 @@ impl Stf {
 			identity,
 			challenge_code,
 		};
-		let http_sender = itc_extrinsic_request_daemon::daemon_sender::HttpRequestSender::new();
+		let http_sender = itc_extrinsic_request_daemon::xt_daemon_sender::XTRequestSender::new();
 		http_sender
-			.send_https_request(RequestType::SetChallengeCode(request))
+			.send_xt_request(RequestType::SetChallengeCode(request))
 			.map_err(|e| StfError::Dispatch(format!("send SetChallengeCodeRequest error:{:?}", e)))
 	}
 
@@ -202,17 +202,17 @@ impl Stf {
 			validation_data,
 			bn,
 		};
-		let http_sender = itc_extrinsic_request_daemon::daemon_sender::HttpRequestSender::new();
+		let http_sender = itc_extrinsic_request_daemon::xt_daemon_sender::XTRequestSender::new();
 		http_sender
-			.send_https_request(RequestType::Web2IdentityVerification(request))
+			.send_xt_request(RequestType::Web2IdentityVerification(request))
 			.map_err(|e| StfError::Dispatch(format!("send https error:{:?}", e)))
 	}
 
 	pub fn verify_assertion1(target: AccountId) -> StfResult<()> {
 		let request = itc_extrinsic_request_daemon::Assertion1Request { target };
-		let http_sender = itc_extrinsic_request_daemon::daemon_sender::HttpRequestSender::new();
+		let http_sender = itc_extrinsic_request_daemon::xt_daemon_sender::XTRequestSender::new();
 		http_sender
-			.send_https_request(RequestType::Assertion(
+			.send_xt_request(RequestType::Assertion(
 				itc_extrinsic_request_daemon::AssertionType::AssertionType1(request),
 			))
 			.map_err(|e| StfError::Dispatch(format!("send verify_assertion1 error:{:?}", e)))
@@ -220,9 +220,9 @@ impl Stf {
 
 	pub fn verify_assertion2(target: AccountId, identity: Identity) -> StfResult<()> {
 		let request = itc_extrinsic_request_daemon::Assertion2Request { target, identity };
-		let http_sender = itc_extrinsic_request_daemon::daemon_sender::HttpRequestSender::new();
+		let http_sender = itc_extrinsic_request_daemon::xt_daemon_sender::XTRequestSender::new();
 		http_sender
-			.send_https_request(RequestType::Assertion(
+			.send_xt_request(RequestType::Assertion(
 				itc_extrinsic_request_daemon::AssertionType::AssertionType2(request),
 			))
 			.map_err(|e| StfError::Dispatch(format!("send verify_assertion2 error:{:?}", e)))
