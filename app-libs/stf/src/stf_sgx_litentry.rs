@@ -18,17 +18,12 @@
 extern crate sgx_tstd as std;
 
 use crate::{stf_sgx_primitives::types::*, AccountId, MetadataOf, Runtime, StfError, StfResult};
-use itc_extrinsic_request_daemon::RequestType;
+use itc_extrinsic_request_daemon::{xt_daemon_sender::SendXTRequest, RequestType};
+use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{
 	Identity, ParentchainBlockNumber, UserShieldingKeyType, Web2ValidationData,
 };
 use log::*;
-
-use itc_assertions_verify_daemon::{
-	verify_daemon_sender::SendVerifyRequest, AssertionVerifyRequest,
-};
-use itc_extrinsic_request_daemon::xt_daemon_sender::SendXTRequest;
-use itp_utils::stringify::account_id_to_string;
 use std::format;
 use support::traits::UnfilteredDispatchable;
 
@@ -130,15 +125,6 @@ impl Stf {
 		// let sender = itc_extrinsic_request_daemon::xt_daemon_sender::XTRequestSender::new();
 		// let result = sender.send_xt_request(request);
 		// info!("send https request, get result as {:?}", result);
-
-		info!("verify daemon send request");
-		let request = itc_assertions_verify_daemon::AssertionVerifyRequest {
-			who: _account_id,
-			assertion_idx: itc_assertions_verify_daemon::AssertionIndex::Assertion1,
-		};
-		let sender = itc_assertions_verify_daemon::verify_daemon_sender::VerifyRequestSender::new();
-		let result = sender.send_verify_request(request);
-		info!("send verify request, get result as {:?}", result);
 
 		Ok(())
 	}

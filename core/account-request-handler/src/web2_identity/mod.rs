@@ -30,7 +30,7 @@ use codec::{Decode, Encode};
 // use core::{borrow::BorrowMut, fmt::Debug, ops::Deref};
 use core::fmt::Debug;
 use futures::executor;
-use ita_stf::{Hash, ShardIdentifier, TrustedCall, TrustedOperation, State as StfState};
+use ita_stf::{Hash, ShardIdentifier, State as StfState, TrustedCall, TrustedOperation};
 use itc_extrinsic_request_daemon::Web2IdentityVerificationRequest;
 use itc_rest_client::{
 	http_client::{DefaultSend, HttpClient},
@@ -47,7 +47,7 @@ use litentry_primitives::{
 };
 use serde::de::DeserializeOwned;
 use sp_core::ByteArray;
-use std::{ marker::PhantomData, sync::Arc };
+use std::{marker::PhantomData, sync::Arc};
 
 pub mod discord;
 pub mod twitter;

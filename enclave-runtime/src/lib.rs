@@ -67,7 +67,6 @@ use sp_core::crypto::Pair;
 use std::{boxed::Box, slice, vec::Vec};
 use substrate_api_client::{compose_extrinsic_offline, ExtrinsicParams};
 
-mod assertions_daemon;
 mod attestation;
 mod empty_impls;
 mod extrinsic_daemon;

@@ -48,7 +48,6 @@ use enclave::{
 };
 use itc_parentchain_light_client::light_client_init_params::LightClientInitParams;
 use itp_enclave_api::{
-	assertions_verify_daemon::AssertionVerifyDaemon,
 	direct_request::DirectRequest,
 	enclave_base::EnclaveBase,
 	extrinsic_request_daemon::HttpsClientDaemon,
@@ -286,7 +285,6 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		+ TeerexApi
 		+ TeeracleApi
 		+ HttpsClientDaemon
-		+ AssertionVerifyDaemon
 		+ Clone,
 	D: BlockPruner + FetchBlocks<SignedSidechainBlock> + Sync + Send + 'static,
 	InitializationHandler: TrackInitialization + IsInitialized + Sync + Send + 'static,
@@ -459,13 +457,6 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	let enclave_api_https_client = enclave.clone();
 	thread::spawn(move || {
 		enclave_api_https_client.run_extrinsic_request_daemon().unwrap();
-	});
-
-	// ------------------------------------------------------------------------
-	// Start assertions verification daemon
-	let enclave_api_assertions_client = enclave.clone();
-	thread::spawn(move || {
-		enclave_api_assertions_client.run_assertions_verify_daemon().unwrap();
 	});
 
 	// ------------------------------------------------------------------------
