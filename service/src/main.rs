@@ -50,7 +50,7 @@ use itc_parentchain_light_client::light_client_init_params::LightClientInitParam
 use itp_enclave_api::{
 	direct_request::DirectRequest,
 	enclave_base::EnclaveBase,
-	extrinsic_request_daemon::HttpsClientDaemon,
+	extrinsic_request_daemon::XTRequestDaemon,
 	remote_attestation::{RemoteAttestation, TlsRemoteAttestation},
 	sidechain::Sidechain,
 	teeracle_api::TeeracleApi,
@@ -284,7 +284,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		+ TlsRemoteAttestation
 		+ TeerexApi
 		+ TeeracleApi
-		+ HttpsClientDaemon
+		+ XTRequestDaemon
 		+ Clone,
 	D: BlockPruner + FetchBlocks<SignedSidechainBlock> + Sync + Send + 'static,
 	InitializationHandler: TrackInitialization + IsInitialized + Sync + Send + 'static,
