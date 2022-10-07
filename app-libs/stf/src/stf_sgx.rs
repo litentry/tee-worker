@@ -465,13 +465,13 @@ impl Stf {
 					Ok(())
 				},
 				TrustedCall::verify_identity_step1(
-					enclave_account,
+					root,
 					account,
 					identity,
 					validation_data,
 					bn,
 				) => {
-					ensure_enclave_signer_account(&enclave_account)?;
+					ensure!(is_root(&root), StfError::MissingPrivileges(root));
 					// TODO support other validation_data
 					if let ValidationData::Web2(Web2ValidationData::Twitter(
 						TwitterValidationData { ref tweet_id },
@@ -546,8 +546,8 @@ impl Stf {
 					debug!("query_credit({:x?}", account.encode(),);
 					Self::query_credit(account)
 				},
-				TrustedCall::set_challenge_code(enclave_account, account, did, challenge_code) => {
-					ensure_enclave_signer_account(&enclave_account)?;
+				TrustedCall::set_challenge_code(root, account, did, challenge_code) => {
+					ensure!(is_root(&root), StfError::MissingPrivileges(root));
 					Self::set_challenge_code(account, did, challenge_code)
 				},
 			}?;
