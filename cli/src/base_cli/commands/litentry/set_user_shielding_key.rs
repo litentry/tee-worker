@@ -16,7 +16,7 @@
 
 use super::IMP;
 use crate::{
-	command_utils::{get_accountid_from_str, get_chain_api, *},
+	command_utils::{get_chain_api, *},
 	Cli,
 };
 use base58::FromBase58;
@@ -24,7 +24,7 @@ use codec::{Decode, Encode};
 use ita_stf::ShardIdentifier;
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use log::*;
-use my_node_runtime::Balance;
+
 use sp_core::sr25519 as sr25519_core;
 use substrate_api_client::{compose_extrinsic, UncheckedExtrinsicV4, XtStatus};
 
