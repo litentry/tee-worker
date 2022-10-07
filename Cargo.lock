@@ -4121,6 +4121,44 @@ dependencies = [
 ]
 
 [[package]]
+name = "itc-account-request-handler"
+version = "0.1.0"
+dependencies = [
+ "futures 0.3.24",
+ "futures 0.3.8",
+ "hex 0.4.0",
+ "hex 0.4.3",
+ "http 0.2.1",
+ "http 0.2.8",
+ "http_req 0.8.1 (git+https://github.com/integritee-network/http_req?branch=master)",
+ "http_req 0.8.1 (git+https://github.com/integritee-network/http_req)",
+ "ita-stf",
+ "itc-extrinsic-request-daemon",
+ "itc-rest-client",
+ "itp-extrinsics-factory",
+ "itp-ocall-api",
+ "itp-sgx-crypto",
+ "itp-sgx-externalities",
+ "itp-stf-executor",
+ "itp-storage",
+ "itp-top-pool-author",
+ "itp-types",
+ "itp-utils",
+ "lazy_static",
+ "litentry-primitives 0.1.0",
+ "log 0.4.17",
+ "parity-scale-codec",
+ "serde 1.0.145",
+ "serde_json 1.0.85",
+ "sgx_tstd",
+ "sp-core",
+ "thiserror 1.0.37",
+ "thiserror 1.0.9",
+ "url 2.1.1",
+ "url 2.3.1",
+]
+
+[[package]]
 name = "itc-assertions-verify-daemon"
 version = "0.1.0"
 dependencies = [
@@ -4175,44 +4213,6 @@ dependencies = [
  "serde 1.0.145",
  "serde_json 1.0.85",
  "sgx_tstd",
- "thiserror 1.0.37",
- "thiserror 1.0.9",
- "url 2.1.1",
- "url 2.3.1",
-]
-
-[[package]]
-name = "itc-https-request-handler"
-version = "0.1.0"
-dependencies = [
- "futures 0.3.24",
- "futures 0.3.8",
- "hex 0.4.0",
- "hex 0.4.3",
- "http 0.2.1",
- "http 0.2.8",
- "http_req 0.8.1 (git+https://github.com/integritee-network/http_req?branch=master)",
- "http_req 0.8.1 (git+https://github.com/integritee-network/http_req)",
- "ita-stf",
- "itc-extrinsic-request-daemon",
- "itc-rest-client",
- "itp-extrinsics-factory",
- "itp-ocall-api",
- "itp-sgx-crypto",
- "itp-sgx-externalities",
- "itp-stf-executor",
- "itp-storage",
- "itp-top-pool-author",
- "itp-types",
- "itp-utils",
- "lazy_static",
- "litentry-primitives 0.1.0",
- "log 0.4.17",
- "parity-scale-codec",
- "serde 1.0.145",
- "serde_json 1.0.85",
- "sgx_tstd",
- "sp-core",
  "thiserror 1.0.37",
  "thiserror 1.0.9",
  "url 2.1.1",

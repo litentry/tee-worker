@@ -27,7 +27,8 @@ use crate::{
 	RequestContext, RequestHandler, String, ToString, UserInfo, Vec,
 };
 use codec::{Decode, Encode};
-use core::{borrow::BorrowMut, fmt::Debug, ops::Deref};
+// use core::{borrow::BorrowMut, fmt::Debug, ops::Deref};
+use core::fmt::Debug;
 use futures::executor;
 use ita_stf::{Hash, ShardIdentifier, TrustedCall, TrustedOperation};
 use itc_extrinsic_request_daemon::Web2IdentityVerificationRequest;

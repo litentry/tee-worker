@@ -41,7 +41,7 @@ use crate::global_components::{
 
 use frame_support::dispatch::UnfilteredDispatchable;
 use ita_stf::{Hash, State as StfState};
-use itc_https_request_handler::{
+use itc_account_request_handler::{
 	web2_identity::{discord, twitter},
 	RequestContext, RequestHandler,
 };
@@ -162,10 +162,10 @@ fn web2_identity_verification<
 >(
 	request_context: &RequestContext<K, A, S>,
 	request: Web2IdentityVerificationRequest,
-) -> core::result::Result<(), itc_https_request_handler::Error> {
+) -> core::result::Result<(), itc_account_request_handler::Error> {
 	match &request.validation_data {
 		Web2ValidationData::Twitter(_) => {
-			let handler = itc_https_request_handler::web2_identity::Web2IdentityVerification::<
+			let handler = itc_account_request_handler::web2_identity::Web2IdentityVerification::<
 				twitter::TwitterResponse,
 			> {
 				verification_request: request,
@@ -174,7 +174,7 @@ fn web2_identity_verification<
 			handler.send_request(request_context)
 		},
 		Web2ValidationData::Discord(_) => {
-			let handler = itc_https_request_handler::web2_identity::Web2IdentityVerification::<
+			let handler = itc_account_request_handler::web2_identity::Web2IdentityVerification::<
 				discord::DiscordResponse,
 			> {
 				verification_request: request,

@@ -1,5 +1,5 @@
 [package]
-name = "itc-https-request-handler"
+name = "itc-account-request-handler"
 version = "0.1.0"
 authors = ["Litentry Dev"]
 edition = "2021"

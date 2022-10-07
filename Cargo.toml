@@ -7,7 +7,7 @@ members = [
     "cli",
     "core/assertions-verify-daemon",
     "core/direct-rpc-server",
-	"core/https-request-handler",
+	"core/account-request-handler",
     "core/offchain-worker-executor",
     "core/parentchain/block-import-dispatcher",
     "core/parentchain/block-importer",
