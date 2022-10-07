@@ -62,7 +62,7 @@ WORKER1URL=${WORKER1URL:-"wss://127.0.0.1"}
 WORKER2PORT=${WORKER2PORT:-3000}
 WORKER2URL=${WORKER2URL:-"wss://127.0.0.1"}
 
-CLIENT_BIN=${CLIENT_BIN:-"./bin/integritee-cli"}
+CLIENT_BIN=${CLIENT_BIN:-"./../bin/integritee-cli"}
 
 echo "Using client binary ${CLIENT_BIN}"
 echo "Using node uri ${NODEURL}:${NPORT}"
