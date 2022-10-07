@@ -25,7 +25,7 @@ use crate::{
 };
 use itc_extrinsic_request_daemon::{
 	xt_daemon_sender, Assertion1Request, Assertion2Request, AssertionType, RequestType,
-	SetChallengeCodeRequest, Web2IdentityVerificationRequest, Web3IdentityVerificationRequest,
+	SetChallengeCodeRequest, Web2IdentityVerificationRequest,
 };
 use log::*;
 use sgx_types::sgx_status_t;
@@ -39,7 +39,6 @@ use crate::global_components::{
 	GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 };
 
-use frame_support::dispatch::UnfilteredDispatchable;
 use ita_stf::{Hash, State as StfState};
 use itc_account_request_handler::{
 	web2_identity::{discord, twitter},
@@ -50,7 +49,6 @@ use itp_extrinsics_factory::{CreateExtrinsics, ExtrinsicsFactory};
 use itp_nonce_cache::GLOBAL_NONCE_CACHE;
 use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_sgx_crypto::{Ed25519Seal, Rsa3072Seal, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
-use itp_sgx_externalities::{SgxExternalities, SgxExternalitiesTrait};
 use itp_sgx_io::StaticSealedIO;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
@@ -107,9 +105,8 @@ fn run_extrinsic_request_daemon_internal() -> Result<()> {
 		Err(Error::Stf("Could not retrieve shard".to_string()))
 	}?;
 
-	let stf_state: StfState = state_handler
-		.load(&default_shard_identifier)
-		.map_err(|e| Error::StfStateHandler(e))?;
+	let stf_state: StfState =
+		state_handler.load(&default_shard_identifier).map_err(Error::StfStateHandler)?;
 	let stf_state = Arc::new(stf_state);
 
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
@@ -140,16 +137,13 @@ fn run_extrinsic_request_daemon_internal() -> Result<()> {
 				error!("web3 don't support yet");
 			},
 			RequestType::Assertion(AssertionType::AssertionType1(ref request)) => {
-				verify_assertion1(&request, &extrinsics_factory);
+				verify_assertion1(request, &extrinsics_factory);
 			},
 			RequestType::Assertion(AssertionType::AssertionType2(ref request)) => {
-				verify_assertion2(&request, &extrinsics_factory);
+				verify_assertion2(request, &extrinsics_factory);
 			},
 			RequestType::SetChallengeCode(ref request) => {
-				set_challenge_code(&request);
-			},
-			_ => {
-				error!("request_type not matched.");
+				set_challenge_code(request);
 			},
 		}
 	}
@@ -227,14 +221,10 @@ fn verify_assertion1<F: CreateExtrinsics>(request: &Assertion1Request, extrinsic
 	}
 }
 
-fn verify_assertion2<F: CreateExtrinsics>(request: &Assertion2Request, extrinsics_factory: &F) {
+fn verify_assertion2<F: CreateExtrinsics>(_request: &Assertion2Request, _extrinsics_factory: &F) {
 	// TODO
 }
 
-fn set_challenge_code(request: &SetChallengeCodeRequest) {
-	ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_challenge_code {
-		who: request.target.clone(),
-		identity: request.identity.clone(),
-		code: request.challenge_code.clone(),
-	};
+fn set_challenge_code(_request: &SetChallengeCodeRequest) {
+	// TODO
 }
