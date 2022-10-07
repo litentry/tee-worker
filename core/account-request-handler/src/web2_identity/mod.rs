@@ -30,7 +30,7 @@ use codec::{Decode, Encode};
 // use core::{borrow::BorrowMut, fmt::Debug, ops::Deref};
 use core::fmt::Debug;
 use futures::executor;
-use ita_stf::{Hash, ShardIdentifier, TrustedCall, TrustedOperation};
+use ita_stf::{Hash, ShardIdentifier, TrustedCall, TrustedOperation, State as StfState};
 use itc_extrinsic_request_daemon::Web2IdentityVerificationRequest;
 use itc_rest_client::{
 	http_client::{DefaultSend, HttpClient},
@@ -47,7 +47,7 @@ use litentry_primitives::{
 };
 use serde::de::DeserializeOwned;
 use sp_core::ByteArray;
-use std::marker::PhantomData;
+use std::{ marker::PhantomData, sync::Arc };
 
 pub mod discord;
 pub mod twitter;
@@ -227,6 +227,7 @@ impl<
 			&request_context.shielding_key,
 			request_context.author.as_ref(),
 			request_context.shard_identifier,
+			&request_context.stf_state,
 			&trusted_call,
 		)
 	}
@@ -241,6 +242,7 @@ fn submit_call<
 	shielding_key: &K,
 	author_api: &A,
 	shard_identifier: ShardIdentifier,
+	_stf_state: &Arc<StfState>,
 	trusted_call: &TrustedCall,
 ) -> Result<(), Error> {
 	let signed_trusted_call = enclave_signer
