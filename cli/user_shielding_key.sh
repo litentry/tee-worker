@@ -40,7 +40,7 @@ echo "Using node uri $NODEURL:$NPORT"
 echo "Using trusted-worker uri $WORKER1URL:$WORKER1PORT"
 echo ""
 
-ICGACCOUNTALICE=//AliceIncognito
+ACC=//Bob
 KEY="22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12"
 
 CLIENT="$CLIENT_BIN -p $NPORT -P $WORKER1PORT -u $NODEURL -U $WORKER1URL"
@@ -61,24 +61,15 @@ else
 fi
 [[ -z $MRENCLAVE ]] && { echo "MRENCLAVE is empty. cannot continue" ; exit 1; }
 
-echo "* Get balance of Alice's on-chain account"
-$CLIENT balance "//Alice"
-echo ""
-
-sleep 10
-echo "* Get balance of Alice's sidechain account"
-$CLIENT trusted --mrenclave $MRENCLAVE --direct balance "//Alice"
-echo ""
-
 # direct calls
 sleep 10
-echo "* Set $ICGACCOUNTALICE 's shielding key to $KEY"
-$CLIENT trusted --mrenclave $MRENCLAVE --direct set-user-shielding-key $ICGACCOUNTALICE "$KEY"
+echo "* Set $ACC 's shielding key to $KEY"
+${CLIENT} set-user-shielding-key "$ACC" "$KEY" ${MRENCLAVE}
 echo ""
 
-sleep 10
-echo "* Get $ICGACCOUNTALICE 's shielding key"
-ACTUAL_KEY=$($CLIENT trusted --mrenclave $MRENCLAVE --direct user-shielding-key $ICGACCOUNTALICE)
+sleep 20
+echo "* Get $ACC 's shielding key"
+ACTUAL_KEY=$($CLIENT trusted --mrenclave $MRENCLAVE --direct user-shielding-key $ACC)
 echo ""
 
 if [ "$ACTUAL_KEY" = "$KEY" ]; then
@@ -88,27 +79,3 @@ else
     echo "KEY non-identical: expected: $KEY actual: $ACTUAL_KEY"
     exit 1
 fi
-
-# change KEY
-KEY="8378193a4ce64180814bd60591d1054a04dbc4da02afde453799cd6888ee0c6c"
-
-# indirect calls
-sleep 10
-echo "* Set $ICGACCOUNTALICE 's shielding key to $KEY"
-$CLIENT trusted --mrenclave $MRENCLAVE set-user-shielding-key $ICGACCOUNTALICE "$KEY"
-echo ""
-
-sleep 10
-echo "* Get $ICGACCOUNTALICE 's shielding key"
-ACTUAL_KEY=$($CLIENT trusted --mrenclave $MRENCLAVE --direct user-shielding-key $ICGACCOUNTALICE)
-echo ""
-
-if [ "$ACTUAL_KEY" = "$KEY" ]; then
-    echo "KEY identical: $KEY"
-    echo "test indirect call passed"
-else
-    echo "KEY non-identical: expected: $KEY actual: $ACTUAL_KEY"
-    exit 1
-fi
-
-exit 0

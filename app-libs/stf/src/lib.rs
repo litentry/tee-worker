@@ -268,10 +268,11 @@ pub enum TrustedCall {
 		ParentchainBlockNumber,
 	), // (EnclaveSigner, Account, identity, metadata, blocknumber)
 	unlink_identity(AccountId, AccountId, Identity), // (EnclaveSigner, Account, identity)
-	verify_identity_step1(AccountId, AccountId, Identity, ValidationData, ParentchainBlockNumber), //
-	verify_identity_step2(AccountId, AccountId, Identity, ValidationData, ParentchainBlockNumber), // (EnclaveSigner, Account, identity, validation_data, blocknumber)
+	// TODO: rethink the origin
+	verify_identity_step1(AccountId, AccountId, Identity, ValidationData, ParentchainBlockNumber),
+	verify_identity_step2(AccountId, AccountId, Identity, ValidationData, ParentchainBlockNumber),
 	query_credit(AccountId),
-	set_challenge_code(AccountId, AccountId, Identity, u32), // (EnclaveSigner, Account, Code)
+	set_challenge_code(AccountId, AccountId, Identity, u32),
 }
 
 impl TrustedCall {
