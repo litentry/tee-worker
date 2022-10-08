@@ -2926,7 +2926,7 @@ dependencies = [
 [[package]]
 name = "pallet-identity-management"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#d621d1daaccfa53fa8eacdef6873b34964285682"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#30313437a7a3f3d63a05061fb6c7f00fcbc4dc4a"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3189,7 +3189,7 @@ dependencies = [
 [[package]]
 name = "primitives"
 version = "0.9.10"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#d621d1daaccfa53fa8eacdef6873b34964285682"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#30313437a7a3f3d63a05061fb6c7f00fcbc4dc4a"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -4387,7 +4387,7 @@ dependencies = [
 [[package]]
 name = "sp-std"
 version = "4.0.0"
-source = "git+https://github.com/paritytech/substrate.git?branch=master#f77f788c8cd8692f716a54f13c434a8774246d7a"
+source = "git+https://github.com/paritytech/substrate.git?branch=master#1a5cdc81c711bc3a7464f24ccd2e1ba20a5ea594"
 
 [[package]]
 name = "sp-std"
