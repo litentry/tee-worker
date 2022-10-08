@@ -64,6 +64,8 @@ members = [
     "sidechain/sidechain-crate",
     "sidechain/state",
     "sidechain/validateer-fetch",
+    "litentry/primitives",
+    "litentry/pallets/identity-management",
 ]
 
 [patch."https://github.com/apache/teaclave-sgx-sdk.git"]

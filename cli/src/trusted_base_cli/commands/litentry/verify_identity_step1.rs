@@ -35,6 +35,8 @@ pub struct VerifyIdentityStep1Command {
 	parent_block_number: u32,
 }
 
+// TODO: we'd need an "integration-test" with parentchain "verify_identity"
+//       the origin of it needs to be re-considered if we want individual steps
 impl VerifyIdentityStep1Command {
 	pub(crate) fn run(&self, cli: &Cli, trusted_args: &TrustedArgs) {
 		let who = get_accountid_from_str(&self.account);

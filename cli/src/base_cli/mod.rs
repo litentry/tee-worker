@@ -17,8 +17,14 @@
 
 use crate::{
 	base_cli::commands::{
-		balance::BalanceCommand, faucet::FaucetCommand, listen::ListenCommand,
-		shield_funds::ShieldFundsCommand, transfer::TransferCommand,
+		balance::BalanceCommand,
+		faucet::FaucetCommand,
+		listen::ListenCommand,
+		litentry::{
+			link_identity::LinkIdentityCommand, set_user_shielding_key::SetUserShieldingKeyCommand,
+		},
+		shield_funds::ShieldFundsCommand,
+		transfer::TransferCommand,
 	},
 	command_utils::*,
 	Cli,
@@ -70,6 +76,12 @@ pub enum BaseCli {
 
 	/// Transfer funds from an parentchain account to an incognito account
 	ShieldFunds(ShieldFundsCommand),
+
+	// Litentry's commands below
+	/// set the user's shielding key
+	SetUserShieldingKey(SetUserShieldingKeyCommand),
+
+	LinkIdentity(LinkIdentityCommand),
 }
 
 impl BaseCli {
@@ -85,6 +97,9 @@ impl BaseCli {
 			BaseCli::ListWorkers => list_workers(cli),
 			BaseCli::Listen(cmd) => cmd.run(cli),
 			BaseCli::ShieldFunds(cmd) => cmd.run(cli),
+			// Litentry's commands below
+			BaseCli::SetUserShieldingKey(cmd) => cmd.run(cli),
+			BaseCli::LinkIdentity(cmd) => cmd.run(cli),
 		}
 	}
 }

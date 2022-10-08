@@ -101,6 +101,9 @@ echo "* Issue ${INITIALFUNDS} tokens to Alice's incognito account (on worker 1)"
 ${CLIENTWORKER1} trusted --mrenclave ${MRENCLAVE} --direct set-balance ${ICGACCOUNTALICE} ${INITIALFUNDS}
 echo ""
 
+# see bob's initial balance to 0
+${CLIENTWORKER1} trusted --mrenclave ${MRENCLAVE} --direct set-balance ${ICGACCOUNTBOB} 0
+
 echo "Get balance of Alice's incognito account (on worker 1)"
 ${CLIENTWORKER1} trusted --mrenclave ${MRENCLAVE} balance ${ICGACCOUNTALICE}
 echo ""
@@ -110,20 +113,20 @@ echo "* First transfer: Send ${AMOUNTTRANSFER} funds from Alice's incognito acco
 $CLIENTWORKER1 trusted --mrenclave ${MRENCLAVE} --direct transfer ${ICGACCOUNTALICE} ${ICGACCOUNTBOB} ${AMOUNTTRANSFER}
 echo ""
 
-# Send funds from Alice to Bobs account, on worker 2.
-echo "* Second transfer: Send ${AMOUNTTRANSFER} funds from Alice's incognito account to Bob's incognito account (on worker 2)"
-$CLIENTWORKER2 trusted --mrenclave ${MRENCLAVE} --direct transfer ${ICGACCOUNTALICE} ${ICGACCOUNTBOB} ${AMOUNTTRANSFER}
+# Send funds from Alice to Bobs account, on worker 1.
+# TODO: send xt from worker 1 instead, currently we have problems in this test.
+#       see https://github.com/litentry/tee-worker/issues/76
+echo "* Second transfer: Send ${AMOUNTTRANSFER} funds from Alice's incognito account to Bob's incognito account (on worker 1)"
+$CLIENTWORKER1 trusted --mrenclave ${MRENCLAVE} --direct transfer ${ICGACCOUNTALICE} ${ICGACCOUNTBOB} ${AMOUNTTRANSFER}
 echo ""
-
-sleep 12s
 
 echo "* Get balance of Alice's incognito account (on worker 1)"
 ALICE_BALANCE=$(${CLIENTWORKER1} trusted --mrenclave ${MRENCLAVE} balance ${ICGACCOUNTALICE} | xargs)
 echo "$ALICE_BALANCE"
 echo ""
 
-echo "* Get balance of Bob's incognito account (on worker 2)"
-BOB_BALANCE=$(${CLIENTWORKER2} trusted --mrenclave ${MRENCLAVE} balance ${ICGACCOUNTBOB} | xargs)
+echo "* Get balance of Bob's incognito account (on worker 1)"
+BOB_BALANCE=$(${CLIENTWORKER1} trusted --mrenclave ${MRENCLAVE} balance ${ICGACCOUNTBOB} | xargs)
 echo "$BOB_BALANCE"
 echo ""
 

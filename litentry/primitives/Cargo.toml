@@ -18,7 +18,6 @@ sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkad
 sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "master", optional = true, features = ["net", "thread"] }
 
 parentchain-primitives = { package = "primitives", git = "https://github.com/litentry/litentry-parachain.git", branch = "tee-dev", default-features = false }
-pallet-imp = { package = "pallet-identity-management", git = "https://github.com/litentry/litentry-parachain.git", branch = "tee-dev", default-features = false }
 
 [features]
 default = ["std"]
@@ -30,7 +29,6 @@ std = [
     "sp-std/std",
 	"sp-runtime/std",
 	"parentchain-primitives/std",
-	"pallet-imp/std",
 ]
 sgx = [
 	"sgx_tstd",

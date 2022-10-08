@@ -197,7 +197,8 @@ jobs:
           - test: EVM
             flavor_id: sidechain-evm
             demo_name: demo-smart-contract
-          - test: Litentry-user-shielding-key
+          # Litentry
+          - test: user-shielding-key
             flavor_id: sidechain
             demo_name: user-shielding-key
           - test: HTTPSTest
@@ -244,6 +245,10 @@ jobs:
           docker tag integritee-worker-${{ matrix.flavor_id }}-${{ github.sha }} ${{ env.WORKER_IMAGE_TAG }}
           docker tag integritee-cli-client-${{ matrix.flavor_id }}-${{ github.sha }} ${{ env.CLIENT_IMAGE_TAG }}
           docker images --all
+
+      - name: Generate parachain artefacts
+        run: |
+          ./scripts/litentry/generate_parachain_artefacts.sh
 
       - name: Build litentry parachain docker images
         run: |

@@ -14,17 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg_attr(not(feature = "std"), no_std)]
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-extern crate sgx_tstd as std;
+pub mod link_identity;
+pub mod set_user_shielding_key;
 
-mod ethereum_signature;
-mod identity;
-mod validation_data;
-pub use ethereum_signature::*;
-pub use identity::*;
-pub use parentchain_primitives::{
-	AesOutput, BlockNumber as ParentchainBlockNumber, UserShieldingKeyType, USER_SHIELDING_KEY_LEN,
-	USER_SHIELDING_KEY_NONCE_LEN, USER_SHIELDING_KEY_TAG_LEN,
-};
-pub use validation_data::*;
+// TODO: maybe move it to use itp_node_api::api_client
+pub const IMP: &str = "IdentityManagement";

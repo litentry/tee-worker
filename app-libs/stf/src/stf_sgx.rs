@@ -361,8 +361,8 @@ impl Stf {
 					Ok(())
 				},
 				// litentry
-				TrustedCall::set_user_shielding_key(root, who, key) => {
-					ensure!(is_root(&root), StfError::MissingPrivileges(root));
+				TrustedCall::set_user_shielding_key(enclave_account, who, key) => {
+					ensure_enclave_signer_account(&enclave_account)?;
 					// TODO: we only checked if the extrinsic dispatch is successful,
 					//       is that enough? (i.e. is the state changed already?)
 					match Self::set_user_shielding_key(who.clone(), key) {
@@ -386,8 +386,8 @@ impl Stf {
 					}
 					Ok(())
 				},
-				TrustedCall::link_identity(root, who, identity, metadata, bn) => {
-					ensure!(is_root(&root), StfError::MissingPrivileges(root));
+				TrustedCall::link_identity(enclave_account, who, identity, metadata, bn) => {
+					ensure_enclave_signer_account(&enclave_account)?;
 					debug!(
 						"link_identity, who: {}, identity: {:?}, metadata: {:?}",
 						account_id_to_string(&who),
@@ -425,8 +425,8 @@ impl Stf {
 					}
 					Ok(())
 				},
-				TrustedCall::unlink_identity(root, who, identity) => {
-					ensure!(is_root(&root), StfError::MissingPrivileges(root));
+				TrustedCall::unlink_identity(enclave_account, who, identity) => {
+					ensure_enclave_signer_account(&enclave_account)?;
 					debug!(
 						"link_identity, who: {}, identity: {:?}",
 						account_id_to_string(&who),
@@ -491,7 +491,13 @@ impl Stf {
 						))
 					}
 				},
-				TrustedCall::verify_identity_step2(root, who, identity, _validation_data, bn) => {
+				TrustedCall::verify_identity_step2(
+					_enclave_account,
+					who,
+					identity,
+					_validation_data,
+					bn,
+				) => {
 					// TODO: the verification process
 
 					// TrustedCall::verify_identity_step2 call by mrenclave(shielding key account)
