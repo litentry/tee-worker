@@ -13,10 +13,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
-use crate::{
-	error::{Error, Result},
-	Request,
-};
+use crate::error::{Error, Result};
 use lazy_static::lazy_static;
 use std::sync::{
 	mpsc::{channel, Receiver, Sender},
@@ -26,71 +23,72 @@ use std::sync::{
 #[cfg(feature = "sgx")]
 use std::sync::SgxMutex as Mutex;
 
+use crate::RequestType;
 #[cfg(feature = "std")]
 use std::sync::Mutex;
 
-pub type HttpsSender = Sender<Request>;
+pub type XTSender = Sender<RequestType>;
 
 // Global storage of the sender. Should not be accessed directly.
 lazy_static! {
-	static ref GLOBAL_HTTPS_DAEMON: Arc<Mutex<Option<HttpsDaemonSender>>> =
+	static ref GLOBAL_XT_DAEMON: Arc<Mutex<Option<XTDaemonSender>>> =
 		Arc::new(Mutex::new(Default::default()));
 }
 
-/// Trait to send an https request to the https client daemon.
-pub trait SendHttpsRequest {
-	fn send_https_request(&self, request: Request) -> Result<()>;
+/// Trait to send an extrinsic request to the extrinsic request daemon.
+pub trait SendXTRequest {
+	fn send_xt_request(&self, request: RequestType) -> Result<()>;
 }
 
-/// Struct to access the `send_https_request` function.
-pub struct HttpRequestSender {}
-impl HttpRequestSender {
+/// Struct to access the `send_xt_request` function.
+pub struct XTRequestSender {}
+impl XTRequestSender {
 	pub fn new() -> Self {
 		Self {}
 	}
 }
 
-impl Default for HttpRequestSender {
+impl Default for XTRequestSender {
 	fn default() -> Self {
 		Self::new()
 	}
 }
 
-impl SendHttpsRequest for HttpRequestSender {
-	fn send_https_request(&self, request: Request) -> Result<()> {
-		// Acquire lock on https sender
-		let mutex_guard = GLOBAL_HTTPS_DAEMON.lock().map_err(|_| Error::MutexAccess)?;
+impl SendXTRequest for XTRequestSender {
+	fn send_xt_request(&self, request: RequestType) -> Result<()> {
+		// Acquire lock on extrinsic sender
+		let mutex_guard = GLOBAL_XT_DAEMON.lock().map_err(|_| Error::MutexAccess)?;
 
-		let daemon_sender = mutex_guard.clone().ok_or(Error::ComponentNotInitialized)?;
+		let xt_daemon_sender = mutex_guard.clone().ok_or(Error::ComponentNotInitialized)?;
 
 		// Release mutex lock, so we don't block the lock longer than necessary.
 		drop(mutex_guard);
 
 		// Send the request to the receiver loop.
-		daemon_sender.send(request)
+		xt_daemon_sender.send(request)
 	}
 }
 
-/// Initialization of the https sender. Needs to be called before any sender access.
-pub fn init_https_daemon_sender_storage() -> Result<Receiver<Request>> {
+/// Initialization of the extrinsic sender. Needs to be called before any sender access.
+pub fn init_xt_daemon_sender_storage() -> Result<Receiver<RequestType>> {
 	let (sender, receiver) = channel();
-	let mut https_daemon_storage = GLOBAL_HTTPS_DAEMON.lock().map_err(|_| Error::MutexAccess)?;
-	*https_daemon_storage = Some(HttpsDaemonSender::new(sender));
+	let mut xt_daemon_storage = GLOBAL_XT_DAEMON.lock().map_err(|_| Error::MutexAccess)?;
+	*xt_daemon_storage = Some(XTDaemonSender::new(sender));
 	Ok(receiver)
 }
 
 /// Wrapping struct around the actual sender. Should not be accessed directly.
 #[derive(Clone, Debug)]
-struct HttpsDaemonSender {
-	sender: HttpsSender,
+struct XTDaemonSender {
+	sender: XTSender,
 }
 
-impl HttpsDaemonSender {
-	pub fn new(sender: HttpsSender) -> Self {
+impl XTDaemonSender {
+	pub fn new(sender: XTSender) -> Self {
 		Self { sender }
 	}
 
-	fn send(&self, request: Request) -> Result<()> {
+	fn send(&self, request: RequestType) -> Result<()> {
 		self.sender.send(request).map_err(|e| Error::Other(e.into()))?;
 		Ok(())
 	}

@@ -35,7 +35,7 @@ use itp_types::OpaqueCall;
 use itp_utils::stringify::account_id_to_string;
 use its_primitives::types::{BlockHash, BlockNumber as SidechainBlockNumber, Timestamp};
 use its_state::SidechainSystemExt;
-use litentry_primitives::{TwitterValidationData, ValidationData, Web2ValidationData};
+use litentry_primitives::ValidationData;
 use log::*;
 use sp_io::hashing::blake2_256;
 use sp_runtime::MultiAddress;
@@ -465,26 +465,16 @@ impl Stf {
 					Ok(())
 				},
 				TrustedCall::verify_identity_step1(
-					root,
+					enclave_account,
 					account,
 					identity,
 					validation_data,
 					bn,
 				) => {
-					ensure!(is_root(&root), StfError::MissingPrivileges(root));
+					ensure_enclave_signer_account(&enclave_account)?;
 					// TODO support other validation_data
-					if let ValidationData::Web2(Web2ValidationData::Twitter(
-						TwitterValidationData { ref tweet_id },
-					)) = validation_data
-					{
-						Self::verify_web2_identity_step1(
-							account,
-							identity,
-							Web2ValidationData::Twitter(TwitterValidationData {
-								tweet_id: tweet_id.clone(),
-							}),
-							bn,
-						)
+					if let ValidationData::Web2(web2) = validation_data {
+						Self::verify_web2_identity_step1(account, identity, web2, bn)
 					} else {
 						Err(StfError::Dispatch(
 							"validation_data only support Web2ValidationData::Twitter".to_string(),
@@ -546,8 +536,8 @@ impl Stf {
 					debug!("query_credit({:x?}", account.encode(),);
 					Self::query_credit(account)
 				},
-				TrustedCall::set_challenge_code(root, account, did, challenge_code) => {
-					ensure!(is_root(&root), StfError::MissingPrivileges(root));
+				TrustedCall::set_challenge_code(enclave_account, account, did, challenge_code) => {
+					ensure_enclave_signer_account(&enclave_account)?;
 					Self::set_challenge_code(account, did, challenge_code)
 				},
 			}?;

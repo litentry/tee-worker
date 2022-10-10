@@ -20,7 +20,7 @@ pub mod direct_request;
 pub mod enclave_base;
 pub mod enclave_test;
 pub mod error;
-pub mod https_client_daemon;
+pub mod extrinsic_request_daemon;
 pub mod remote_attestation;
 pub mod sidechain;
 pub mod teeracle_api;

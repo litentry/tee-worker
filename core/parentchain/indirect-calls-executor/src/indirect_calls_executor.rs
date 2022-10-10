@@ -377,6 +377,11 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 					}
 				}
 			}
+
+			// Found VerifyAssertion extrinsic
+			// if let Ok(xt) = ParentchainUncheckedExtrinsic::<VerifyAssertionFn>::decode(
+			// 	&mut encoded_xt_opaque.as_slice(),
+			// ) {}
 		}
 
 		// Include a processed parentchain block confirmation for each block.

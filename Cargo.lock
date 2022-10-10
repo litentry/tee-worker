@@ -2018,9 +2018,9 @@ checksum = "9ea835d29036a4087793836fa931b08837ad5e957da9e23886b29586fb9b6650"
 
 [[package]]
 name = "dtoa"
-version = "1.0.3"
+version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c6053ff46b5639ceb91756a85a4c8914668393a03170efd79c8884a529d80656"
+checksum = "f8a6eee2d5d0d113f015688310da018bd1d864d86bd567c8fca9c266889e1bfa"
 
 [[package]]
 name = "dyn-clonable"
@@ -3496,7 +3496,7 @@ checksum = "75f43d41e26995c17e71ee126451dd3941010b0514a81a9d11f3b341debc2399"
 dependencies = [
  "bytes 1.2.1",
  "fnv 1.0.7",
- "itoa 1.0.3",
+ "itoa 1.0.4",
 ]
 
 [[package]]
@@ -3576,7 +3576,7 @@ dependencies = [
  "http-body",
  "httparse 1.8.0",
  "httpdate",
- "itoa 1.0.3",
+ "itoa 1.0.4",
  "pin-project-lite 0.2.9",
  "socket2",
  "tokio",
@@ -4090,7 +4090,7 @@ dependencies = [
  "frame-system",
  "hex 0.4.0",
  "ita-sgx-runtime",
- "itc-https-client-daemon",
+ "itc-extrinsic-request-daemon",
  "itp-hashing",
  "itp-node-api",
  "itp-node-api-metadata",
@@ -4120,6 +4120,44 @@ dependencies = [
 ]
 
 [[package]]
+name = "itc-account-request-handler"
+version = "0.1.0"
+dependencies = [
+ "futures 0.3.24",
+ "futures 0.3.8",
+ "hex 0.4.0",
+ "hex 0.4.3",
+ "http 0.2.1",
+ "http 0.2.8",
+ "http_req 0.8.1 (git+https://github.com/integritee-network/http_req?branch=master)",
+ "http_req 0.8.1 (git+https://github.com/integritee-network/http_req)",
+ "ita-stf",
+ "itc-extrinsic-request-daemon",
+ "itc-rest-client",
+ "itp-extrinsics-factory",
+ "itp-ocall-api",
+ "itp-sgx-crypto",
+ "itp-sgx-externalities",
+ "itp-stf-executor",
+ "itp-storage",
+ "itp-top-pool-author",
+ "itp-types",
+ "itp-utils",
+ "lazy_static",
+ "litentry-primitives 0.1.0",
+ "log 0.4.17",
+ "parity-scale-codec",
+ "serde 1.0.145",
+ "serde_json 1.0.85",
+ "sgx_tstd",
+ "sp-core",
+ "thiserror 1.0.37",
+ "thiserror 1.0.9",
+ "url 2.1.1",
+ "url 2.3.1",
+]
+
+[[package]]
 name = "itc-direct-rpc-server"
 version = "0.9.0"
 dependencies = [
@@ -4140,7 +4178,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "itc-https-client-daemon"
+name = "itc-extrinsic-request-daemon"
 version = "0.1.0"
 dependencies = [
  "http 0.2.1",
@@ -4160,43 +4198,6 @@ dependencies = [
  "serde 1.0.145",
  "serde_json 1.0.85",
  "sgx_tstd",
- "thiserror 1.0.37",
- "thiserror 1.0.9",
- "url 2.1.1",
- "url 2.3.1",
-]
-
-[[package]]
-name = "itc-https-request-handler"
-version = "0.1.0"
-dependencies = [
- "futures 0.3.24",
- "futures 0.3.8",
- "hex 0.4.0",
- "hex 0.4.3",
- "http 0.2.1",
- "http 0.2.8",
- "http_req 0.8.1 (git+https://github.com/integritee-network/http_req?branch=master)",
- "http_req 0.8.1 (git+https://github.com/integritee-network/http_req)",
- "ita-stf",
- "itc-https-client-daemon",
- "itc-rest-client",
- "itp-extrinsics-factory",
- "itp-ocall-api",
- "itp-sgx-crypto",
- "itp-stf-executor",
- "itp-storage",
- "itp-top-pool-author",
- "itp-types",
- "itp-utils",
- "lazy_static",
- "litentry-primitives 0.1.0",
- "log 0.4.17",
- "parity-scale-codec",
- "serde 1.0.145",
- "serde_json 1.0.85",
- "sgx_tstd",
- "sp-core",
  "thiserror 1.0.37",
  "thiserror 1.0.9",
  "url 2.1.1",
@@ -4475,9 +4476,9 @@ checksum = "b71991ff56294aa922b450139ee08b3bfc70982c6b2c7562771375cf73542dd4"
 
 [[package]]
 name = "itoa"
-version = "1.0.3"
+version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c8af84674fe1f223a982c933a0ee1086ac4d4052aa0fb8060c12c6ad838e754"
+checksum = "4217ad341ebadf8d8e724e264f13e593e0648f5b3e94b3896a5df283be015ecc"
 
 [[package]]
 name = "itp-api-client-extensions"
@@ -6298,7 +6299,7 @@ dependencies = [
 [[package]]
 name = "litentry-primitives"
 version = "0.1.0"
-source = "git+https://github.com/litentry/tee-worker?branch=88-wrong-signer-origin#0726bc78435ecbb10cb06a6cf90982ceaa1f7ade"
+source = "git+https://github.com/litentry/tee-worker#e0b91fb9aa19f13369d0a0bd83519812acfbc5b6"
 dependencies = [
  "parity-scale-codec",
  "primitives",
@@ -6313,7 +6314,7 @@ dependencies = [
 [[package]]
 name = "litmus-parachain-runtime"
 version = "0.9.10"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#d621d1daaccfa53fa8eacdef6873b34964285682"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#30313437a7a3f3d63a05061fb6c7f00fcbc4dc4a"
 dependencies = [
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
@@ -7548,7 +7549,7 @@ dependencies = [
 [[package]]
 name = "pallet-asset-manager"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#d621d1daaccfa53fa8eacdef6873b34964285682"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#30313437a7a3f3d63a05061fb6c7f00fcbc4dc4a"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -7725,7 +7726,7 @@ dependencies = [
 [[package]]
 name = "pallet-bridge"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#d621d1daaccfa53fa8eacdef6873b34964285682"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#30313437a7a3f3d63a05061fb6c7f00fcbc4dc4a"
 dependencies = [
  "blake2-rfc",
  "frame-benchmarking",
@@ -7743,7 +7744,7 @@ dependencies = [
 [[package]]
 name = "pallet-bridge-transfer"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#d621d1daaccfa53fa8eacdef6873b34964285682"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#30313437a7a3f3d63a05061fb6c7f00fcbc4dc4a"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7834,7 +7835,7 @@ dependencies = [
 [[package]]
 name = "pallet-drop3"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#d621d1daaccfa53fa8eacdef6873b34964285682"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#30313437a7a3f3d63a05061fb6c7f00fcbc4dc4a"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7913,7 +7914,7 @@ dependencies = [
 [[package]]
 name = "pallet-extrinsic-filter"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#d621d1daaccfa53fa8eacdef6873b34964285682"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#30313437a7a3f3d63a05061fb6c7f00fcbc4dc4a"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7988,7 +7989,7 @@ dependencies = [
 [[package]]
 name = "pallet-identity-management"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#d621d1daaccfa53fa8eacdef6873b34964285682"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#30313437a7a3f3d63a05061fb6c7f00fcbc4dc4a"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8007,7 +8008,7 @@ dependencies = [
 [[package]]
 name = "pallet-identity-management-mock"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#d621d1daaccfa53fa8eacdef6873b34964285682"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#30313437a7a3f3d63a05061fb6c7f00fcbc4dc4a"
 dependencies = [
  "aes-gcm 0.10.1",
  "frame-benchmarking",
@@ -8015,7 +8016,7 @@ dependencies = [
  "frame-system",
  "hex 0.4.3",
  "hex-literal",
- "litentry-primitives 0.1.0 (git+https://github.com/litentry/tee-worker?branch=88-wrong-signer-origin)",
+ "litentry-primitives 0.1.0 (git+https://github.com/litentry/tee-worker)",
  "log 0.4.17",
  "pallet-identity-management 0.1.0 (git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev)",
  "parity-scale-codec",
@@ -8166,7 +8167,7 @@ dependencies = [
 [[package]]
 name = "pallet-parachain-staking"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#d621d1daaccfa53fa8eacdef6873b34964285682"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#30313437a7a3f3d63a05061fb6c7f00fcbc4dc4a"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -8499,7 +8500,7 @@ dependencies = [
 [[package]]
 name = "pallet-vc-management"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#d621d1daaccfa53fa8eacdef6873b34964285682"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#30313437a7a3f3d63a05061fb6c7f00fcbc4dc4a"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -10114,7 +10115,7 @@ dependencies = [
 [[package]]
 name = "primitives"
 version = "0.9.10"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#d621d1daaccfa53fa8eacdef6873b34964285682"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#30313437a7a3f3d63a05061fb6c7f00fcbc4dc4a"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -10230,7 +10231,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ac1abe0255c04d15f571427a2d1e00099016506cf3297b53853acd2b7eb87825"
 dependencies = [
  "dtoa",
- "itoa 1.0.3",
+ "itoa 1.0.4",
  "owning_ref",
  "prometheus-client-derive-text-encode",
 ]
@@ -10824,7 +10825,7 @@ dependencies = [
 [[package]]
 name = "runtime-common"
 version = "0.9.10"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#d621d1daaccfa53fa8eacdef6873b34964285682"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#30313437a7a3f3d63a05061fb6c7f00fcbc4dc4a"
 dependencies = [
  "cumulus-pallet-parachain-system",
  "cumulus-primitives-core",
@@ -12358,7 +12359,7 @@ version = "1.0.85"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e55a28e3aaef9d5ce0506d0a14dbba8054ddc7e499ef522dd8b26859ec9d4a44"
 dependencies = [
- "itoa 1.0.3",
+ "itoa 1.0.4",
  "ryu",
  "serde 1.0.145",
 ]
@@ -12379,7 +12380,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d3491c14715ca2294c4d6a88f15e84739788c1d030eed8c110436aafdaa2f3fd"
 dependencies = [
  "form_urlencoded",
- "itoa 1.0.3",
+ "itoa 1.0.4",
  "ryu",
  "serde 1.0.145",
 ]
@@ -13435,7 +13436,7 @@ dependencies = [
 [[package]]
 name = "sp-std"
 version = "4.0.0"
-source = "git+https://github.com/paritytech/substrate.git?branch=master#241b0d0455453499763d0db0b4ea4188012b372f"
+source = "git+https://github.com/paritytech/substrate.git?branch=master#1a5cdc81c711bc3a7464f24ccd2e1ba20a5ea594"
 
 [[package]]
 name = "sp-std"
@@ -13852,9 +13853,9 @@ checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
 
 [[package]]
 name = "syn"
-version = "1.0.101"
+version = "1.0.102"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e90cde112c4b9690b8cbe810cba9ddd8bc1d7472e2cae317b69e9438c1cba7d2"
+checksum = "3fcd952facd492f9be3ef0d0b7032a6e442ee9b361d4acc2b1d0c4aaa5f613a1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -14268,9 +14269,9 @@ checksum = "b6bc1c9ce2b5135ac7f93c72918fc37feb872bdc6a5533a8b85eb4b86bfdae52"
 
 [[package]]
 name = "tracing"
-version = "0.1.36"
+version = "0.1.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2fce9567bd60a67d08a16488756721ba392f24f29006402881e43b19aac64307"
+checksum = "8ce8c33a8d48bd45d624a6e523445fd21ec13d3653cd51f681abf67418f54eb8"
 dependencies = [
  "cfg-if 1.0.0",
  "log 0.4.17",
@@ -14281,9 +14282,9 @@ dependencies = [
 
 [[package]]
 name = "tracing-attributes"
-version = "0.1.22"
+version = "0.1.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "11c75893af559bc8e10716548bdef5cb2b983f8e637db9d0e15126b61b484ee2"
+checksum = "4017f8f45139870ca7e672686113917c71c7a6e02d4924eda67186083c03081a"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -14292,9 +14293,9 @@ dependencies = [
 
 [[package]]
 name = "tracing-core"
-version = "0.1.29"
+version = "0.1.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5aeea4303076558a00714b823f9ad67d58a3bbda1df83d8827d21193156e22f7"
+checksum = "24eb03ba0eab1fd845050058ce5e616558e8f8d8fca633e6b163fe25c797213a"
 dependencies = [
  "once_cell 1.15.0",
  "valuable",

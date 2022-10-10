@@ -20,15 +20,15 @@ use itp_enclave_api_ffi as ffi;
 use sgx_types::*;
 
 /// Trait to run a https client daemon thread inside the enclave.
-pub trait HttpsClientDaemon {
-	fn run_https_client_daemon(&self) -> EnclaveResult<()>;
+pub trait XTRequestDaemon {
+	fn run_extrinsic_request_daemon(&self) -> EnclaveResult<()>;
 }
 
-impl HttpsClientDaemon for Enclave {
-	fn run_https_client_daemon(&self) -> EnclaveResult<()> {
+impl XTRequestDaemon for Enclave {
+	fn run_extrinsic_request_daemon(&self) -> EnclaveResult<()> {
 		let mut retval = sgx_status_t::SGX_SUCCESS;
 
-		let result = unsafe { ffi::run_https_client_daemon(self.eid, &mut retval) };
+		let result = unsafe { ffi::run_extrinsic_request_daemon(self.eid, &mut retval) };
 
 		ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
 		ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));

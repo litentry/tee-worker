@@ -32,8 +32,8 @@ pub mod sgx_reexport_prelude {
 }
 
 use itp_types::AccountId;
-pub mod daemon_sender;
 pub mod error;
+pub mod xt_daemon_sender;
 // pub mod https_client;
 pub use error::Result;
 
@@ -41,10 +41,50 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use litentry_primitives::{Identity, Web2ValidationData};
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen)]
-pub struct Request {
+pub struct Web2IdentityVerificationRequest {
 	pub target: AccountId,
 	pub identity: Identity,
 	pub challenge_code: u32,
 	pub validation_data: Web2ValidationData,
 	pub bn: litentry_primitives::ParentchainBlockNumber, //Parentchain BlockNumber
+}
+
+/// TODO: adapt Web3 struct fields later
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen)]
+pub struct Web3IdentityVerificationRequest {
+	pub target: AccountId,
+	pub identity: Identity,
+	pub challenge_code: u32,
+	pub validation_data: Web2ValidationData,
+	pub bn: litentry_primitives::ParentchainBlockNumber, //Parentchain BlockNumber
+}
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen)]
+pub struct Assertion1Request {
+	pub target: AccountId,
+}
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen)]
+pub struct Assertion2Request {
+	pub target: AccountId,
+	pub identity: Identity,
+}
+
+pub enum AssertionType {
+	AssertionType1(Assertion1Request), // TODO: The type names can be adapted later
+	AssertionType2(Assertion2Request),
+}
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen)]
+pub struct SetChallengeCodeRequest {
+	pub target: AccountId,
+	pub identity: Identity,
+	pub challenge_code: u32,
+}
+
+pub enum RequestType {
+	Web2IdentityVerification(Web2IdentityVerificationRequest),
+	Web3IndentityVerification(Web3IdentityVerificationRequest),
+	Assertion(AssertionType),
+	SetChallengeCode(SetChallengeCodeRequest),
 }

@@ -18,13 +18,12 @@
 extern crate sgx_tstd as std;
 
 use crate::{stf_sgx_primitives::types::*, AccountId, MetadataOf, Runtime, StfError, StfResult};
+use itc_extrinsic_request_daemon::{xt_daemon_sender::SendXTRequest, RequestType};
+use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{
 	Identity, ParentchainBlockNumber, UserShieldingKeyType, Web2ValidationData,
 };
 use log::*;
-
-use itc_https_client_daemon::daemon_sender::SendHttpsRequest;
-use itp_utils::stringify::account_id_to_string;
 use std::format;
 use support::traits::UnfilteredDispatchable;
 
@@ -93,38 +92,38 @@ impl Stf {
 		Ok(())
 	}
 
-	pub fn verify_ruleset1(who: AccountId) -> StfResult<()> {
-		let v_identity_context =
-		ita_sgx_runtime::pallet_identity_management::Pallet::<Runtime>::get_identity_and_identity_context(&who);
+	// pub fn verify_ruleset1(who: AccountId) -> StfResult<()> {
+	// 	let v_identity_context =
+	// 	ita_sgx_runtime::pallet_identity_management::Pallet::<Runtime>::get_identity_and_identity_context(&who);
 
-		let mut web2_cnt = 0;
-		let mut web3_cnt = 0;
+	// 	let mut web2_cnt = 0;
+	// 	let mut web3_cnt = 0;
 
-		for identity_ctx in &v_identity_context {
-			if identity_ctx.1.is_verified {
-				if identity_ctx.0.is_web2() {
-					web2_cnt = web2_cnt + 1;
-				} else if identity_ctx.0.is_web3() {
-					web3_cnt = web3_cnt + 1;
-				}
-			}
-		}
+	// 	for identity_ctx in &v_identity_context {
+	// 		if identity_ctx.1.is_verified {
+	// 			if identity_ctx.0.is_web2() {
+	// 				web2_cnt = web2_cnt + 1;
+	// 			} else if identity_ctx.0.is_web3() {
+	// 				web3_cnt = web3_cnt + 1;
+	// 			}
+	// 		}
+	// 	}
 
-		if web2_cnt > 0 && web3_cnt > 0 {
-			// TODO: generate_vc();
-			Ok(())
-		} else {
-			Err(StfError::RuleSet1VerifyFail)
-		}
-	}
+	// 	if web2_cnt > 0 && web3_cnt > 0 {
+	// 		// TODO: generate_vc();
+	// 		Ok(())
+	// 	} else {
+	// 		Err(StfError::RuleSet1VerifyFail)
+	// 	}
+	// }
 
 	pub fn query_credit(_account_id: AccountId) -> StfResult<()> {
 		// info!("query_credit({:x?})", account_id.encode(),);
 		// let tweet_id: Vec<u8> = "1569510747084050432".as_bytes().to_vec();
 		// // let request_str = format!("{}", "https://httpbin.org/anything");
-		// let request = itc_https_client_daemon::Request { tweet_id };
-		// let sender = itc_https_client_daemon::daemon_sender::HttpRequestSender::new();
-		// let result = sender.send_https_request(request);
+		// let request = itc_extrinsic_request_daemon::Request { tweet_id };
+		// let sender = itc_extrinsic_request_daemon::xt_daemon_sender::XTRequestSender::new();
+		// let result = sender.send_xt_request(request);
 		// info!("send https request, get result as {:?}", result);
 
 		Ok(())
@@ -135,14 +134,24 @@ impl Stf {
 		identity: Identity,
 		challenge_code: u32,
 	) -> StfResult<()> {
-		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_challenge_code {
-			who: account,
+		// ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_challenge_code {
+		// 	who: account,
+		// 	identity,
+		// 	code: challenge_code,
+		// }
+		// .dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+		// .map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+		// Ok(())
+
+		let request = itc_extrinsic_request_daemon::SetChallengeCodeRequest {
+			target: account,
 			identity,
-			code: challenge_code,
-		}
-		.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
-		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
-		Ok(())
+			challenge_code,
+		};
+		let xt_sender = itc_extrinsic_request_daemon::xt_daemon_sender::XTRequestSender::new();
+		xt_sender
+			.send_xt_request(RequestType::SetChallengeCode(request))
+			.map_err(|e| StfError::Dispatch(format!("send SetChallengeCodeRequest error:{:?}", e)))
 	}
 
 	pub fn verify_web2_identity_step1(
@@ -151,21 +160,57 @@ impl Stf {
 		validation_data: Web2ValidationData,
 		bn: ParentchainBlockNumber,
 	) -> StfResult<()> {
-		let code: Option<u32> = ita_sgx_runtime::pallet_identity_management::ChallengeCodes::<
-			Runtime,
-		>::get(&target, &identity);
+		// testing.. remove later
+		let key = itp_storage::storage_double_map_key(
+			"IdentityManagement",
+			"ChallengeCodes",
+			&target,
+			&itp_storage::StorageHasher::Blake2_128Concat,
+			&identity,
+			&itp_storage::StorageHasher::Blake2_128Concat,
+		);
+
+		let value: Option<u32> = crate::helpers::get_storage_by_key_hash(key.clone());
+
+		// let code: Option<u32> = ita_sgx_runtime::pallet_identity_management::ChallengeCodes::<
+		// 	Runtime,
+		// >::get(&target, &identity);
+		let code = Some(1134);
+
+		log::warn!("storage key:{:?}, value:{:?}, pallet:{:?}", key, value, code);
+
 		//TODO change error type
 		code.ok_or_else(|| StfError::Dispatch(format!("code not found")))?;
-		let request = itc_https_client_daemon::Request {
+		let request = itc_extrinsic_request_daemon::Web2IdentityVerificationRequest {
 			target,
 			identity,
 			challenge_code: code.unwrap(),
 			validation_data,
 			bn,
 		};
-		let http_sender = itc_https_client_daemon::daemon_sender::HttpRequestSender::new();
-		http_sender
-			.send_https_request(request)
-			.map_err(|e| StfError::Dispatch(format!("send https error:{:?}", e)))
+		let xt_sender = itc_extrinsic_request_daemon::xt_daemon_sender::XTRequestSender::new();
+		xt_sender
+			.send_xt_request(RequestType::Web2IdentityVerification(request))
+			.map_err(|e| StfError::Dispatch(format!("send extrinsic request error:{:?}", e)))
+	}
+
+	pub fn verify_assertion1(target: AccountId) -> StfResult<()> {
+		let request = itc_extrinsic_request_daemon::Assertion1Request { target };
+		let xt_sender = itc_extrinsic_request_daemon::xt_daemon_sender::XTRequestSender::new();
+		xt_sender
+			.send_xt_request(RequestType::Assertion(
+				itc_extrinsic_request_daemon::AssertionType::AssertionType1(request),
+			))
+			.map_err(|e| StfError::Dispatch(format!("send verify_assertion1 error:{:?}", e)))
+	}
+
+	pub fn verify_assertion2(target: AccountId, identity: Identity) -> StfResult<()> {
+		let request = itc_extrinsic_request_daemon::Assertion2Request { target, identity };
+		let xt_sender = itc_extrinsic_request_daemon::xt_daemon_sender::XTRequestSender::new();
+		xt_sender
+			.send_xt_request(RequestType::Assertion(
+				itc_extrinsic_request_daemon::AssertionType::AssertionType2(request),
+			))
+			.map_err(|e| StfError::Dispatch(format!("send verify_assertion2 error:{:?}", e)))
 	}
 }

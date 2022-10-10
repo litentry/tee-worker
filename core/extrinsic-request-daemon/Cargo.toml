@@ -1,5 +1,5 @@
 [package]
-name = "itc-https-client-daemon"
+name = "itc-extrinsic-request-daemon"
 version = "0.1.0"
 authors = ["Litentry dev"]
 edition = "2021"

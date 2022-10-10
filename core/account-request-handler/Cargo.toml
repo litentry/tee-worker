@@ -1,5 +1,5 @@
 [package]
-name = "itc-https-request-handler"
+name = "itc-account-request-handler"
 version = "0.1.0"
 authors = ["Litentry Dev"]
 edition = "2021"
@@ -33,11 +33,12 @@ sp-core = { default-features = false, features = ["full_crypto"], git = "https:/
 # internal dependencies
 ita-stf = { path = "../../app-libs/stf", default-features = false }
 itc-rest-client = { path = "../rest-client", default-features = false }
-itc-https-client-daemon = { path = "../https-client-daemon", default-features = false }
+itc-extrinsic-request-daemon = { path = "../extrinsic-request-daemon", default-features = false }
 itp-types = { path = "../../core-primitives/types", default-features = false }
 
 itp-ocall-api = { path = "../../core-primitives/ocall-api", default-features = false }
 itp-extrinsics-factory = { path = "../../core-primitives/extrinsics-factory", default-features = false }
+itp-sgx-externalities = { path = "../../core-primitives/substrate-sgx/externalities", default-features = false}
 itp-sgx-crypto = { path = "../../core-primitives/sgx/crypto", default-features = false }
 itp-stf-executor = { path = "../../core-primitives/stf-executor", default-features = false }
 itp-storage = { path = "../../core-primitives/storage", default-features = false }
@@ -55,7 +56,7 @@ std = [
     "http",
     "http_req",
     "itc-rest-client/std",
-    "itc-https-client-daemon/std",
+    "itc-extrinsic-request-daemon/std",
     "log/std",
     "serde/std",
     "serde_json/std",
@@ -79,8 +80,9 @@ sgx = [
     "thiserror_sgx",
     "url_sgx",
 	"ita-stf/sgx",
-    "itp-stf-executor/sgx",
-	"itc-https-client-daemon/sgx",
+	"itc-extrinsic-request-daemon/sgx",
+	"itp-sgx-externalities/sgx",
+	"itp-stf-executor/sgx",
     "itp-top-pool-author/sgx",
 	"itp-utils/sgx",
 	"sp-core/full_crypto",
