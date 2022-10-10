@@ -31,12 +31,12 @@ use codec::{Decode, Encode};
 use core::fmt::Debug;
 use futures::executor;
 use ita_stf::{Hash, ShardIdentifier, State as StfState, TrustedCall, TrustedOperation};
-use itc_extrinsic_request_daemon::Web2IdentityVerificationRequest;
 use itc_rest_client::{
 	http_client::{DefaultSend, HttpClient},
 	rest_client::RestClient,
 	RestGet, RestPath,
 };
+use itc_stf_task_handler::Web2IdentityVerificationRequest;
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;

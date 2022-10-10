@@ -6,7 +6,7 @@ members = [
     "app-libs/stf",
     "cli",
     "core/direct-rpc-server",
-	"core/account-request-handler",
+	"core/identity-verify-handler",
     "core/offchain-worker-executor",
     "core/parentchain/block-import-dispatcher",
     "core/parentchain/block-importer",

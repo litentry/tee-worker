@@ -69,11 +69,11 @@ use substrate_api_client::{compose_extrinsic_offline, ExtrinsicParams};
 
 mod attestation;
 mod empty_impls;
-mod extrinsic_daemon;
 mod global_components;
 mod initialization;
 mod ipfs;
 mod ocall;
+mod stf_task_thread;
 mod utils;
 
 pub mod cert;

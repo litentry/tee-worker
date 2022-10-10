@@ -733,12 +733,12 @@ dependencies = [
  "ita-exchange-oracle",
  "ita-sgx-runtime",
  "ita-stf",
- "itc-account-request-handler",
  "itc-direct-rpc-server",
- "itc-extrinsic-request-daemon",
+ "itc-identity-verify-handler",
  "itc-offchain-worker-executor",
  "itc-parentchain",
  "itc-parentchain-test",
+ "itc-stf-task-handler",
  "itc-tls-websocket-server",
  "itertools",
  "itp-block-import-queue",
@@ -1589,7 +1589,7 @@ dependencies = [
  "frame-system",
  "hex 0.4.0",
  "ita-sgx-runtime",
- "itc-extrinsic-request-daemon",
+ "itc-stf-task-handler",
  "itp-hashing",
  "itp-node-api",
  "itp-node-api-metadata",
@@ -1614,38 +1614,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "itc-account-request-handler"
-version = "0.1.0"
-dependencies = [
- "futures 0.3.8",
- "hex 0.4.0",
- "http",
- "http_req",
- "ita-stf",
- "itc-extrinsic-request-daemon",
- "itc-rest-client",
- "itp-extrinsics-factory",
- "itp-ocall-api",
- "itp-sgx-crypto",
- "itp-sgx-externalities",
- "itp-stf-executor",
- "itp-storage",
- "itp-top-pool-author",
- "itp-types",
- "itp-utils",
- "lazy_static",
- "litentry-primitives",
- "log",
- "parity-scale-codec",
- "serde 1.0.145",
- "serde_json 1.0.85",
- "sgx_tstd",
- "sp-core",
- "thiserror 1.0.9",
- "url",
-]
-
-[[package]]
 name = "itc-direct-rpc-server"
 version = "0.9.0"
 dependencies = [
@@ -1664,15 +1632,23 @@ dependencies = [
 ]
 
 [[package]]
-name = "itc-extrinsic-request-daemon"
+name = "itc-identity-verify-handler"
 version = "0.1.0"
 dependencies = [
+ "futures 0.3.8",
+ "hex 0.4.0",
  "http",
  "http_req",
+ "ita-stf",
  "itc-rest-client",
+ "itc-stf-task-handler",
  "itp-extrinsics-factory",
  "itp-ocall-api",
  "itp-sgx-crypto",
+ "itp-sgx-externalities",
+ "itp-stf-executor",
+ "itp-storage",
+ "itp-top-pool-author",
  "itp-types",
  "itp-utils",
  "lazy_static",
@@ -1682,6 +1658,7 @@ dependencies = [
  "serde 1.0.145",
  "serde_json 1.0.85",
  "sgx_tstd",
+ "sp-core",
  "thiserror 1.0.9",
  "url",
 ]
@@ -1831,6 +1808,29 @@ dependencies = [
  "serde_json 1.0.85",
  "sgx_tstd",
  "sgx_types",
+ "thiserror 1.0.9",
+ "url",
+]
+
+[[package]]
+name = "itc-stf-task-handler"
+version = "0.1.0"
+dependencies = [
+ "http",
+ "http_req",
+ "itc-rest-client",
+ "itp-extrinsics-factory",
+ "itp-ocall-api",
+ "itp-sgx-crypto",
+ "itp-types",
+ "itp-utils",
+ "lazy_static",
+ "litentry-primitives",
+ "log",
+ "parity-scale-codec",
+ "serde 1.0.145",
+ "serde_json 1.0.85",
+ "sgx_tstd",
  "thiserror 1.0.9",
  "url",
 ]
