@@ -18,8 +18,8 @@
 extern crate sgx_tstd as std;
 
 use crate::{stf_sgx_primitives::types::*, AccountId, MetadataOf, Runtime, StfError, StfResult};
-use itc_stf_task_handler::{stf_task_sender::SendXTRequest, RequestType};
 use itp_utils::stringify::account_id_to_string;
+use lc_stf_task_handler::{stf_task_sender::SendXTRequest, RequestType};
 use litentry_primitives::{
 	Identity, ParentchainBlockNumber, UserShieldingKeyType, Web2ValidationData,
 };
@@ -121,8 +121,8 @@ impl Stf {
 		// info!("query_credit({:x?})", account_id.encode(),);
 		// let tweet_id: Vec<u8> = "1569510747084050432".as_bytes().to_vec();
 		// // let request_str = format!("{}", "https://httpbin.org/anything");
-		// let request = itc_stf_task_handler::Request { tweet_id };
-		// let sender = itc_stf_task_handler::stf_task_sender::XTRequestSender::new();
+		// let request = lc_stf_task_handler::Request { tweet_id };
+		// let sender = lc_stf_task_handler::stf_task_sender::XTRequestSender::new();
 		// let result = sender.send_xt_request(request);
 		// info!("send https request, get result as {:?}", result);
 
@@ -143,12 +143,12 @@ impl Stf {
 		// .map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
 		// Ok(())
 
-		let request = itc_stf_task_handler::SetChallengeCodeRequest {
+		let request = lc_stf_task_handler::SetChallengeCodeRequest {
 			target: account,
 			identity,
 			challenge_code,
 		};
-		let xt_sender = itc_stf_task_handler::stf_task_sender::XTRequestSender::new();
+		let xt_sender = lc_stf_task_handler::stf_task_sender::XTRequestSender::new();
 		xt_sender
 			.send_xt_request(RequestType::SetChallengeCode(request))
 			.map_err(|e| StfError::Dispatch(format!("send SetChallengeCodeRequest error:{:?}", e)))
@@ -181,35 +181,35 @@ impl Stf {
 
 		//TODO change error type
 		code.ok_or_else(|| StfError::Dispatch(format!("code not found")))?;
-		let request = itc_stf_task_handler::Web2IdentityVerificationRequest {
+		let request = lc_stf_task_handler::Web2IdentityVerificationRequest {
 			target,
 			identity,
 			challenge_code: code.unwrap(),
 			validation_data,
 			bn,
 		};
-		let xt_sender = itc_stf_task_handler::stf_task_sender::XTRequestSender::new();
+		let xt_sender = lc_stf_task_handler::stf_task_sender::XTRequestSender::new();
 		xt_sender
 			.send_xt_request(RequestType::Web2IdentityVerification(request))
 			.map_err(|e| StfError::Dispatch(format!("send extrinsic request error:{:?}", e)))
 	}
 
 	pub fn verify_assertion1(target: AccountId) -> StfResult<()> {
-		let request = itc_stf_task_handler::Assertion1Request { target };
-		let xt_sender = itc_stf_task_handler::stf_task_sender::XTRequestSender::new();
+		let request = lc_stf_task_handler::Assertion1Request { target };
+		let xt_sender = lc_stf_task_handler::stf_task_sender::XTRequestSender::new();
 		xt_sender
 			.send_xt_request(RequestType::Assertion(
-				itc_stf_task_handler::AssertionType::AssertionType1(request),
+				lc_stf_task_handler::AssertionType::AssertionType1(request),
 			))
 			.map_err(|e| StfError::Dispatch(format!("send verify_assertion1 error:{:?}", e)))
 	}
 
 	pub fn verify_assertion2(target: AccountId, identity: Identity) -> StfResult<()> {
-		let request = itc_stf_task_handler::Assertion2Request { target, identity };
-		let xt_sender = itc_stf_task_handler::stf_task_sender::XTRequestSender::new();
+		let request = lc_stf_task_handler::Assertion2Request { target, identity };
+		let xt_sender = lc_stf_task_handler::stf_task_sender::XTRequestSender::new();
 		xt_sender
 			.send_xt_request(RequestType::Assertion(
-				itc_stf_task_handler::AssertionType::AssertionType2(request),
+				lc_stf_task_handler::AssertionType::AssertionType2(request),
 			))
 			.map_err(|e| StfError::Dispatch(format!("send verify_assertion2 error:{:?}", e)))
 	}

@@ -46,7 +46,7 @@ itp-utils = { path = "../../../core-primitives/utils", default-features = false 
 
 # litentry
 litentry-primitives = { path = "../../primitives", default-features = false }
-itc-stf-task-handler = { path = "../stf-task-handler", default-features = false }
+lc-stf-task-handler = { path = "../stf-task-handler", default-features = false }
 
 [features]
 default = ["std"]
@@ -56,7 +56,7 @@ std = [
     "http",
     "http_req",
     "itc-rest-client/std",
-    "itc-stf-task-handler/std",
+    "lc-stf-task-handler/std",
     "log/std",
     "serde/std",
     "serde_json/std",
@@ -80,7 +80,7 @@ sgx = [
     "thiserror_sgx",
     "url_sgx",
 	"ita-stf/sgx",
-	"itc-stf-task-handler/sgx",
+	"lc-stf-task-handler/sgx",
 	"itp-sgx-externalities/sgx",
 	"itp-stf-executor/sgx",
     "itp-top-pool-author/sgx",

@@ -127,7 +127,7 @@ its-sidechain = { path = "../sidechain/sidechain-crate", default-features = fals
 sp-io = { optional = true, default-features = false, features = ["disable_oom", "disable_panic_handler", "disable_allocator", "sgx"], path = "../core-primitives/substrate-sgx/sp-io" }
 
 # litentry
-itc-stf-task-handler = { path = "../litentry/core/stf-task-handler", default-features = false, features = ["sgx"] }
+lc-stf-task-handler = { path = "../litentry/core/stf-task-handler", default-features = false, features = ["sgx"] }
 litentry-primitives = { path = "../litentry/primitives", default-features = false, features = ["sgx"] }
 lc-identity-verify-handler = { path = "../litentry/core/identity-verify-handler", default-features = false, features = ["sgx"] }
 

@@ -23,7 +23,7 @@ use crate::{
 	},
 	GLOBAL_STATE_HANDLER_COMPONENT,
 };
-use itc_stf_task_handler::{
+use lc_stf_task_handler::{
 	stf_task_sender, Assertion1Request, Assertion2Request, AssertionType, RequestType,
 	SetChallengeCodeRequest, Web2IdentityVerificationRequest,
 };

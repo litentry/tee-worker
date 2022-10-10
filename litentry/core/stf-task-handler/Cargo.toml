@@ -1,5 +1,5 @@
 [package]
-name = "itc-stf-task-handler"
+name = "lc-stf-task-handler"
 version = "0.1.0"
 authors = ["Litentry dev"]
 edition = "2021"

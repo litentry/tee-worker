@@ -36,12 +36,12 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestGet, RestPath,
 };
-use itc_stf_task_handler::Web2IdentityVerificationRequest;
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_storage::{storage_double_map_key, StorageHasher};
 use itp_top_pool_author::traits::AuthorApi;
+use lc_stf_task_handler::Web2IdentityVerificationRequest;
 use litentry_primitives::{
 	IdentityHandle, TwitterValidationData, ValidationData, Web2ValidationData,
 };
