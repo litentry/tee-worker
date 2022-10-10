@@ -6,7 +6,6 @@ members = [
     "app-libs/stf",
     "cli",
     "core/direct-rpc-server",
-	"core/identity-verify-handler",
     "core/offchain-worker-executor",
     "core/parentchain/block-import-dispatcher",
     "core/parentchain/block-importer",
@@ -66,6 +65,7 @@ members = [
     "sidechain/validateer-fetch",
     "litentry/primitives",
     "litentry/pallets/identity-management",
+    "litentry/core/identity-verify-handler",
 ]
 
 [patch."https://github.com/apache/teaclave-sgx-sdk.git"]
