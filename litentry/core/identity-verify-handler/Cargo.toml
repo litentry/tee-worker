@@ -1,5 +1,5 @@
 [package]
-name = "itc-identity-verify-handler"
+name = "lc-identity-verify-handler"
 version = "0.1.0"
 authors = ["Litentry Dev"]
 edition = "2021"

@@ -4140,44 +4140,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "itc-identity-verify-handler"
-version = "0.1.0"
-dependencies = [
- "futures 0.3.24",
- "futures 0.3.8",
- "hex 0.4.0",
- "hex 0.4.3",
- "http 0.2.1",
- "http 0.2.8",
- "http_req 0.8.1 (git+https://github.com/integritee-network/http_req?branch=master)",
- "http_req 0.8.1 (git+https://github.com/integritee-network/http_req)",
- "ita-stf",
- "itc-rest-client",
- "itc-stf-task-handler",
- "itp-extrinsics-factory",
- "itp-ocall-api",
- "itp-sgx-crypto",
- "itp-sgx-externalities",
- "itp-stf-executor",
- "itp-storage",
- "itp-top-pool-author",
- "itp-types",
- "itp-utils",
- "lazy_static",
- "litentry-primitives 0.1.0",
- "log 0.4.17",
- "parity-scale-codec",
- "serde 1.0.145",
- "serde_json 1.0.85",
- "sgx_tstd",
- "sp-core",
- "thiserror 1.0.37",
- "thiserror 1.0.9",
- "url 2.1.1",
- "url 2.3.1",
-]
-
-[[package]]
 name = "itc-offchain-worker-executor"
 version = "0.9.0"
 dependencies = [
@@ -5613,6 +5575,44 @@ name = "lazycell"
 version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
+
+[[package]]
+name = "lc-identity-verify-handler"
+version = "0.1.0"
+dependencies = [
+ "futures 0.3.24",
+ "futures 0.3.8",
+ "hex 0.4.0",
+ "hex 0.4.3",
+ "http 0.2.1",
+ "http 0.2.8",
+ "http_req 0.8.1 (git+https://github.com/integritee-network/http_req?branch=master)",
+ "http_req 0.8.1 (git+https://github.com/integritee-network/http_req)",
+ "ita-stf",
+ "itc-rest-client",
+ "itc-stf-task-handler",
+ "itp-extrinsics-factory",
+ "itp-ocall-api",
+ "itp-sgx-crypto",
+ "itp-sgx-externalities",
+ "itp-stf-executor",
+ "itp-storage",
+ "itp-top-pool-author",
+ "itp-types",
+ "itp-utils",
+ "lazy_static",
+ "litentry-primitives 0.1.0",
+ "log 0.4.17",
+ "parity-scale-codec",
+ "serde 1.0.145",
+ "serde_json 1.0.85",
+ "sgx_tstd",
+ "sp-core",
+ "thiserror 1.0.37",
+ "thiserror 1.0.9",
+ "url 2.1.1",
+ "url 2.3.1",
+]
 
 [[package]]
 name = "libc"

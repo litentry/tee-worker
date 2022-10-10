@@ -24,7 +24,7 @@ extern crate sgx_tstd as std;
 use crate::sgx_reexport_prelude::*;
 use crate::{
 	build_client_with_authorization, format, str, vec, DecryptionVerificationPayload, Error,
-	RequestContext, RequestHandler, String, ToString, UserInfo, Vec,
+	String, ToString, UserInfo, Vec, VerifyContext, VerifyHandler,
 };
 use codec::{Decode, Encode};
 // use core::{borrow::BorrowMut, fmt::Debug, ops::Deref};
@@ -133,11 +133,11 @@ impl<
 		S: StfEnclaveSigning,
 		K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
 		R: UserInfo + DecryptionVerificationPayload<K> + Debug + DeserializeOwned + RestPath<String>,
-	> RequestHandler<K, A, S> for Web2IdentityVerification<R>
+	> VerifyHandler<K, A, S> for Web2IdentityVerification<R>
 {
 	type Response = R;
 
-	fn send_request(&self, request_context: &RequestContext<K, A, S>) -> Result<(), Error> {
+	fn send_request(&self, request_context: &VerifyContext<K, A, S>) -> Result<(), Error> {
 		let mut client = self.make_client()?;
 		let query: Vec<(&str, &str)> =
 			client.query.iter().map(|(k, v)| (k.as_str(), v.as_str())).collect();
@@ -152,7 +152,7 @@ impl<
 
 	fn handle_response(
 		&self,
-		request_context: &RequestContext<K, A, S>,
+		request_context: &VerifyContext<K, A, S>,
 		response: Self::Response,
 	) -> Result<(), Error> {
 		{

@@ -40,10 +40,6 @@ use crate::global_components::{
 };
 
 use ita_stf::{Hash, State as StfState};
-use itc_identity_verify_handler::{
-	web2_identity::{discord, twitter},
-	RequestContext, RequestHandler,
-};
 use itp_component_container::ComponentGetter;
 use itp_extrinsics_factory::{CreateExtrinsics, ExtrinsicsFactory};
 use itp_nonce_cache::GLOBAL_NONCE_CACHE;
@@ -54,6 +50,10 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{OpaqueCall, ShardIdentifier};
+use lc_identity_verify_handler::{
+	web2_identity::{discord, twitter},
+	VerifyContext, VerifyHandler,
+};
 use litentry_primitives::Web2ValidationData;
 
 #[no_mangle]
@@ -117,7 +117,7 @@ fn run_stf_task_handler_internal() -> Result<()> {
 	let stf_enclave_signer =
 		Arc::new(EnclaveStfEnclaveSigner::new(state_observer, ocall_api, shielding_key_repository));
 
-	let request_context = RequestContext::new(
+	let request_context = VerifyContext::new(
 		default_shard_identifier,
 		stf_state,
 		shielding_key,
@@ -154,12 +154,12 @@ fn web2_identity_verification<
 	A: AuthorApi<Hash, Hash>,
 	S: StfEnclaveSigning,
 >(
-	request_context: &RequestContext<K, A, S>,
+	request_context: &VerifyContext<K, A, S>,
 	request: Web2IdentityVerificationRequest,
-) -> core::result::Result<(), itc_identity_verify_handler::Error> {
+) -> core::result::Result<(), lc_identity_verify_handler::Error> {
 	match &request.validation_data {
 		Web2ValidationData::Twitter(_) => {
-			let handler = itc_identity_verify_handler::web2_identity::Web2IdentityVerification::<
+			let handler = lc_identity_verify_handler::web2_identity::Web2IdentityVerification::<
 				twitter::TwitterResponse,
 			> {
 				verification_request: request,
@@ -168,7 +168,7 @@ fn web2_identity_verification<
 			handler.send_request(request_context)
 		},
 		Web2ValidationData::Discord(_) => {
-			let handler = itc_identity_verify_handler::web2_identity::Web2IdentityVerification::<
+			let handler = lc_identity_verify_handler::web2_identity::Web2IdentityVerification::<
 				discord::DiscordResponse,
 			> {
 				verification_request: request,
