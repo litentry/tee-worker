@@ -27,37 +27,37 @@ use crate::RequestType;
 #[cfg(feature = "std")]
 use std::sync::Mutex;
 
-pub type XTSender = Sender<RequestType>;
+pub type StfSender = Sender<RequestType>;
 
 // Global storage of the sender. Should not be accessed directly.
 lazy_static! {
-	static ref GLOBAL_XT_DAEMON: Arc<Mutex<Option<XTDaemonSender>>> =
+	static ref GLOBAL_STF_REQUEST_TASK: Arc<Mutex<Option<StfTaskSender>>> =
 		Arc::new(Mutex::new(Default::default()));
 }
 
-/// Trait to send an extrinsic request to the extrinsic request daemon.
-pub trait SendXTRequest {
-	fn send_xt_request(&self, request: RequestType) -> Result<()>;
+/// Trait to send an stf request to the stf request thread.
+pub trait SendStfRequest {
+	fn send_stf_request(&self, request: RequestType) -> Result<()>;
 }
 
-/// Struct to access the `send_xt_request` function.
-pub struct XTRequestSender {}
-impl XTRequestSender {
+/// Struct to access the `send_stf_request` function.
+pub struct StfRequestSender {}
+impl StfRequestSender {
 	pub fn new() -> Self {
 		Self {}
 	}
 }
 
-impl Default for XTRequestSender {
+impl Default for StfRequestSender {
 	fn default() -> Self {
 		Self::new()
 	}
 }
 
-impl SendXTRequest for XTRequestSender {
-	fn send_xt_request(&self, request: RequestType) -> Result<()> {
+impl SendStfRequest for StfRequestSender {
+	fn send_stf_request(&self, request: RequestType) -> Result<()> {
 		// Acquire lock on extrinsic sender
-		let mutex_guard = GLOBAL_XT_DAEMON.lock().map_err(|_| Error::MutexAccess)?;
+		let mutex_guard = GLOBAL_STF_REQUEST_TASK.lock().map_err(|_| Error::MutexAccess)?;
 
 		let stf_task_sender = mutex_guard.clone().ok_or(Error::ComponentNotInitialized)?;
 
@@ -72,19 +72,19 @@ impl SendXTRequest for XTRequestSender {
 /// Initialization of the extrinsic sender. Needs to be called before any sender access.
 pub fn init_stf_task_sender_storage() -> Result<Receiver<RequestType>> {
 	let (sender, receiver) = channel();
-	let mut xt_daemon_storage = GLOBAL_XT_DAEMON.lock().map_err(|_| Error::MutexAccess)?;
-	*xt_daemon_storage = Some(XTDaemonSender::new(sender));
+	let mut stf_task_storage = GLOBAL_STF_REQUEST_TASK.lock().map_err(|_| Error::MutexAccess)?;
+	*stf_task_storage = Some(StfTaskSender::new(sender));
 	Ok(receiver)
 }
 
 /// Wrapping struct around the actual sender. Should not be accessed directly.
 #[derive(Clone, Debug)]
-struct XTDaemonSender {
-	sender: XTSender,
+struct StfTaskSender {
+	sender: StfSender,
 }
 
-impl XTDaemonSender {
-	pub fn new(sender: XTSender) -> Self {
+impl StfTaskSender {
+	pub fn new(sender: StfSender) -> Self {
 		Self { sender }
 	}
 

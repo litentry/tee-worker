@@ -23,15 +23,11 @@ use crate::{
 	},
 	GLOBAL_STATE_HANDLER_COMPONENT,
 };
-use lc_stf_task_handler::{
-	stf_task_sender, Assertion1Request, Assertion2Request, AssertionType, RequestType,
-	SetChallengeCodeRequest, Web2IdentityVerificationRequest,
-};
+use lc_stf_task_handler::{stf_task_sender, RequestType, Web2IdentityVerificationRequest};
 use log::*;
 use sgx_types::sgx_status_t;
 use std::{string::ToString, sync::Arc};
 
-use ita_sgx_runtime::Runtime;
 use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, LightClientState};
 
 use crate::global_components::{
@@ -41,15 +37,14 @@ use crate::global_components::{
 
 use ita_stf::{Hash, State as StfState};
 use itp_component_container::ComponentGetter;
-use itp_extrinsics_factory::{CreateExtrinsics, ExtrinsicsFactory};
+use itp_extrinsics_factory::ExtrinsicsFactory;
 use itp_nonce_cache::GLOBAL_NONCE_CACHE;
-use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_sgx_crypto::{Ed25519Seal, Rsa3072Seal, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_io::StaticSealedIO;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{OpaqueCall, ShardIdentifier};
+use itp_types::ShardIdentifier;
 use lc_identity_verify_handler::{
 	web2_identity::{discord, twitter},
 	VerifyContext, VerifyHandler,
@@ -86,7 +81,7 @@ fn run_stf_task_handler_internal() -> Result<()> {
 	let authority = Ed25519Seal::unseal_from_static_file()?;
 	let node_metadata_repository = GLOBAL_NODE_METADATA_REPOSITORY_COMPONENT.get()?;
 
-	let extrinsics_factory = ExtrinsicsFactory::new(
+	let _extrinsics_factory = ExtrinsicsFactory::new(
 		genesis_hash,
 		authority,
 		GLOBAL_NONCE_CACHE.clone(),
@@ -136,14 +131,8 @@ fn run_stf_task_handler_internal() -> Result<()> {
 			RequestType::Web3IndentityVerification(ref _request) => {
 				error!("web3 don't support yet");
 			},
-			RequestType::Assertion(AssertionType::AssertionType1(ref request)) => {
-				verify_assertion1(request, &extrinsics_factory);
-			},
-			RequestType::Assertion(AssertionType::AssertionType2(ref request)) => {
-				verify_assertion2(request, &extrinsics_factory);
-			},
-			RequestType::SetChallengeCode(ref request) => {
-				set_challenge_code(request);
+			_ => {
+				error!("Not yet implement");
 			},
 		}
 	}
@@ -177,54 +166,4 @@ fn web2_identity_verification<
 			handler.send_request(request_context)
 		},
 	}
-}
-
-fn feedback_via_ocall<F: CreateExtrinsics>(
-	module_id: u8,
-	method_id: u8,
-	extrinsics_factory: &F,
-) -> Result<()> {
-	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
-
-	let call = OpaqueCall::from_tuple(&([module_id, method_id],));
-	let calls = std::vec![call];
-	let tx = extrinsics_factory.create_extrinsics(calls.as_slice(), None)?;
-
-	let result = ocall_api.send_to_parentchain(tx)?;
-	debug!("extrinsic daemon send tx result as ( {:?},)", result);
-
-	Ok(())
-}
-
-fn verify_assertion1<F: CreateExtrinsics>(request: &Assertion1Request, extrinsics_factory: &F) {
-	let v_did_context =
-	ita_sgx_runtime::pallet_identity_management::Pallet::<Runtime>::get_identity_and_identity_context(&request.target);
-
-	let mut web2_cnt = 0;
-	let mut web3_cnt = 0;
-
-	for did_ctx in &v_did_context {
-		if did_ctx.1.is_verified {
-			if did_ctx.0.is_web2() {
-				web2_cnt += 1;
-			} else if did_ctx.0.is_web3() {
-				web3_cnt += 1;
-			}
-		}
-	}
-
-	if web2_cnt > 0 && web3_cnt > 0 {
-		// TODO: align with Parachain pallet module_id and method_id
-		let module_id = 64u8;
-		let method_id = 0u8;
-		let _err = feedback_via_ocall(module_id, method_id, extrinsics_factory);
-	}
-}
-
-fn verify_assertion2<F: CreateExtrinsics>(_request: &Assertion2Request, _extrinsics_factory: &F) {
-	// TODO
-}
-
-fn set_challenge_code(_request: &SetChallengeCodeRequest) {
-	// TODO
 }

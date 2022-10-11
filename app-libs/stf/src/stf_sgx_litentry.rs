@@ -19,7 +19,7 @@ extern crate sgx_tstd as std;
 
 use crate::{stf_sgx_primitives::types::*, AccountId, MetadataOf, Runtime, StfError, StfResult};
 use itp_utils::stringify::account_id_to_string;
-use lc_stf_task_handler::{stf_task_sender::SendXTRequest, RequestType};
+use lc_stf_task_handler::{stf_task_sender::SendStfRequest, RequestType};
 use litentry_primitives::{
 	Identity, ParentchainBlockNumber, UserShieldingKeyType, Web2ValidationData,
 };
@@ -92,38 +92,38 @@ impl Stf {
 		Ok(())
 	}
 
-	// pub fn verify_ruleset1(who: AccountId) -> StfResult<()> {
-	// 	let v_identity_context =
-	// 	ita_sgx_runtime::pallet_identity_management::Pallet::<Runtime>::get_identity_and_identity_context(&who);
+	pub fn verify_ruleset1(who: AccountId) -> StfResult<()> {
+		let v_identity_context =
+		ita_sgx_runtime::pallet_identity_management::Pallet::<Runtime>::get_identity_and_identity_context(&who);
 
-	// 	let mut web2_cnt = 0;
-	// 	let mut web3_cnt = 0;
+		let mut web2_cnt = 0;
+		let mut web3_cnt = 0;
 
-	// 	for identity_ctx in &v_identity_context {
-	// 		if identity_ctx.1.is_verified {
-	// 			if identity_ctx.0.is_web2() {
-	// 				web2_cnt = web2_cnt + 1;
-	// 			} else if identity_ctx.0.is_web3() {
-	// 				web3_cnt = web3_cnt + 1;
-	// 			}
-	// 		}
-	// 	}
+		for identity_ctx in &v_identity_context {
+			if identity_ctx.1.is_verified {
+				if identity_ctx.0.is_web2() {
+					web2_cnt = web2_cnt + 1;
+				} else if identity_ctx.0.is_web3() {
+					web3_cnt = web3_cnt + 1;
+				}
+			}
+		}
 
-	// 	if web2_cnt > 0 && web3_cnt > 0 {
-	// 		// TODO: generate_vc();
-	// 		Ok(())
-	// 	} else {
-	// 		Err(StfError::RuleSet1VerifyFail)
-	// 	}
-	// }
+		if web2_cnt > 0 && web3_cnt > 0 {
+			// TODO: generate_vc();
+			Ok(())
+		} else {
+			Err(StfError::RuleSet1VerifyFail)
+		}
+	}
 
 	pub fn query_credit(_account_id: AccountId) -> StfResult<()> {
 		// info!("query_credit({:x?})", account_id.encode(),);
 		// let tweet_id: Vec<u8> = "1569510747084050432".as_bytes().to_vec();
 		// // let request_str = format!("{}", "https://httpbin.org/anything");
 		// let request = lc_stf_task_handler::Request { tweet_id };
-		// let sender = lc_stf_task_handler::stf_task_sender::XTRequestSender::new();
-		// let result = sender.send_xt_request(request);
+		// let sender = lc_stf_task_handler::stf_task_sender::StfRequestSender::new();
+		// let result = sender.send_stf_request(request);
 		// info!("send https request, get result as {:?}", result);
 
 		Ok(())
@@ -134,24 +134,14 @@ impl Stf {
 		identity: Identity,
 		challenge_code: u32,
 	) -> StfResult<()> {
-		// ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_challenge_code {
-		// 	who: account,
-		// 	identity,
-		// 	code: challenge_code,
-		// }
-		// .dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
-		// .map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
-		// Ok(())
-
-		let request = lc_stf_task_handler::SetChallengeCodeRequest {
-			target: account,
+		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_challenge_code {
+			who: account,
 			identity,
-			challenge_code,
-		};
-		let xt_sender = lc_stf_task_handler::stf_task_sender::XTRequestSender::new();
-		xt_sender
-			.send_xt_request(RequestType::SetChallengeCode(request))
-			.map_err(|e| StfError::Dispatch(format!("send SetChallengeCodeRequest error:{:?}", e)))
+			code: challenge_code,
+		}
+		.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+		Ok(())
 	}
 
 	pub fn verify_web2_identity_step1(
@@ -188,29 +178,9 @@ impl Stf {
 			validation_data,
 			bn,
 		};
-		let xt_sender = lc_stf_task_handler::stf_task_sender::XTRequestSender::new();
+		let xt_sender = lc_stf_task_handler::stf_task_sender::StfRequestSender::new();
 		xt_sender
-			.send_xt_request(RequestType::Web2IdentityVerification(request))
+			.send_stf_request(RequestType::Web2IdentityVerification(request))
 			.map_err(|e| StfError::Dispatch(format!("send extrinsic request error:{:?}", e)))
-	}
-
-	pub fn verify_assertion1(target: AccountId) -> StfResult<()> {
-		let request = lc_stf_task_handler::Assertion1Request { target };
-		let xt_sender = lc_stf_task_handler::stf_task_sender::XTRequestSender::new();
-		xt_sender
-			.send_xt_request(RequestType::Assertion(
-				lc_stf_task_handler::AssertionType::AssertionType1(request),
-			))
-			.map_err(|e| StfError::Dispatch(format!("send verify_assertion1 error:{:?}", e)))
-	}
-
-	pub fn verify_assertion2(target: AccountId, identity: Identity) -> StfResult<()> {
-		let request = lc_stf_task_handler::Assertion2Request { target, identity };
-		let xt_sender = lc_stf_task_handler::stf_task_sender::XTRequestSender::new();
-		xt_sender
-			.send_xt_request(RequestType::Assertion(
-				lc_stf_task_handler::AssertionType::AssertionType2(request),
-			))
-			.map_err(|e| StfError::Dispatch(format!("send verify_assertion2 error:{:?}", e)))
 	}
 }
