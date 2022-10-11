@@ -134,24 +134,14 @@ impl Stf {
 		identity: Identity,
 		challenge_code: u32,
 	) -> StfResult<()> {
-		// ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_challenge_code {
-		// 	who: account,
-		// 	identity,
-		// 	code: challenge_code,
-		// }
-		// .dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
-		// .map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
-		// Ok(())
-
-		let request = lc_stf_task_handler::SetChallengeCodeRequest {
-			target: account,
+		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_challenge_code {
+			who: account,
 			identity,
-			challenge_code,
-		};
-		let xt_sender = lc_stf_task_handler::stf_task_sender::StfRequestSender::new();
-		xt_sender
-			.send_stf_request(RequestType::SetChallengeCode(request))
-			.map_err(|e| StfError::Dispatch(format!("send SetChallengeCodeRequest error:{:?}", e)))
+			code: challenge_code,
+		}
+		.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+		Ok(())
 	}
 
 	pub fn verify_web2_identity_step1(
