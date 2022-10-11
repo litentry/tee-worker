@@ -23,8 +23,8 @@ use crate::{
 	},
 	GLOBAL_STATE_HANDLER_COMPONENT,
 };
-use itc_extrinsic_request_daemon::{
-	xt_daemon_sender, Assertion1Request, Assertion2Request, AssertionType, RequestType,
+use lc_stf_task_handler::{
+	stf_task_sender, Assertion1Request, Assertion2Request, AssertionType, RequestType,
 	SetChallengeCodeRequest, Web2IdentityVerificationRequest,
 };
 use log::*;
@@ -40,10 +40,6 @@ use crate::global_components::{
 };
 
 use ita_stf::{Hash, State as StfState};
-use itc_account_request_handler::{
-	web2_identity::{discord, twitter},
-	RequestContext, RequestHandler,
-};
 use itp_component_container::ComponentGetter;
 use itp_extrinsics_factory::{CreateExtrinsics, ExtrinsicsFactory};
 use itp_nonce_cache::GLOBAL_NONCE_CACHE;
@@ -54,11 +50,15 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{OpaqueCall, ShardIdentifier};
+use lc_identity_verify_handler::{
+	web2_identity::{discord, twitter},
+	VerifyContext, VerifyHandler,
+};
 use litentry_primitives::Web2ValidationData;
 
 #[no_mangle]
-pub unsafe extern "C" fn run_extrinsic_request_daemon() -> sgx_status_t {
-	if let Err(e) = run_extrinsic_request_daemon_internal() {
+pub unsafe extern "C" fn run_stf_task_handler() -> sgx_status_t {
+	if let Err(e) = run_stf_task_handler_internal() {
 		error!("Error while running extrinsic request daemon: {:?}", e);
 		return e.into()
 	}
@@ -66,12 +66,12 @@ pub unsafe extern "C" fn run_extrinsic_request_daemon() -> sgx_status_t {
 	sgx_status_t::SGX_SUCCESS
 }
 
-/// Internal [`run_extrinsic_request_daemon`] function to be able to use the `?` operator.
+/// Internal [`run_stf_task_handler`] function to be able to use the `?` operator.
 ///
 /// Runs an extrinsic request inside the enclave, opening a channel and waiting for
 /// senders to send requests.
-fn run_extrinsic_request_daemon_internal() -> Result<()> {
-	let receiver = xt_daemon_sender::init_xt_daemon_sender_storage()?;
+fn run_stf_task_handler_internal() -> Result<()> {
+	let receiver = stf_task_sender::init_stf_task_sender_storage()?;
 
 	let validator_access = GLOBAL_PARENTCHAIN_BLOCK_VALIDATOR_ACCESS_COMPONENT.get()?;
 
@@ -117,7 +117,7 @@ fn run_extrinsic_request_daemon_internal() -> Result<()> {
 	let stf_enclave_signer =
 		Arc::new(EnclaveStfEnclaveSigner::new(state_observer, ocall_api, shielding_key_repository));
 
-	let request_context = RequestContext::new(
+	let request_context = VerifyContext::new(
 		default_shard_identifier,
 		stf_state,
 		shielding_key,
@@ -154,12 +154,12 @@ fn web2_identity_verification<
 	A: AuthorApi<Hash, Hash>,
 	S: StfEnclaveSigning,
 >(
-	request_context: &RequestContext<K, A, S>,
+	request_context: &VerifyContext<K, A, S>,
 	request: Web2IdentityVerificationRequest,
-) -> core::result::Result<(), itc_account_request_handler::Error> {
+) -> core::result::Result<(), lc_identity_verify_handler::Error> {
 	match &request.validation_data {
 		Web2ValidationData::Twitter(_) => {
-			let handler = itc_account_request_handler::web2_identity::Web2IdentityVerification::<
+			let handler = lc_identity_verify_handler::web2_identity::Web2IdentityVerification::<
 				twitter::TwitterResponse,
 			> {
 				verification_request: request,
@@ -168,7 +168,7 @@ fn web2_identity_verification<
 			handler.send_request(request_context)
 		},
 		Web2ValidationData::Discord(_) => {
-			let handler = itc_account_request_handler::web2_identity::Web2IdentityVerification::<
+			let handler = lc_identity_verify_handler::web2_identity::Web2IdentityVerification::<
 				discord::DiscordResponse,
 			> {
 				verification_request: request,

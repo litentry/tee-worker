@@ -85,7 +85,7 @@ pub struct VerificationPayload {
 	pub identity: Identity,
 }
 
-pub struct RequestContext<
+pub struct VerifyContext<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
 	A: AuthorApi<Hash, Hash>,
 	S: StfEnclaveSigning,
@@ -101,7 +101,7 @@ impl<
 		K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
 		A: AuthorApi<Hash, Hash>,
 		S: StfEnclaveSigning,
-	> RequestContext<K, A, S>
+	> VerifyContext<K, A, S>
 {
 	pub fn new(
 		shard_identifier: ShardIdentifier,
@@ -138,20 +138,20 @@ pub trait UserInfo {
 	fn get_user_id(&self) -> Option<String>;
 }
 
-pub trait RequestHandler<
+pub trait VerifyHandler<
 	K: ShieldingCryptoEncrypt + ShieldingCryptoDecrypt + Clone,
 	A: AuthorApi<Hash, Hash>,
 	S: StfEnclaveSigning,
 >
 {
 	type Response: Debug + serde::de::DeserializeOwned + RestPath<String>;
-	// fn make_https_request(&self, context: &RequestContext<K,A,S>)->
+	// fn make_https_request(&self, context: &VerifyContext<K,A,S>)->
 
-	fn send_request(&self, request_context: &RequestContext<K, A, S>) -> Result<(), Error>;
+	fn send_request(&self, request_context: &VerifyContext<K, A, S>) -> Result<(), Error>;
 
 	fn handle_response(
 		&self,
-		request_context: &RequestContext<K, A, S>,
+		request_context: &VerifyContext<K, A, S>,
 		response: Self::Response,
 	) -> Result<(), Error>;
 }

@@ -24,14 +24,13 @@ extern crate sgx_tstd as std;
 use crate::sgx_reexport_prelude::*;
 use crate::{
 	build_client_with_authorization, format, str, vec, DecryptionVerificationPayload, Error,
-	RequestContext, RequestHandler, String, ToString, UserInfo, Vec,
+	String, ToString, UserInfo, Vec, VerifyContext, VerifyHandler,
 };
 use codec::{Decode, Encode};
 // use core::{borrow::BorrowMut, fmt::Debug, ops::Deref};
 use core::fmt::Debug;
 use futures::executor;
 use ita_stf::{Hash, ShardIdentifier, State as StfState, TrustedCall, TrustedOperation};
-use itc_extrinsic_request_daemon::Web2IdentityVerificationRequest;
 use itc_rest_client::{
 	http_client::{DefaultSend, HttpClient},
 	rest_client::RestClient,
@@ -42,6 +41,7 @@ use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_storage::{storage_double_map_key, StorageHasher};
 use itp_top_pool_author::traits::AuthorApi;
+use lc_stf_task_handler::Web2IdentityVerificationRequest;
 use litentry_primitives::{
 	IdentityHandle, TwitterValidationData, ValidationData, Web2ValidationData,
 };
@@ -133,11 +133,11 @@ impl<
 		S: StfEnclaveSigning,
 		K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
 		R: UserInfo + DecryptionVerificationPayload<K> + Debug + DeserializeOwned + RestPath<String>,
-	> RequestHandler<K, A, S> for Web2IdentityVerification<R>
+	> VerifyHandler<K, A, S> for Web2IdentityVerification<R>
 {
 	type Response = R;
 
-	fn send_request(&self, request_context: &RequestContext<K, A, S>) -> Result<(), Error> {
+	fn send_request(&self, request_context: &VerifyContext<K, A, S>) -> Result<(), Error> {
 		let mut client = self.make_client()?;
 		let query: Vec<(&str, &str)> =
 			client.query.iter().map(|(k, v)| (k.as_str(), v.as_str())).collect();
@@ -152,7 +152,7 @@ impl<
 
 	fn handle_response(
 		&self,
-		request_context: &RequestContext<K, A, S>,
+		request_context: &VerifyContext<K, A, S>,
 		response: Self::Response,
 	) -> Result<(), Error> {
 		{

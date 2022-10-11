@@ -59,18 +59,18 @@ impl SendXTRequest for XTRequestSender {
 		// Acquire lock on extrinsic sender
 		let mutex_guard = GLOBAL_XT_DAEMON.lock().map_err(|_| Error::MutexAccess)?;
 
-		let xt_daemon_sender = mutex_guard.clone().ok_or(Error::ComponentNotInitialized)?;
+		let stf_task_sender = mutex_guard.clone().ok_or(Error::ComponentNotInitialized)?;
 
 		// Release mutex lock, so we don't block the lock longer than necessary.
 		drop(mutex_guard);
 
 		// Send the request to the receiver loop.
-		xt_daemon_sender.send(request)
+		stf_task_sender.send(request)
 	}
 }
 
 /// Initialization of the extrinsic sender. Needs to be called before any sender access.
-pub fn init_xt_daemon_sender_storage() -> Result<Receiver<RequestType>> {
+pub fn init_stf_task_sender_storage() -> Result<Receiver<RequestType>> {
 	let (sender, receiver) = channel();
 	let mut xt_daemon_storage = GLOBAL_XT_DAEMON.lock().map_err(|_| Error::MutexAccess)?;
 	*xt_daemon_storage = Some(XTDaemonSender::new(sender));

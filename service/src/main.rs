@@ -50,9 +50,9 @@ use itc_parentchain_light_client::light_client_init_params::LightClientInitParam
 use itp_enclave_api::{
 	direct_request::DirectRequest,
 	enclave_base::EnclaveBase,
-	extrinsic_request_daemon::XTRequestDaemon,
 	remote_attestation::{RemoteAttestation, TlsRemoteAttestation},
 	sidechain::Sidechain,
+	stf_task_handler::StfTaskHandler,
 	teeracle_api::TeeracleApi,
 	teerex_api::TeerexApi,
 	Enclave,
@@ -284,7 +284,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		+ TlsRemoteAttestation
 		+ TeerexApi
 		+ TeeracleApi
-		+ XTRequestDaemon
+		+ StfTaskHandler
 		+ Clone,
 	D: BlockPruner + FetchBlocks<SignedSidechainBlock> + Sync + Send + 'static,
 	InitializationHandler: TrackInitialization + IsInitialized + Sync + Send + 'static,
@@ -456,7 +456,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	// Start https client daemon
 	let enclave_api_https_client = enclave.clone();
 	thread::spawn(move || {
-		enclave_api_https_client.run_extrinsic_request_daemon().unwrap();
+		enclave_api_https_client.run_stf_task_handler().unwrap();
 	});
 
 	// ------------------------------------------------------------------------
