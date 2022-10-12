@@ -14,8 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::*;
-use litentry_primitives::{Identity, Web2Network};
+use super::*;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DiscordResponse {

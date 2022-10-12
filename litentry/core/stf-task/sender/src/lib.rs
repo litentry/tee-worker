@@ -34,16 +34,14 @@ pub mod sgx_reexport_prelude {
 use itp_types::AccountId;
 pub mod error;
 pub mod stf_task_sender;
-// pub mod stf_task_receiver;
-// pub mod https_client;
 pub use error::Result;
 
 use codec::{Decode, Encode, MaxEncodedLen};
-use litentry_primitives::{Identity, Web2ValidationData};
+use litentry_primitives::{Identity, Web2ValidationData, Web3ValidationData};
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen)]
 pub struct Web2IdentityVerificationRequest {
-	pub target: AccountId,
+	pub who: AccountId,
 	pub identity: Identity,
 	pub challenge_code: u32,
 	pub validation_data: Web2ValidationData,
@@ -53,21 +51,21 @@ pub struct Web2IdentityVerificationRequest {
 /// TODO: adapt Web3 struct fields later
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen)]
 pub struct Web3IdentityVerificationRequest {
-	pub target: AccountId,
+	pub who: AccountId,
 	pub identity: Identity,
 	pub challenge_code: u32,
-	pub validation_data: Web2ValidationData,
+	pub validation_data: Web3ValidationData,
 	pub bn: litentry_primitives::ParentchainBlockNumber, //Parentchain BlockNumber
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen)]
 pub struct Assertion1Request {
-	pub target: AccountId,
+	pub who: AccountId,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen)]
 pub struct Assertion2Request {
-	pub target: AccountId,
+	pub who: AccountId,
 	pub identity: Identity,
 }
 
@@ -78,7 +76,7 @@ pub enum AssertionType {
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen)]
 pub struct SetChallengeCodeRequest {
-	pub target: AccountId,
+	pub who: AccountId,
 	pub identity: Identity,
 	pub challenge_code: u32,
 }
@@ -88,4 +86,28 @@ pub enum RequestType {
 	Web3IdentityVerification(Web3IdentityVerificationRequest),
 	Assertion(AssertionType),
 	SetChallengeCode(SetChallengeCodeRequest),
+}
+
+impl From<Web2IdentityVerificationRequest> for RequestType {
+	fn from(r: Web2IdentityVerificationRequest) -> Self {
+		RequestType::Web2IdentityVerification(r)
+	}
+}
+
+impl From<Web3IdentityVerificationRequest> for RequestType {
+	fn from(r: Web3IdentityVerificationRequest) -> Self {
+		RequestType::Web3IdentityVerification(r)
+	}
+}
+
+impl From<AssertionType> for RequestType {
+	fn from(r: AssertionType) -> Self {
+		RequestType::Assertion(r)
+	}
+}
+
+impl From<SetChallengeCodeRequest> for RequestType {
+	fn from(r: SetChallengeCodeRequest) -> Self {
+		RequestType::SetChallengeCode(r)
+	}
 }

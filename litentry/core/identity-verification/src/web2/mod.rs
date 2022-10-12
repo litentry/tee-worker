@@ -22,16 +22,14 @@ extern crate sgx_tstd as std;
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
-use crate::{
-	build_client_with_authorization, format, str, vec, DecryptionVerificationPayload, Error,
-	String, ToString, UserInfo, Vec, VerifyContext, VerifyHandler,
-};
+
 use codec::{Decode, Encode};
-// use core::{borrow::BorrowMut, fmt::Debug, ops::Deref};
-use core::fmt::Debug;
 use futures::executor;
+use http::header::{AUTHORIZATION, CONNECTION};
+use http_req::response::Headers;
 use ita_stf::{Hash, ShardIdentifier, State as StfState, TrustedCall, TrustedOperation};
 use itc_rest_client::{
+	error::Error as HttpError,
 	http_client::{DefaultSend, HttpClient},
 	rest_client::RestClient,
 	RestGet, RestPath,
@@ -43,11 +41,23 @@ use itp_storage::{storage_double_map_key, StorageHasher};
 use itp_top_pool_author::traits::AuthorApi;
 use lc_stf_task_sender::Web2IdentityVerificationRequest;
 use litentry_primitives::{
-	IdentityHandle, TwitterValidationData, ValidationData, Web2ValidationData,
+	Identity, IdentityHandle, IdentityString, IdentityWebType, TwitterValidationData,
+	ValidationData, Web2Network, Web2ValidationData,
 };
-use serde::de::DeserializeOwned;
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use sp_core::ByteArray;
-use std::{marker::PhantomData, sync::Arc};
+use std::{
+	fmt::Debug,
+	format,
+	marker::PhantomData,
+	str,
+	string::{String, ToString},
+	sync::Arc,
+	time::Duration,
+	vec,
+	vec::Vec,
+};
+use url::Url;
 
 pub mod discord;
 pub mod twitter;
@@ -62,10 +72,83 @@ const TWITTER_BASE_URL: &str = "http://localhost";
 #[cfg(test)]
 const DISCORD_BASE_URL: &str = "http://localhost";
 
+const TIMEOUT: Duration = Duration::from_secs(3u64);
+
+// TODO: maybe split this file into smaller mods
+
+#[derive(Debug, thiserror::Error, Clone)]
+pub enum Error {
+	#[error("Request error: {0}")]
+	RquestError(String),
+
+	#[error("Other error: {0}")]
+	OtherError(String),
+}
+
+pub trait VerifyHandler<
+	K: ShieldingCryptoEncrypt + ShieldingCryptoDecrypt + Clone,
+	A: AuthorApi<Hash, Hash>,
+	S: StfEnclaveSigning,
+>
+{
+	type Response: Debug + serde::de::DeserializeOwned + RestPath<String>;
+
+	fn send_request(&self, request_context: &VerifyContext<K, A, S>) -> Result<(), Error>;
+
+	fn handle_response(
+		&self,
+		request_context: &VerifyContext<K, A, S>,
+		response: Self::Response,
+	) -> Result<(), Error>;
+}
+
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct Web2IdentityVerification<T> {
 	pub verification_request: Web2IdentityVerificationRequest,
 	pub _marker: PhantomData<T>,
+}
+
+pub trait DecryptionVerificationPayload<K: ShieldingCryptoDecrypt> {
+	fn decrypt_ciphertext(&self, key: K) -> Result<VerificationPayload, Error>;
+}
+
+pub trait UserInfo {
+	fn get_user_id(&self) -> Option<String>;
+}
+
+pub struct VerificationPayload {
+	pub owner: String,
+	pub code: u32,
+	pub identity: Identity,
+}
+
+pub struct VerifyContext<
+	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
+	A: AuthorApi<Hash, Hash>,
+	S: StfEnclaveSigning,
+> {
+	shielding_key: K,
+	stf_state: Arc<StfState>,
+	shard_identifier: ShardIdentifier,
+	enclave_signer: Arc<S>,
+	author: Arc<A>,
+}
+
+impl<
+		K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
+		A: AuthorApi<Hash, Hash>,
+		S: StfEnclaveSigning,
+	> VerifyContext<K, A, S>
+{
+	pub fn new(
+		shard_identifier: ShardIdentifier,
+		stf_state: Arc<StfState>,
+		shielding_key: K,
+		enclave_signer: Arc<S>,
+		author: Arc<A>,
+	) -> Self {
+		Self { shard_identifier, stf_state, shielding_key, enclave_signer, author }
+	}
 }
 
 struct Web2HttpsClient {
@@ -160,7 +243,7 @@ impl<
 			let key = storage_double_map_key(
 				"IdentityManagement",
 				"ChallengeCodes",
-				&self.verification_request.target,
+				&self.verification_request.who,
 				&StorageHasher::Blake2_128Concat,
 				&self.verification_request.identity,
 				&StorageHasher::Blake2_128Concat,
@@ -198,12 +281,9 @@ impl<
 			return Err(Error::OtherError("identity is not the same".to_string()))
 		}
 
-		let target_hex = hex::encode(request.target.as_slice());
-		if !payload.owner.eq_ignore_ascii_case(target_hex.as_str()) {
-			return Err(Error::OtherError(format!(
-				"owner is not the same as target:{:?}",
-				target_hex
-			)))
+		let who_hex = hex::encode(request.who.as_slice());
+		if !payload.owner.eq_ignore_ascii_case(who_hex.as_str()) {
+			return Err(Error::OtherError(format!("owner is not the same as target:{:?}", who_hex)))
 		}
 
 		if !request.challenge_code.eq(&payload.code) {
@@ -217,7 +297,7 @@ impl<
 
 		let trusted_call = TrustedCall::verify_identity_step2(
 			enclave_account_id,
-			request.target.clone(),
+			request.who.clone(),
 			request.identity.clone(),
 			ValidationData::Web2(request.validation_data.clone()),
 			request.bn,
@@ -262,4 +342,20 @@ fn submit_call<
 	})?;
 
 	Ok(())
+}
+
+pub fn build_client(base_url: Url, headers: Headers) -> RestClient<HttpClient<DefaultSend>> {
+	let http_client = HttpClient::new(DefaultSend {}, true, Some(TIMEOUT), Some(headers), None);
+	RestClient::new(http_client, base_url)
+}
+
+pub fn build_client_with_authorization(
+	base_url: &str,
+	authorization_token: &str,
+) -> RestClient<HttpClient<DefaultSend>> {
+	let base_url = Url::parse(base_url).unwrap();
+	let mut headers = Headers::new();
+	headers.insert(CONNECTION.as_str(), "close");
+	headers.insert(AUTHORIZATION.as_str(), authorization_token);
+	build_client(base_url, headers)
 }

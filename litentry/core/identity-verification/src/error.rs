@@ -14,36 +14,31 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg_attr(not(feature = "std"), no_std)]
-
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-extern crate sgx_tstd as std;
-
-// re-export module to properly feature gate sgx and regular std environment
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-pub mod sgx_reexport_prelude {
-	pub use futures_sgx as futures;
-	pub use hex_sgx as hex;
-	pub use thiserror_sgx as thiserror;
-	pub use url_sgx as url;
-}
-
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
+use std::boxed::Box;
 
-#[cfg(all(feature = "std", feature = "sgx"))]
-compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
+pub type Result<T> = core::result::Result<T, Error>;
 
-use ita_stf::State as StfState;
-use std::string::String;
-
-#[derive(Debug, thiserror::Error, Clone)]
+// identity verification errors
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
-	#[error("Request error: {0}")]
-	RequestError(String),
-
-	#[error("Other error: {0}")]
-	OtherError(String),
+	#[error("unexpected message")]
+	UnexpectedMessage,
+	#[error("wrong identity handle type")]
+	WrongIdentityHanldeType,
+	#[error("wrong signature type")]
+	WrongSignatureType,
+	#[error("wrong web3 network type")]
+	WrongWeb3NetworkType,
+	#[error("failed to verify substrate signature")]
+	VerifySubstrateSignatureFailed,
+	#[error("failed to recover substrate public key")]
+	RecoverSubstratePubkeyFailed,
+	#[error("failed to verify evm signature")]
+	VerifyEvmSignatureFailed,
+	#[error("failed to recover evm address")]
+	RecoverEvmAddressFailed,
+	#[error(transparent)]
+	Other(#[from] Box<dyn std::error::Error + Sync + Send + 'static>),
 }
-
-pub mod stf_task_receiver;

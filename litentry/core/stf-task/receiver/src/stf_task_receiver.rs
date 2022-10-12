@@ -14,23 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-// use crate::{
-// 	error::{Error, Result},
-// 	stf_task_sender, AssertionType, RequestType,
-// };
-use crate::{
-	web2_identity_verification::{discord, twitter, Web2IdentityVerification},
-	Error, StfState, VerifyContext, VerifyHandler,
-};
+use crate::{Error, StfState};
 use ita_stf::{Hash, ShardIdentifier};
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_top_pool_author::traits::AuthorApi;
+use lc_identity_verification::web2::{
+	discord, twitter, VerifyContext, VerifyHandler, Web2IdentityVerification,
+};
 use lc_stf_task_sender::{stf_task_sender, RequestType, Web2IdentityVerificationRequest};
 use litentry_primitives::Web2ValidationData;
 use log::error;
 use std::{format, sync::Arc};
 
+// TODO: better error handling
 pub fn run_stf_task_receiver<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
 	A: AuthorApi<Hash, Hash>,
@@ -87,14 +84,18 @@ fn web2_identity_verification<
 				verification_request: request,
 				_marker: Default::default(),
 			};
-			handler.send_request(request_context)
+			handler
+				.send_request(request_context)
+				.map_err(|e| Error::OtherError(format!("error send request {:?}", e)))
 		},
 		Web2ValidationData::Discord(_) => {
 			let handler = Web2IdentityVerification::<discord::DiscordResponse> {
 				verification_request: request,
 				_marker: Default::default(),
 			};
-			handler.send_request(request_context)
+			handler
+				.send_request(request_context)
+				.map_err(|e| Error::OtherError(format!("error send request {:?}", e)))
 		},
 	}
 }

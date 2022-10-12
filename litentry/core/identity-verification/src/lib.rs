@@ -24,26 +24,33 @@ extern crate sgx_tstd as std;
 pub mod sgx_reexport_prelude {
 	pub use futures_sgx as futures;
 	pub use hex_sgx as hex;
+	pub use http_req_sgx as http_req;
+	pub use http_sgx as http;
 	pub use thiserror_sgx as thiserror;
 	pub use url_sgx as url;
 }
 
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use crate::sgx_reexport_prelude::*;
-
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
-use ita_stf::State as StfState;
-use std::string::String;
+use codec::Encode;
+// this should be ita_stf::AccountId, but we use itp_types to avoid cyclic dep
+use itp_types::AccountId;
+use litentry_primitives::{ChallengeCode, Identity};
+use sp_std::vec::Vec;
+use std::string::ToString;
 
-#[derive(Debug, thiserror::Error, Clone)]
-pub enum Error {
-	#[error("Request error: {0}")]
-	RequestError(String),
+// TODO: maybe we can define some Verifier trait
+pub mod web2;
+pub mod web3;
 
-	#[error("Other error: {0}")]
-	OtherError(String),
+pub mod error;
+
+// verification message format: <challeng-code> + <litentry-AccountId32> + <Identity>,
+// where <> means SCALE-encoded
+pub fn get_expected_message(who: &AccountId, identity: &Identity, code: &ChallengeCode) -> Vec<u8> {
+	let mut msg = code.encode();
+	msg.append(&mut who.encode());
+	msg.append(&mut identity.encode());
+	msg
 }
-
-pub mod stf_task_receiver;

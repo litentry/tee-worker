@@ -78,6 +78,8 @@ pub enum StfError {
 	// litentry
 	LayerOneNumberUnavailable,
 	InvalidMetadata,
+	#[display(fmt = "Identity verification failed")]
+	VerifyIdentityFailed,
 	RuleSet1VerifyFail,
 }
 

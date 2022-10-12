@@ -35,7 +35,6 @@ use itp_types::OpaqueCall;
 use itp_utils::stringify::account_id_to_string;
 use its_primitives::types::{BlockHash, BlockNumber as SidechainBlockNumber, Timestamp};
 use its_state::SidechainSystemExt;
-use litentry_primitives::ValidationData;
 use log::*;
 use sp_io::hashing::blake2_256;
 use sp_runtime::MultiAddress;
@@ -472,14 +471,7 @@ impl Stf {
 					bn,
 				) => {
 					ensure_enclave_signer_account(&enclave_account)?;
-					// TODO support other validation_data
-					if let ValidationData::Web2(web2) = validation_data {
-						Self::verify_web2_identity_step1(account, identity, web2, bn)
-					} else {
-						Err(StfError::Dispatch(
-							"validation_data only support Web2ValidationData::Twitter".to_string(),
-						))
-					}
+					Self::verify_identity_step1(account, identity, validation_data, bn)
 				},
 				TrustedCall::verify_identity_step2(
 					_enclave_account,

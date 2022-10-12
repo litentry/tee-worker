@@ -18,14 +18,13 @@
 extern crate sgx_tstd as std;
 
 use crate::{stf_sgx_primitives::types::*, AccountId, MetadataOf, Runtime, StfError, StfResult};
+use ita_sgx_runtime::IdentityManagement;
 use itp_utils::stringify::account_id_to_string;
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
-	RequestType, Web2IdentityVerificationRequest,
+	RequestType, Web2IdentityVerificationRequest, Web3IdentityVerificationRequest,
 };
-use litentry_primitives::{
-	Identity, ParentchainBlockNumber, UserShieldingKeyType, Web2ValidationData,
-};
+use litentry_primitives::{Identity, ParentchainBlockNumber, UserShieldingKeyType, ValidationData};
 use log::*;
 use std::format;
 use support::traits::UnfilteredDispatchable;
@@ -157,43 +156,37 @@ impl Stf {
 		Ok(())
 	}
 
-	pub fn verify_web2_identity_step1(
-		target: AccountId,
+	pub fn verify_identity_step1(
+		who: AccountId,
 		identity: Identity,
-		validation_data: Web2ValidationData,
+		validation_data: ValidationData,
 		bn: ParentchainBlockNumber,
 	) -> StfResult<()> {
-		// testing.. remove later
-		let key = itp_storage::storage_double_map_key(
-			"IdentityManagement",
-			"ChallengeCodes",
-			&target,
-			&itp_storage::StorageHasher::Blake2_128Concat,
-			&identity,
-			&itp_storage::StorageHasher::Blake2_128Concat,
-		);
+		let code = IdentityManagement::challenge_codes(&who, &identity)
+			.ok_or_else(|| StfError::Dispatch(format!("code not found")))?;
 
-		let value: Option<u32> = crate::helpers::get_storage_by_key_hash(key.clone());
+		debug!("who:{:?}, identity:{:?}, code:{:?}", who, identity, code);
 
-		// let code: Option<u32> = ita_sgx_runtime::pallet_identity_management::ChallengeCodes::<
-		// 	Runtime,
-		// >::get(&target, &identity);
-		let code = Some(1134);
-
-		log::warn!("storage key:{:?}, value:{:?}, pallet:{:?}", key, value, code);
-
-		//TODO change error type
-		code.ok_or_else(|| StfError::Dispatch(format!("code not found")))?;
-		let request = Web2IdentityVerificationRequest {
-			target,
-			identity,
-			challenge_code: code.unwrap(),
-			validation_data,
-			bn,
+		let request: RequestType = match validation_data {
+			ValidationData::Web2(web2) => Web2IdentityVerificationRequest {
+				who,
+				identity,
+				challenge_code: code,
+				validation_data: web2,
+				bn,
+			}
+			.into(),
+			ValidationData::Web3(web3) => Web3IdentityVerificationRequest {
+				who,
+				identity,
+				challenge_code: code,
+				validation_data: web3,
+				bn,
+			}
+			.into(),
 		};
+
 		let sender = StfRequestSender::new();
-		sender
-			.send_stf_request(RequestType::Web2IdentityVerification(request))
-			.map_err(|e| StfError::Dispatch(format!("send extrinsic request error:{:?}", e)))
+		sender.send_stf_request(request).map_err(|_| StfError::VerifyIdentityFailed)
 	}
 }
