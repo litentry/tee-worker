@@ -17,12 +17,9 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{
-	stf_sgx_primitives::types::*, AccountId, MetadataOf, Runtime, StfError, StfResult, TrustedCall,
-};
-use codec::Encode;
+use crate::{stf_sgx_primitives::types::*, AccountId, MetadataOf, Runtime, StfError, StfResult};
 use itp_utils::stringify::account_id_to_string;
-use lc_stf_task_initialization::{
+use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
 	RequestType, Web2IdentityVerificationRequest,
 };

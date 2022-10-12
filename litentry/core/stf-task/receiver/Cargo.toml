@@ -1,5 +1,5 @@
 [package]
-name = "lc-stf-task-handler"
+name = "lc-stf-task-receiver"
 version = "0.1.0"
 authors = ["Litentry Dev"]
 edition = "2021"
@@ -46,7 +46,7 @@ itp-utils = { path = "../../../../core-primitives/utils", default-features = fal
 
 # litentry
 litentry-primitives = { path = "../../../primitives", default-features = false }
-lc-stf-task-initialization = { path = "../initialization", default-features = false }
+lc-stf-task-sender = { path = "../sender", default-features = false }
 
 [features]
 default = ["std"]
@@ -56,7 +56,7 @@ std = [
     "http",
     "http_req",
     "itc-rest-client/std",
-    "lc-stf-task-initialization/std",
+    "lc-stf-task-sender/std",
     "log/std",
     "serde/std",
     "serde_json/std",
@@ -80,7 +80,7 @@ sgx = [
     "thiserror_sgx",
     "url_sgx",
 	"ita-stf/sgx",
-	"lc-stf-task-initialization/sgx",
+	"lc-stf-task-sender/sgx",
 	"itp-sgx-externalities/sgx",
 	"itp-stf-executor/sgx",
     "itp-top-pool-author/sgx",

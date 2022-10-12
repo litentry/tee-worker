@@ -29,7 +29,7 @@ pub enum Error {
 	Crypto(itp_sgx_crypto::Error),
 	ChainStorage(itp_ocall_api::Error),
 	ExtrinsicsFactory(itp_extrinsics_factory::error::Error),
-	StfTaskHandler(lc_stf_task_initialization::error::Error),
+	StfTaskReceiver(lc_stf_task_receiver::Error),
 	IO(std::io::Error),
 	LightClient(itc_parentchain::light_client::error::Error),
 	NodeMetadataProvider(itp_node_api::metadata::provider::Error),

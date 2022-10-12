@@ -41,7 +41,7 @@ use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_storage::{storage_double_map_key, StorageHasher};
 use itp_top_pool_author::traits::AuthorApi;
-use lc_stf_task_initialization::Web2IdentityVerificationRequest;
+use lc_stf_task_sender::Web2IdentityVerificationRequest;
 use litentry_primitives::{
 	IdentityHandle, TwitterValidationData, ValidationData, Web2ValidationData,
 };

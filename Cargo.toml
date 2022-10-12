@@ -65,7 +65,7 @@ members = [
     "sidechain/validateer-fetch",
     "litentry/primitives",
     "litentry/pallets/identity-management",
-    "litentry/core/stf-task/handler",
+	"litentry/core/stf-task/receiver",
 ]
 
 [patch."https://github.com/apache/teaclave-sgx-sdk.git"]
