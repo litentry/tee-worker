@@ -85,7 +85,7 @@ pub struct SetChallengeCodeRequest {
 
 pub enum RequestType {
 	Web2IdentityVerification(Web2IdentityVerificationRequest),
-	Web3IndentityVerification(Web3IdentityVerificationRequest),
+	Web3IdentityVerification(Web3IdentityVerificationRequest),
 	Assertion(AssertionType),
 	SetChallengeCode(SetChallengeCodeRequest),
 }

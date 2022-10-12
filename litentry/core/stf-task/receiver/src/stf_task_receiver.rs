@@ -63,7 +63,7 @@ pub fn run_stf_task_receiver<
 					error!("Could not retrieve data from https server due to: {:?}", e);
 				}
 			},
-			RequestType::Web3IndentityVerification(ref _request) => {
+			RequestType::Web3IdentityVerification(ref _request) => {
 				error!("web3 don't support yet");
 			},
 			_ => {
