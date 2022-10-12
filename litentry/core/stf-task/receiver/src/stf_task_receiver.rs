@@ -19,15 +19,13 @@
 // 	stf_task_sender, AssertionType, RequestType,
 // };
 use crate::{
-	web2_identity_verification::{discord, twitter, Web2IdentityVerification},
-	Error, StfState, VerifyContext, VerifyHandler,
+	web2_identity_verification::web2_identity_verification, Error, StfState, VerifyContext,
 };
 use ita_stf::{Hash, ShardIdentifier};
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_top_pool_author::traits::AuthorApi;
-use lc_stf_task_sender::{stf_task_sender, RequestType, Web2IdentityVerificationRequest};
-use litentry_primitives::Web2ValidationData;
+use lc_stf_task_sender::{stf_task_sender, RequestType};
 use log::error;
 use std::{format, sync::Arc};
 
@@ -70,31 +68,5 @@ pub fn run_stf_task_receiver<
 				error!("Not yet implement");
 			},
 		}
-	}
-}
-
-fn web2_identity_verification<
-	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-	A: AuthorApi<Hash, Hash>,
-	S: StfEnclaveSigning,
->(
-	request_context: &VerifyContext<K, A, S>,
-	request: Web2IdentityVerificationRequest,
-) -> core::result::Result<(), Error> {
-	match &request.validation_data {
-		Web2ValidationData::Twitter(_) => {
-			let handler = Web2IdentityVerification::<twitter::TwitterResponse> {
-				verification_request: request,
-				_marker: Default::default(),
-			};
-			handler.send_request(request_context)
-		},
-		Web2ValidationData::Discord(_) => {
-			let handler = Web2IdentityVerification::<discord::DiscordResponse> {
-				verification_request: request,
-				_marker: Default::default(),
-			};
-			handler.send_request(request_context)
-		},
 	}
 }

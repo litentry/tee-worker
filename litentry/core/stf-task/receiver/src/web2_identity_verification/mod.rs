@@ -257,3 +257,29 @@ fn submit_call<
 
 	Ok(())
 }
+
+pub fn web2_identity_verification<
+	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
+	A: AuthorApi<Hash, Hash>,
+	S: StfEnclaveSigning,
+>(
+	request_context: &VerifyContext<K, A, S>,
+	request: Web2IdentityVerificationRequest,
+) -> core::result::Result<(), Error> {
+	match &request.validation_data {
+		Web2ValidationData::Twitter(_) => {
+			let handler = Web2IdentityVerification::<twitter::TwitterResponse> {
+				verification_request: request,
+				_marker: Default::default(),
+			};
+			handler.send_request(request_context)
+		},
+		Web2ValidationData::Discord(_) => {
+			let handler = Web2IdentityVerification::<discord::DiscordResponse> {
+				verification_request: request,
+				_marker: Default::default(),
+			};
+			handler.send_request(request_context)
+		},
+	}
+}
