@@ -24,20 +24,12 @@ use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
 	RequestType, Web2IdentityVerificationRequest, Web3IdentityVerificationRequest,
 };
-use litentry_primitives::{Identity, ParentchainBlockNumber, UserShieldingKeyType, ValidationData};
+use litentry_primitives::{
+	ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType, ValidationData,
+};
 use log::*;
 use std::format;
 use support::traits::UnfilteredDispatchable;
-
-// struct LitentryTrustedCallConverter {}
-//
-// impl litentry_primitives::TrustedCallConverter for LitentryTrustedCallConverter {
-// 	fn encode_litentry_trusted_call(
-// 		trusted_call: litentry_primitives::LitentryTrustedCall,
-// 	) -> Vec<u8> {
-// 		Encode::encode(TrustedCall::litentry_trusted_call(trusted_call))
-// 	}
-// }
 
 impl Stf {
 	pub fn set_user_shielding_key(who: AccountId, key: UserShieldingKeyType) -> StfResult<()> {
@@ -144,12 +136,12 @@ impl Stf {
 	pub fn set_challenge_code(
 		account: AccountId,
 		identity: Identity,
-		challenge_code: u32,
+		code: ChallengeCode,
 	) -> StfResult<()> {
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_challenge_code {
 			who: account,
 			identity,
-			code: challenge_code,
+			code,
 		}
 		.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
 		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;

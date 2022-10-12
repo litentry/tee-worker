@@ -30,8 +30,9 @@ use sp_core::Pair;
 pub struct SetChallengeCodeCommand {
 	/// AccountId in ss58check format
 	account: String,
-	did: String,
-	code: u32,
+	identity: String,
+	/// challenge code in hex string
+	code_hex: String,
 }
 
 impl SetChallengeCodeCommand {
@@ -42,19 +43,15 @@ impl SetChallengeCodeCommand {
 		let (mrenclave, shard) = get_identifiers(trusted_args);
 		let nonce = get_layer_two_nonce!(root, cli, trusted_args);
 		// compose the extrinsic
-		let identity = serde_json::from_str(self.did.as_str());
-		if let Err(e) = identity {
-			warn!("Deserialize Identity error: {:?}", e.to_string());
-			return
-		}
-		let top: TrustedOperation = TrustedCall::set_challenge_code(
-			root.public().into(),
-			who,
-			identity.unwrap(),
-			self.code,
-		)
-		.sign(&KeyPair::Sr25519(root), nonce, &mrenclave, &shard)
-		.into_trusted_operation(trusted_args.direct);
+		let identity = serde_json::from_str(self.identity.as_str()).unwrap();
+
+		let mut code = [0u8; 16];
+		let _ = hex::decode_to_slice(&self.code_hex, &mut code).expect("decoding code failed");
+
+		let top: TrustedOperation =
+			TrustedCall::set_challenge_code(root.public().into(), who, identity, code)
+				.sign(&KeyPair::Sr25519(root), nonce, &mrenclave, &shard)
+				.into_trusted_operation(trusted_args.direct);
 		let _ = perform_trusted_operation(cli, trusted_args, &top);
 	}
 }

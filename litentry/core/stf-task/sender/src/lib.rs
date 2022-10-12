@@ -37,13 +37,13 @@ pub mod stf_task_sender;
 pub use error::Result;
 
 use codec::{Decode, Encode, MaxEncodedLen};
-use litentry_primitives::{Identity, Web2ValidationData, Web3ValidationData};
+use litentry_primitives::{ChallengeCode, Identity, Web2ValidationData, Web3ValidationData};
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen)]
 pub struct Web2IdentityVerificationRequest {
 	pub who: AccountId,
 	pub identity: Identity,
-	pub challenge_code: u32,
+	pub challenge_code: ChallengeCode,
 	pub validation_data: Web2ValidationData,
 	pub bn: litentry_primitives::ParentchainBlockNumber, //Parentchain BlockNumber
 }
@@ -53,7 +53,7 @@ pub struct Web2IdentityVerificationRequest {
 pub struct Web3IdentityVerificationRequest {
 	pub who: AccountId,
 	pub identity: Identity,
-	pub challenge_code: u32,
+	pub challenge_code: ChallengeCode,
 	pub validation_data: Web3ValidationData,
 	pub bn: litentry_primitives::ParentchainBlockNumber, //Parentchain BlockNumber
 }

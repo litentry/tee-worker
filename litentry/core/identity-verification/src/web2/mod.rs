@@ -41,8 +41,8 @@ use itp_storage::{storage_double_map_key, StorageHasher};
 use itp_top_pool_author::traits::AuthorApi;
 use lc_stf_task_sender::Web2IdentityVerificationRequest;
 use litentry_primitives::{
-	Identity, IdentityHandle, IdentityString, IdentityWebType, TwitterValidationData,
-	ValidationData, Web2Network, Web2ValidationData,
+	ChallengeCode, Identity, IdentityHandle, IdentityString, IdentityWebType,
+	TwitterValidationData, ValidationData, Web2Network, Web2ValidationData,
 };
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use sp_core::ByteArray;
@@ -252,7 +252,7 @@ impl<
 
 			state.execute_with(|| {
 				log::warn!("storage--key: {:?}", key);
-				let code: Option<u32> = ita_stf::helpers::get_storage_by_key_hash(key);
+				let code: Option<ChallengeCode> = ita_stf::helpers::get_storage_by_key_hash(key);
 				log::warn!("code: {:?}", code);
 			});
 		}
@@ -284,10 +284,6 @@ impl<
 		let who_hex = hex::encode(request.who.as_slice());
 		if !payload.owner.eq_ignore_ascii_case(who_hex.as_str()) {
 			return Err(Error::OtherError(format!("owner is not the same as target:{:?}", who_hex)))
-		}
-
-		if !request.challenge_code.eq(&payload.code) {
-			return Err(Error::OtherError("challenge code is not the same".to_string()))
 		}
 
 		let enclave_account_id = request_context
