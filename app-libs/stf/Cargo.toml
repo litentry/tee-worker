@@ -45,7 +45,7 @@ substrate-client-keystore = { optional = true, git = "https://github.com/scs/sub
 # litentry
 litentry-primitives = { path = "../../litentry/primitives", default-features = false }
 parentchain-primitives = { package = "primitives", git = "https://github.com/litentry/litentry-parachain.git", branch = "tee-dev", default-features = false, optional = true }
-lc-stf-task-handler = { path = "../../litentry/core/stf-task-handler", default-features = false, features = ["sgx"], optional = true }
+lc-stf-task-initialization = { path = "../../litentry/core/stf-task/initialization", default-features = false, features = ["sgx"], optional = true }
 hex-sgx = { package = "hex", git = "https://github.com/mesalock-linux/rust-hex-sgx", tag = "sgx_1.1.3", features = ["sgx_tstd"] }
 aes-gcm = { git = "https://github.com/RustCrypto/AEADs" }
 
@@ -66,7 +66,7 @@ sgx = [
     "its-state/sgx",
     "itp-utils/sgx",
     "sp-io/sgx",
-    "lc-stf-task-handler/sgx",
+    "lc-stf-task-initialization/sgx",
     "itp-node-api/sgx",
     "litentry-primitives/sgx",
 ]

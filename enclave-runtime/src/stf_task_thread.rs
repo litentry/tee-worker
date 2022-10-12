@@ -23,7 +23,7 @@ use crate::{
 	},
 	GLOBAL_STATE_HANDLER_COMPONENT,
 };
-use lc_stf_task_handler::{stf_task_sender, RequestType, Web2IdentityVerificationRequest};
+use lc_stf_task_initialization::{stf_task_sender, RequestType, Web2IdentityVerificationRequest};
 use log::*;
 use sgx_types::sgx_status_t;
 use std::{string::ToString, sync::Arc};
@@ -45,8 +45,8 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::ShardIdentifier;
-use lc_identity_verify_handler::{
-	web2_identity::{discord, twitter},
+use lc_stf_task_handler::{
+	web2_identity_verification::{discord, twitter, Web2IdentityVerification},
 	VerifyContext, VerifyHandler,
 };
 use litentry_primitives::Web2ValidationData;
@@ -145,21 +145,17 @@ fn web2_identity_verification<
 >(
 	request_context: &VerifyContext<K, A, S>,
 	request: Web2IdentityVerificationRequest,
-) -> core::result::Result<(), lc_identity_verify_handler::Error> {
+) -> core::result::Result<(), lc_stf_task_handler::Error> {
 	match &request.validation_data {
 		Web2ValidationData::Twitter(_) => {
-			let handler = lc_identity_verify_handler::web2_identity::Web2IdentityVerification::<
-				twitter::TwitterResponse,
-			> {
+			let handler = Web2IdentityVerification::<twitter::TwitterResponse> {
 				verification_request: request,
 				_marker: Default::default(),
 			};
 			handler.send_request(request_context)
 		},
 		Web2ValidationData::Discord(_) => {
-			let handler = lc_identity_verify_handler::web2_identity::Web2IdentityVerification::<
-				discord::DiscordResponse,
-			> {
+			let handler = Web2IdentityVerification::<discord::DiscordResponse> {
 				verification_request: request,
 				_marker: Default::default(),
 			};

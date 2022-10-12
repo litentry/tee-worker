@@ -20,11 +20,14 @@ extern crate sgx_tstd as std;
 
 mod ethereum_signature;
 mod identity;
+// mod trusted_call;
 mod validation_data;
+
 pub use ethereum_signature::*;
 pub use identity::*;
 pub use parentchain_primitives::{
 	AesOutput, BlockNumber as ParentchainBlockNumber, UserShieldingKeyType, USER_SHIELDING_KEY_LEN,
 	USER_SHIELDING_KEY_NONCE_LEN, USER_SHIELDING_KEY_TAG_LEN,
 };
+// pub use trusted_call::*;
 pub use validation_data::*;

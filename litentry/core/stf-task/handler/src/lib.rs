@@ -66,7 +66,7 @@ use litentry_primitives::{Identity, IdentityHandle, IdentityString, IdentityWebT
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
-pub mod web2_identity;
+pub mod web2_identity_verification;
 
 const TIMEOUT: Duration = Duration::from_secs(3u64);
 
