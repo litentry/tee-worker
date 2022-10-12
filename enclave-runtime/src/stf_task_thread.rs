@@ -105,5 +105,5 @@ fn run_stf_task_handler_internal() -> Result<()> {
 		stf_enclave_signer,
 		author_api,
 	)
-	.map_err(|e| Error::StfTaskReceiver(e))
+	.map_err(Error::StfTaskReceiver)
 }
