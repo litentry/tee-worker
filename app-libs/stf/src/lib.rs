@@ -273,6 +273,7 @@ pub enum TrustedCall {
 	verify_identity_step2(AccountId, AccountId, Identity, ValidationData, ParentchainBlockNumber),
 	query_credit(AccountId),
 	set_challenge_code(AccountId, AccountId, Identity, u32),
+	// litentry_trusted_call(LitentryTrustedCall),
 }
 
 impl TrustedCall {
@@ -298,6 +299,7 @@ impl TrustedCall {
 			TrustedCall::verify_identity_step2(account, _, _, _, _) => account,
 			TrustedCall::query_credit(account) => account,
 			TrustedCall::set_challenge_code(account, _, _, _) => account,
+			// TrustedCall::litentry_trusted_call(call) => call.sender_account(),
 		}
 	}
 

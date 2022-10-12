@@ -19,13 +19,26 @@ extern crate sgx_tstd as std;
 
 use crate::{stf_sgx_primitives::types::*, AccountId, MetadataOf, Runtime, StfError, StfResult};
 use itp_utils::stringify::account_id_to_string;
-use lc_stf_task_handler::{stf_task_sender::SendStfRequest, RequestType};
+use lc_stf_task_sender::{
+	stf_task_sender::{SendStfRequest, StfRequestSender},
+	RequestType, Web2IdentityVerificationRequest,
+};
 use litentry_primitives::{
 	Identity, ParentchainBlockNumber, UserShieldingKeyType, Web2ValidationData,
 };
 use log::*;
 use std::format;
 use support::traits::UnfilteredDispatchable;
+
+// struct LitentryTrustedCallConverter {}
+//
+// impl litentry_primitives::TrustedCallConverter for LitentryTrustedCallConverter {
+// 	fn encode_litentry_trusted_call(
+// 		trusted_call: litentry_primitives::LitentryTrustedCall,
+// 	) -> Vec<u8> {
+// 		Encode::encode(TrustedCall::litentry_trusted_call(trusted_call))
+// 	}
+// }
 
 impl Stf {
 	pub fn set_user_shielding_key(who: AccountId, key: UserShieldingKeyType) -> StfResult<()> {
@@ -171,15 +184,15 @@ impl Stf {
 
 		//TODO change error type
 		code.ok_or_else(|| StfError::Dispatch(format!("code not found")))?;
-		let request = lc_stf_task_handler::Web2IdentityVerificationRequest {
+		let request = Web2IdentityVerificationRequest {
 			target,
 			identity,
 			challenge_code: code.unwrap(),
 			validation_data,
 			bn,
 		};
-		let xt_sender = lc_stf_task_handler::stf_task_sender::StfRequestSender::new();
-		xt_sender
+		let sender = StfRequestSender::new();
+		sender
 			.send_stf_request(RequestType::Web2IdentityVerification(request))
 			.map_err(|e| StfError::Dispatch(format!("send extrinsic request error:{:?}", e)))
 	}

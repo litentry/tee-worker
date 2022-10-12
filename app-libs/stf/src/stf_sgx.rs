@@ -540,6 +540,7 @@ impl Stf {
 					ensure_enclave_signer_account(&enclave_account)?;
 					Self::set_challenge_code(account, did, challenge_code)
 				},
+				// TrustedCall::litentry_trusted_call(call) => Ok(()),
 			}?;
 			System::inc_account_nonce(&sender);
 			Ok(())

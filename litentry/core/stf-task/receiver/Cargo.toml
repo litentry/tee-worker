@@ -1,5 +1,5 @@
 [package]
-name = "lc-identity-verify-handler"
+name = "lc-stf-task-receiver"
 version = "0.1.0"
 authors = ["Litentry Dev"]
 edition = "2021"
@@ -31,22 +31,22 @@ lazy_static = { version = "1.1.0", features = ["spin_no_std"] }
 sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
 
 # internal dependencies
-ita-stf = { path = "../../../app-libs/stf", default-features = false }
-itc-rest-client = { path = "../../../core/rest-client", default-features = false }
-itp-types = { path = "../../../core-primitives/types", default-features = false }
+ita-stf = { path = "../../../../app-libs/stf", default-features = false }
+itc-rest-client = { path = "../../../../core/rest-client", default-features = false }
+itp-types = { path = "../../../../core-primitives/types", default-features = false }
 
-itp-ocall-api = { path = "../../../core-primitives/ocall-api", default-features = false }
-itp-extrinsics-factory = { path = "../../../core-primitives/extrinsics-factory", default-features = false }
-itp-sgx-externalities = { path = "../../../core-primitives/substrate-sgx/externalities", default-features = false}
-itp-sgx-crypto = { path = "../../../core-primitives/sgx/crypto", default-features = false }
-itp-stf-executor = { path = "../../../core-primitives/stf-executor", default-features = false }
-itp-storage = { path = "../../../core-primitives/storage", default-features = false }
-itp-top-pool-author = { path = "../../../core-primitives/top-pool-author", default-features = false }
-itp-utils = { path = "../../../core-primitives/utils", default-features = false }
+itp-ocall-api = { path = "../../../../core-primitives/ocall-api", default-features = false }
+itp-extrinsics-factory = { path = "../../../../core-primitives/extrinsics-factory", default-features = false }
+itp-sgx-externalities = { path = "../../../../core-primitives/substrate-sgx/externalities", default-features = false}
+itp-sgx-crypto = { path = "../../../../core-primitives/sgx/crypto", default-features = false }
+itp-stf-executor = { path = "../../../../core-primitives/stf-executor", default-features = false }
+itp-storage = { path = "../../../../core-primitives/storage", default-features = false }
+itp-top-pool-author = { path = "../../../../core-primitives/top-pool-author", default-features = false }
+itp-utils = { path = "../../../../core-primitives/utils", default-features = false }
 
 # litentry
-litentry-primitives = { path = "../../primitives", default-features = false }
-lc-stf-task-handler = { path = "../stf-task-handler", default-features = false }
+litentry-primitives = { path = "../../../primitives", default-features = false }
+lc-stf-task-sender = { path = "../sender", default-features = false }
 
 [features]
 default = ["std"]
@@ -56,7 +56,7 @@ std = [
     "http",
     "http_req",
     "itc-rest-client/std",
-    "lc-stf-task-handler/std",
+    "lc-stf-task-sender/std",
     "log/std",
     "serde/std",
     "serde_json/std",
@@ -80,7 +80,7 @@ sgx = [
     "thiserror_sgx",
     "url_sgx",
 	"ita-stf/sgx",
-	"lc-stf-task-handler/sgx",
+	"lc-stf-task-sender/sgx",
 	"itp-sgx-externalities/sgx",
 	"itp-stf-executor/sgx",
     "itp-top-pool-author/sgx",

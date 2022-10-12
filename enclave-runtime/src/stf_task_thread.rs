@@ -14,42 +14,30 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{
-	error::{Error, Result},
-	global_components::{
-		GLOBAL_NODE_METADATA_REPOSITORY_COMPONENT,
-		GLOBAL_PARENTCHAIN_BLOCK_VALIDATOR_ACCESS_COMPONENT,
-		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
-	},
-	GLOBAL_STATE_HANDLER_COMPONENT,
-};
-use lc_stf_task_handler::{stf_task_sender, RequestType, Web2IdentityVerificationRequest};
 use log::*;
 use sgx_types::sgx_status_t;
 use std::{string::ToString, sync::Arc};
 
+use ita_stf::State as StfState;
 use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, LightClientState};
-
-use crate::global_components::{
-	EnclaveStfEnclaveSigner, GLOBAL_OCALL_API_COMPONENT, GLOBAL_STATE_OBSERVER_COMPONENT,
-	GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
-};
-
-use ita_stf::{Hash, State as StfState};
 use itp_component_container::ComponentGetter;
 use itp_extrinsics_factory::ExtrinsicsFactory;
 use itp_nonce_cache::GLOBAL_NONCE_CACHE;
-use itp_sgx_crypto::{Ed25519Seal, Rsa3072Seal, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
+use itp_sgx_crypto::{Ed25519Seal, Rsa3072Seal};
 use itp_sgx_io::StaticSealedIO;
-use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
-use itp_top_pool_author::traits::AuthorApi;
 use itp_types::ShardIdentifier;
-use lc_identity_verify_handler::{
-	web2_identity::{discord, twitter},
-	VerifyContext, VerifyHandler,
+
+use crate::{
+	error::{Error, Result},
+	global_components::{
+		EnclaveStfEnclaveSigner, GLOBAL_NODE_METADATA_REPOSITORY_COMPONENT,
+		GLOBAL_OCALL_API_COMPONENT, GLOBAL_PARENTCHAIN_BLOCK_VALIDATOR_ACCESS_COMPONENT,
+		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_OBSERVER_COMPONENT,
+		GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
+	},
+	GLOBAL_STATE_HANDLER_COMPONENT,
 };
-use litentry_primitives::Web2ValidationData;
 
 #[no_mangle]
 pub unsafe extern "C" fn run_stf_task_handler() -> sgx_status_t {
@@ -66,8 +54,6 @@ pub unsafe extern "C" fn run_stf_task_handler() -> sgx_status_t {
 /// Runs an extrinsic request inside the enclave, opening a channel and waiting for
 /// senders to send requests.
 fn run_stf_task_handler_internal() -> Result<()> {
-	let receiver = stf_task_sender::init_stf_task_sender_storage()?;
-
 	let validator_access = GLOBAL_PARENTCHAIN_BLOCK_VALIDATOR_ACCESS_COMPONENT.get()?;
 
 	// This gets the latest imported block. We accept that all of AURA, up until the block production
@@ -112,58 +98,12 @@ fn run_stf_task_handler_internal() -> Result<()> {
 	let stf_enclave_signer =
 		Arc::new(EnclaveStfEnclaveSigner::new(state_observer, ocall_api, shielding_key_repository));
 
-	let request_context = VerifyContext::new(
+	lc_stf_task_receiver::stf_task_receiver::run_stf_task_receiver(
 		default_shard_identifier,
 		stf_state,
 		shielding_key,
 		stf_enclave_signer,
 		author_api,
-	);
-	loop {
-		let request_type = receiver.recv().map_err(|e| Error::Other(e.into()))?;
-
-		match request_type {
-			RequestType::Web2IdentityVerification(ref request) => {
-				if let Err(e) = web2_identity_verification(&request_context, request.clone()) {
-					error!("Could not retrieve data from https server due to: {:?}", e);
-				}
-			},
-			RequestType::Web3IndentityVerification(ref _request) => {
-				error!("web3 don't support yet");
-			},
-			_ => {
-				error!("Not yet implement");
-			},
-		}
-	}
-}
-
-fn web2_identity_verification<
-	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-	A: AuthorApi<Hash, Hash>,
-	S: StfEnclaveSigning,
->(
-	request_context: &VerifyContext<K, A, S>,
-	request: Web2IdentityVerificationRequest,
-) -> core::result::Result<(), lc_identity_verify_handler::Error> {
-	match &request.validation_data {
-		Web2ValidationData::Twitter(_) => {
-			let handler = lc_identity_verify_handler::web2_identity::Web2IdentityVerification::<
-				twitter::TwitterResponse,
-			> {
-				verification_request: request,
-				_marker: Default::default(),
-			};
-			handler.send_request(request_context)
-		},
-		Web2ValidationData::Discord(_) => {
-			let handler = lc_identity_verify_handler::web2_identity::Web2IdentityVerification::<
-				discord::DiscordResponse,
-			> {
-				verification_request: request,
-				_marker: Default::default(),
-			};
-			handler.send_request(request_context)
-		},
-	}
+	)
+	.map_err(Error::StfTaskReceiver)
 }
