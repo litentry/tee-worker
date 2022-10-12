@@ -17,7 +17,10 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{stf_sgx_primitives::types::*, AccountId, MetadataOf, Runtime, StfError, StfResult};
+use crate::{
+	helpers::generate_challenge_code, stf_sgx_primitives::types::*, AccountId, MetadataOf, Runtime,
+	StfError, StfResult,
+};
 use ita_sgx_runtime::IdentityManagement;
 use itp_utils::stringify::account_id_to_string;
 use lc_stf_task_sender::{
@@ -53,16 +56,26 @@ impl Stf {
 			metadata,
 			bn
 		);
-		// let parentchain_number = ita_sgx_runtime::pallet_parentchain::Pallet::<Runtime>::block_number();
+
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::link_identity {
-			who,
-			identity,
+			who: who.clone(),
+			identity: identity.clone(),
 			metadata,
 			linking_request_block: bn,
 		}
 		.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
 		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
-		// TODO: generate challenge code
+
+		// generate challenge code
+		let code = generate_challenge_code();
+		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_challenge_code {
+			who,
+			identity,
+			code,
+		}
+		.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+
 		Ok(())
 	}
 
@@ -86,13 +99,18 @@ impl Stf {
 			bn
 		);
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::verify_identity {
-			who,
-			identity,
+			who: who.clone(),
+			identity: identity.clone(),
 			verification_request_block: bn,
 		}
 		.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
 		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
-		// TODO: remove challenge code
+
+		// remove challenge code
+		ita_sgx_runtime::IdentityManagementCall::<Runtime>::remove_challenge_code { who, identity }
+			.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+
 		Ok(())
 	}
 
