@@ -139,6 +139,19 @@ pub trait UserInfo {
 	fn get_user_id(&self) -> Option<String>;
 }
 
+pub trait MakeClient {
+	type Client;
+	fn make_client(&self) -> Result<Self::Client, Error>;
+}
+
+#[allow(dead_code)]
+pub struct StfDefaultHttpClient {
+	client: RestClient<HttpClient<DefaultSend>>,
+	body: String,
+	path: String,
+	query: Vec<(String, String)>,
+}
+
 pub trait VerifyHandler<
 	K: ShieldingCryptoEncrypt + ShieldingCryptoDecrypt + Clone,
 	A: AuthorApi<Hash, Hash>,

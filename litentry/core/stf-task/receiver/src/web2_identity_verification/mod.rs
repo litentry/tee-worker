@@ -24,18 +24,15 @@ extern crate sgx_tstd as std;
 use crate::sgx_reexport_prelude::*;
 use crate::{
 	build_client_with_authorization, format, str, vec, DecryptionVerificationPayload, Error,
-	String, ToString, UserInfo, Vec, VerifyContext, VerifyHandler,
+	MakeClient, StfDefaultHttpClient, String, ToString, UserInfo, Vec, VerifyContext,
+	VerifyHandler,
 };
 use codec::{Decode, Encode};
 // use core::{borrow::BorrowMut, fmt::Debug, ops::Deref};
 use core::fmt::Debug;
 use futures::executor;
 use ita_stf::{Hash, ShardIdentifier, State as StfState, TrustedCall, TrustedOperation};
-use itc_rest_client::{
-	http_client::{DefaultSend, HttpClient},
-	rest_client::RestClient,
-	RestGet, RestPath,
-};
+use itc_rest_client::{RestGet, RestPath};
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
@@ -68,14 +65,9 @@ pub struct Web2IdentityVerification<T> {
 	pub _marker: PhantomData<T>,
 }
 
-struct Web2HttpsClient {
-	client: RestClient<HttpClient<DefaultSend>>,
-	path: String,
-	query: Vec<(String, String)>,
-}
-
-impl<R> Web2IdentityVerification<R> {
-	fn make_client(&self) -> Result<Web2HttpsClient, Error> {
+impl<R> MakeClient for Web2IdentityVerification<R> {
+	type Client = StfDefaultHttpClient;
+	fn make_client(&self) -> Result<StfDefaultHttpClient, Error> {
 		let request = &self.verification_request;
 		match request.validation_data {
 			Web2ValidationData::Twitter(TwitterValidationData { ref tweet_id }) => {
@@ -91,8 +83,9 @@ impl<R> Web2IdentityVerification<R> {
 
 				let client = build_client_with_authorization(TWITTER_BASE_URL, token.as_str());
 
-				Ok(Web2HttpsClient {
+				Ok(Self::Client {
 					client,
+					body: "".to_string(),
 					path: "/2/tweets".to_string(),
 					query: vec![
 						("ids".to_string(), tweet_id.to_string()),
@@ -118,8 +111,9 @@ impl<R> Web2IdentityVerification<R> {
 				}
 
 				let client = build_client_with_authorization(DISCORD_BASE_URL, token.as_str());
-				Ok(Web2HttpsClient {
+				Ok(Self::Client {
 					client,
+					body: "".to_string(),
 					path: format!("/api/channels/{}/messages/{}", channel_id, message_id),
 					query: vec![],
 				})

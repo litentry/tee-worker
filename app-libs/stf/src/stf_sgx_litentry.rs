@@ -130,6 +130,16 @@ impl Stf {
 		}
 	}
 
+	pub fn verify_ruleset2(who: AccountId) -> StfResult<()> {
+		let v_identity_context =
+		ita_sgx_runtime::pallet_identity_management::Pallet::<Runtime>::get_identity_and_identity_context(&who);
+
+		for identity_ctx in &v_identity_context {
+			if identity_ctx.1.is_verified {}
+		}
+		Ok(())
+	}
+
 	pub fn query_credit(_account_id: AccountId) -> StfResult<()> {
 		// info!("query_credit({:x?})", account_id.encode(),);
 		// let tweet_id: Vec<u8> = "1569510747084050432".as_bytes().to_vec();
