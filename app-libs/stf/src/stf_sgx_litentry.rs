@@ -191,8 +191,8 @@ impl Stf {
 			validation_data,
 			bn,
 		};
-		let xt_sender = StfRequestSender::new();
-		xt_sender
+		let sender = StfRequestSender::new();
+		sender
 			.send_stf_request(RequestType::Web2IdentityVerification(request))
 			.map_err(|e| StfError::Dispatch(format!("send extrinsic request error:{:?}", e)))
 	}
