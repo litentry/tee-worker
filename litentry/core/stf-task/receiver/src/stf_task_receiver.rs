@@ -14,88 +14,87 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{Error, StfState};
-use ita_stf::{Hash, ShardIdentifier};
-use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
-use itp_stf_executor::traits::StfEnclaveSigning;
-use itp_top_pool_author::traits::AuthorApi;
-use lc_identity_verification::web2::{
-	discord, twitter, VerifyContext, VerifyHandler, Web2IdentityVerification,
+use crate::{
+	format, AuthorApi, Error, Hash, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt,
+	StfEnclaveSigning, StfTaskContext,
 };
-use lc_stf_task_sender::{stf_task_sender, RequestType, Web2IdentityVerificationRequest};
+use lc_identity_verification::web2::{discord, twitter, HttpVerifier, Web2IdentityVerification};
+use lc_stf_task_sender::{stf_task_sender, RequestType};
 use litentry_primitives::Web2ValidationData;
-use log::error;
-use std::{format, sync::Arc};
 
-// TODO: better error handling
-pub fn run_stf_task_receiver<
+// `StfTaskContext` must outlive the function
+pub fn run_stf_task_receiver<'a, K, A, S>(context: &'a StfTaskContext<K, A, S>) -> Result<(), Error>
+where
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
 	A: AuthorApi<Hash, Hash>,
 	S: StfEnclaveSigning,
->(
-	shard_identifier: ShardIdentifier,
-	stf_state: Arc<StfState>,
-	shielding_key: K,
-	stf_enclave_signer: Arc<S>,
-	author_api: Arc<A>,
-) -> Result<(), Error> {
+{
 	let receiver = stf_task_sender::init_stf_task_sender_storage()
 		.map_err(|e| Error::OtherError(format!("read storage error:{:?}", e)))?;
 
-	let request_context = VerifyContext::new(
-		shard_identifier,
-		stf_state,
-		shielding_key,
-		stf_enclave_signer,
-		author_api,
-	);
+	// TODO: better error handling for this loop
+	//       we shouldn't panic when processing tasks
 	loop {
 		let request_type = receiver
 			.recv()
 			.map_err(|e| Error::OtherError(format!("receiver error:{:?}", e)))?;
 
 		match request_type {
-			RequestType::Web2IdentityVerification(ref request) => {
-				if let Err(e) = web2_identity_verification(&request_context, request.clone()) {
-					error!("Could not retrieve data from https server due to: {:?}", e);
-				}
+			// TODO: further simplify this
+			RequestType::Web2IdentityVerification(request) => {
+				match request.validation_data {
+					Web2ValidationData::Twitter(_) => {
+						let verifier = Web2IdentityVerification::<twitter::TwitterResponse> {
+							verification_request: request.clone(),
+							_marker: Default::default(),
+						};
+
+						let _ = verifier
+							.make_http_request_and_verify(context.shielding_key.clone())
+							.map_err(|e| {
+								Error::OtherError(format!("error send request {:?}", e))
+							})?;
+					},
+					Web2ValidationData::Discord(_) => {
+						let verifier = Web2IdentityVerification::<discord::DiscordResponse> {
+							verification_request: request.clone(),
+							_marker: Default::default(),
+						};
+
+						let _ = verifier
+							.make_http_request_and_verify(context.shielding_key.clone())
+							.map_err(|e| {
+								Error::OtherError(format!("error send request {:?}", e))
+							})?;
+					},
+				};
+
+				let c = context.create_verify_identity_trusted_call(
+					request.who,
+					request.identity,
+					request.bn,
+				)?;
+				let _ = context.submit_trusted_call(&c)?;
 			},
-			RequestType::Web3IdentityVerification(ref _request) => {
-				error!("web3 don't support yet");
+			RequestType::Web3IdentityVerification(request) => {
+				let _ = lc_identity_verification::web3::verify(
+					request.who.clone(),
+					request.identity.clone(),
+					request.challenge_code.clone(),
+					request.validation_data.clone(),
+				)
+				.map_err(|e| Error::OtherError(format!("error verify web3: {:?}", e)))?;
+
+				let c = context.create_verify_identity_trusted_call(
+					request.who,
+					request.identity,
+					request.bn,
+				)?;
+				let _ = context.submit_trusted_call(&c)?;
 			},
 			_ => {
-				error!("Not yet implement");
+				unimplemented!()
 			},
 		}
-	}
-}
-
-fn web2_identity_verification<
-	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-	A: AuthorApi<Hash, Hash>,
-	S: StfEnclaveSigning,
->(
-	request_context: &VerifyContext<K, A, S>,
-	request: Web2IdentityVerificationRequest,
-) -> core::result::Result<(), Error> {
-	match &request.validation_data {
-		Web2ValidationData::Twitter(_) => {
-			let handler = Web2IdentityVerification::<twitter::TwitterResponse> {
-				verification_request: request,
-				_marker: Default::default(),
-			};
-			handler
-				.send_request(request_context)
-				.map_err(|e| Error::OtherError(format!("error send request {:?}", e)))
-		},
-		Web2ValidationData::Discord(_) => {
-			let handler = Web2IdentityVerification::<discord::DiscordResponse> {
-				verification_request: request,
-				_marker: Default::default(),
-			};
-			handler
-				.send_request(request_context)
-				.map_err(|e| Error::OtherError(format!("error send request {:?}", e)))
-		},
 	}
 }

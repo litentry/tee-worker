@@ -19,7 +19,7 @@ use frame_support::ensure;
 use itp_enclave_api_ffi as ffi;
 use sgx_types::*;
 
-/// Trait to run a https client daemon thread inside the enclave.
+/// Trait to run a stf task handling thread inside the enclave.
 pub trait StfTaskHandler {
 	fn run_stf_task_handler(&self) -> EnclaveResult<()>;
 }

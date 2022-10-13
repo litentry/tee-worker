@@ -35,11 +35,9 @@ itc-rest-client = { path = "../../../core/rest-client", default-features = false
 itp-types = { path = "../../../core-primitives/types", default-features = false }
 itp-utils = { path = "../../../core-primitives/utils", default-features = false }
 itp-ocall-api = { path = "../../../core-primitives/ocall-api", default-features = false }
-itp-sgx-crypto = { path = "../../../core-primitives/sgx/crypto", default-features = false }
-itp-stf-executor = { path = "../../../core-primitives/stf-executor", default-features = false }
 itp-storage = { path = "../../../core-primitives/storage", default-features = false }
-itp-top-pool-author = { path = "../../../core-primitives/top-pool-author", default-features = false }
-itp-sgx-externalities = { path = "../../../core-primitives/substrate-sgx/externalities", default-features = false}
+itp-sgx-externalities = { path = "../../../core-primitives/substrate-sgx/externalities", default-features = false }
+itp-sgx-crypto = { path = "../../../core-primitives/sgx/crypto", default-features = false }
 
 sp-std = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28", default-features = false }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28", default-features = false }
@@ -65,10 +63,9 @@ std = [
     "ita-stf/std",
     "itp-types/std",
     "itp-utils/std",
-    "itp-stf-executor/std",
-    "itp-top-pool-author/std",
     "itp-sgx-externalities/std",
     "itp-storage/std",
+    "itp-sgx-crypto/std",
     "sp-std/std",
     "sp-io/std",
     "frame-support/std",
@@ -85,9 +82,8 @@ sgx = [
     "thiserror_sgx",
     "url_sgx",
     "ita-stf/sgx",
-	"itp-stf-executor/sgx",
     "itp-sgx-externalities/sgx",
-    "itp-top-pool-author/sgx",
+    "itp-sgx-crypto/sgx",
     "litentry-primitives/sgx",
     "lc-stf-task-sender/sgx",
 ]

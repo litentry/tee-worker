@@ -73,7 +73,7 @@ mod global_components;
 mod initialization;
 mod ipfs;
 mod ocall;
-mod stf_task_thread;
+mod stf_task_handler;
 mod utils;
 
 pub mod cert;

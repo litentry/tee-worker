@@ -473,19 +473,8 @@ impl Stf {
 					ensure_enclave_signer_account(&enclave_account)?;
 					Self::verify_identity_step1(account, identity, validation_data, bn)
 				},
-				TrustedCall::verify_identity_step2(
-					_enclave_account,
-					who,
-					identity,
-					_validation_data,
-					bn,
-				) => {
-					// TODO: the verification process
-
-					// TrustedCall::verify_identity_step2 call by mrenclave(shielding key account)
-					// see trait: StfEnclaveSigning
-					// maybe it is more reasonable to call by the enclave account
-					// ensure!(is_root(&root), StfError::MissingPrivileges(root));
+				TrustedCall::verify_identity_step2(enclave_account, who, identity, bn) => {
+					ensure_enclave_signer_account(&enclave_account)?;
 					debug!(
 						"verify_identity, who: {}, identity: {:?}, bn: {:?}",
 						account_id_to_string(&who),

@@ -274,7 +274,7 @@ pub enum TrustedCall {
 	unlink_identity(AccountId, AccountId, Identity), // (EnclaveSigner, Account, identity)
 	// TODO: rethink the origin
 	verify_identity_step1(AccountId, AccountId, Identity, ValidationData, ParentchainBlockNumber),
-	verify_identity_step2(AccountId, AccountId, Identity, ValidationData, ParentchainBlockNumber),
+	verify_identity_step2(AccountId, AccountId, Identity, ParentchainBlockNumber),
 	query_credit(AccountId),
 	set_challenge_code(AccountId, AccountId, Identity, ChallengeCode),
 }
@@ -299,7 +299,7 @@ impl TrustedCall {
 			TrustedCall::link_identity(account, _, _, _, _) => account,
 			TrustedCall::unlink_identity(account, _, _) => account,
 			TrustedCall::verify_identity_step1(account, _, _, _, _) => account,
-			TrustedCall::verify_identity_step2(account, _, _, _, _) => account,
+			TrustedCall::verify_identity_step2(account, _, _, _) => account,
 			TrustedCall::query_credit(account) => account,
 			TrustedCall::set_challenge_code(account, _, _, _) => account,
 		}

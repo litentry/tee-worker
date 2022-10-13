@@ -25,10 +25,8 @@ use crate::sgx_reexport_prelude::*;
 
 use crate::{ensure, get_expected_payload};
 use codec::{Decode, Encode};
-use futures::executor;
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
-use ita_stf::{Hash, ShardIdentifier, State as StfState, TrustedCall, TrustedOperation};
 use itc_rest_client::{
 	error::Error as HttpError,
 	http_client::{DefaultSend, HttpClient},
@@ -36,12 +34,8 @@ use itc_rest_client::{
 	RestGet, RestPath,
 };
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
-use itp_stf_executor::traits::StfEnclaveSigning;
-use itp_top_pool_author::traits::AuthorApi;
 use lc_stf_task_sender::Web2IdentityVerificationRequest;
-use litentry_primitives::{
-	IdentityHandle, TwitterValidationData, ValidationData, Web2ValidationData,
-};
+use litentry_primitives::{IdentityHandle, TwitterValidationData, Web2ValidationData};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::{
 	fmt::Debug,
@@ -49,7 +43,6 @@ use std::{
 	marker::PhantomData,
 	str,
 	string::{String, ToString},
-	sync::Arc,
 	time::Duration,
 	vec,
 	vec::Vec,
@@ -82,21 +75,16 @@ pub enum Error {
 	OtherError(String),
 }
 
-pub trait VerifyHandler<
+pub trait HttpVerifier<K>
+where
+	// the TEE shielding key used to decrypt the http response
 	K: ShieldingCryptoEncrypt + ShieldingCryptoDecrypt + Clone,
-	A: AuthorApi<Hash, Hash>,
-	S: StfEnclaveSigning,
->
 {
-	type Response: Debug + serde::de::DeserializeOwned + RestPath<String>;
-
-	fn send_request(&self, request_context: &VerifyContext<K, A, S>) -> Result<(), Error>;
-
-	fn handle_response(
-		&self,
-		request_context: &VerifyContext<K, A, S>,
-		response: Self::Response,
-	) -> Result<(), Error>;
+	// merged into one fn, as normally you won't expect to have
+	// one trait fn to call another internally
+	//
+	// this is a synchronous call
+	fn make_http_request_and_verify(&self, key: K) -> Result<(), Error>;
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
@@ -111,35 +99,6 @@ pub trait DecryptionVerificationPayload<K: ShieldingCryptoDecrypt> {
 
 pub trait UserInfo {
 	fn get_user_id(&self) -> Option<String>;
-}
-
-pub struct VerifyContext<
-	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-	A: AuthorApi<Hash, Hash>,
-	S: StfEnclaveSigning,
-> {
-	shielding_key: K,
-	stf_state: Arc<StfState>,
-	shard_identifier: ShardIdentifier,
-	enclave_signer: Arc<S>,
-	author: Arc<A>,
-}
-
-impl<
-		K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-		A: AuthorApi<Hash, Hash>,
-		S: StfEnclaveSigning,
-	> VerifyContext<K, A, S>
-{
-	pub fn new(
-		shard_identifier: ShardIdentifier,
-		stf_state: Arc<StfState>,
-		shielding_key: K,
-		enclave_signer: Arc<S>,
-		author: Arc<A>,
-	) -> Self {
-		Self { shard_identifier, stf_state, shielding_key, enclave_signer, author }
-	}
 }
 
 struct Web2HttpsClient {
@@ -202,36 +161,25 @@ impl<R> Web2IdentityVerification<R> {
 	}
 }
 
-impl<
-		A: AuthorApi<Hash, Hash>,
-		S: StfEnclaveSigning,
-		K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-		R: UserInfo + DecryptionVerificationPayload<K> + Debug + DeserializeOwned + RestPath<String>,
-	> VerifyHandler<K, A, S> for Web2IdentityVerification<R>
+impl<K, R> HttpVerifier<K> for Web2IdentityVerification<R>
+where
+	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
+	R: UserInfo + DecryptionVerificationPayload<K> + Debug + DeserializeOwned + RestPath<String>,
 {
-	type Response = R;
-
-	fn send_request(&self, request_context: &VerifyContext<K, A, S>) -> Result<(), Error> {
+	fn make_http_request_and_verify(&self, key: K) -> Result<(), Error> {
 		let mut client = self.make_client()?;
 		let query: Vec<(&str, &str)> =
 			client.query.iter().map(|(k, v)| (k.as_str(), v.as_str())).collect();
-		let response: Self::Response = client
+		let response: R = client
 			.client
 			.get_with::<String, R>(client.path, query.as_slice())
 			.map_err(|e| Error::RquestError(format!("{:?}", e)))?;
-		//TODO log level
-		log::warn!("response:{:?}", response);
-		self.handle_response(request_context, response)
-	}
 
-	fn handle_response(
-		&self,
-		request_context: &VerifyContext<K, A, S>,
-		response: Self::Response,
-	) -> Result<(), Error> {
+		log::debug!("http response:{:?}", response);
+
 		let request = &self.verification_request;
 		let payload = response
-			.decrypt_ciphertext(request_context.shielding_key.clone())
+			.decrypt_ciphertext(key.clone())
 			.map_err(|_| Error::OtherError("decrypt payload error".to_string()))?;
 
 		let user_id = response
@@ -251,6 +199,7 @@ impl<
 		}
 
 		// the payload must match
+		// TODO: maybe move it to common place
 		ensure!(
 			payload
 				== get_expected_payload(
@@ -261,58 +210,8 @@ impl<
 			Error::OtherError("payload not match".to_string())
 		);
 
-		let enclave_account_id = request_context
-			.enclave_signer
-			.get_enclave_account()
-			.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
-
-		let trusted_call = TrustedCall::verify_identity_step2(
-			enclave_account_id,
-			request.who.clone(),
-			request.identity.clone(),
-			ValidationData::Web2(request.validation_data.clone()),
-			request.bn,
-		);
-		submit_call(
-			request_context.enclave_signer.as_ref(),
-			&request_context.shielding_key,
-			request_context.author.as_ref(),
-			request_context.shard_identifier,
-			&request_context.stf_state,
-			&trusted_call,
-		)
+		Ok(())
 	}
-}
-
-fn submit_call<
-	K: ShieldingCryptoEncrypt + Clone,
-	A: AuthorApi<Hash, Hash>,
-	S: StfEnclaveSigning,
->(
-	enclave_signer: &S,
-	shielding_key: &K,
-	author_api: &A,
-	shard_identifier: ShardIdentifier,
-	_stf_state: &Arc<StfState>,
-	trusted_call: &TrustedCall,
-) -> Result<(), Error> {
-	let signed_trusted_call = enclave_signer
-		.sign_call_with_self(trusted_call, &shard_identifier)
-		.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
-
-	let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
-
-	let encrypted_trusted_call = shielding_key
-		.encrypt(&trusted_operation.encode())
-		.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
-
-	let top_submit_future =
-		async { author_api.submit_top(encrypted_trusted_call, shard_identifier).await };
-	executor::block_on(top_submit_future).map_err(|e| {
-		Error::OtherError(format!("Error adding indirect trusted call to TOP pool: {:?}", e))
-	})?;
-
-	Ok(())
 }
 
 pub fn build_client(base_url: Url, headers: Headers) -> RestClient<HttpClient<DefaultSend>> {

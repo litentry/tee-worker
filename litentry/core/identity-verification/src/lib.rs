@@ -34,14 +34,13 @@ pub mod sgx_reexport_prelude {
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
 use codec::Encode;
-// this should be ita_stf::AccountId, but we use itp_types to avoid cyclic dep
 use frame_support::pallet_prelude::*;
+// this should be ita_stf::AccountId, but we use itp_types to avoid cyclic dep
 use itp_types::AccountId;
 use litentry_primitives::{ChallengeCode, Identity};
 use sp_std::vec::Vec;
 use std::string::ToString;
 
-// TODO: maybe we can define some Verifier trait
 pub mod web2;
 pub mod web3;
 
