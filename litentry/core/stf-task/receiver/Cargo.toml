@@ -48,6 +48,7 @@ itp-utils = { path = "../../../../core-primitives/utils", default-features = fal
 litentry-primitives = { path = "../../../primitives", default-features = false }
 lc-stf-task-sender = { path = "../sender", default-features = false }
 lc-identity-verification = { path = "../../identity-verification", default-features = false }
+lc-ruleset-build = { path = "../../ruleset-build", default-features = false }
 
 [features]
 default = ["std"]

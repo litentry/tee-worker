@@ -48,6 +48,9 @@ pub enum Error {
 	#[error("Request error: {0}")]
 	RequestError(String),
 
+	#[error("Ruleset error: {0}")]
+	RulesetError(String),
+
 	#[error("Other error: {0}")]
 	OtherError(String),
 }
@@ -106,7 +109,7 @@ impl<
 		Ok(())
 	}
 
-	pub fn create_verify_identity_trusted_call(
+	pub fn create_identity_verify_trusted_call(
 		&self,
 		who: AccountId,
 		identity: Identity,

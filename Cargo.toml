@@ -68,6 +68,7 @@ members = [
     "litentry/core/stf-task/sender",
 	"litentry/core/stf-task/receiver",
     "litentry/core/identity-verification",
+    "litentry/core/ruleset-build",
 ]
 
 [patch."https://github.com/apache/teaclave-sgx-sdk.git"]

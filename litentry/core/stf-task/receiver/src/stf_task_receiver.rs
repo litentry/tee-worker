@@ -14,13 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use std::panic::resume_unwind;
+
 use crate::{
 	format, AuthorApi, Error, Hash, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt,
 	StfEnclaveSigning, StfTaskContext,
 };
 use lc_identity_verification::web2::{discord, twitter, HttpVerifier, Web2IdentityVerification};
 use lc_stf_task_sender::{stf_task_sender, RequestType};
-use litentry_primitives::Web2ValidationData;
+use litentry_primitives::{IdentityWebType, Ruleset, Web2Network, Web2ValidationData, Web3Network};
 
 // lifetime elision: StfTaskContext is guaranteed to outlive the fn
 pub fn run_stf_task_receiver<K, A, S>(context: &StfTaskContext<K, A, S>) -> Result<(), Error>
@@ -69,7 +71,7 @@ where
 					},
 				};
 
-				let c = context.create_verify_identity_trusted_call(
+				let c = context.create_identity_verify_trusted_call(
 					request.who,
 					request.identity,
 					request.bn,
@@ -85,13 +87,40 @@ where
 				)
 				.map_err(|e| Error::OtherError(format!("error verify web3: {:?}", e)))?;
 
-				let c = context.create_verify_identity_trusted_call(
+				let c = context.create_identity_verify_trusted_call(
 					request.who,
 					request.identity,
 					request.bn,
 				)?;
 				let _ = context.submit_trusted_call(&c)?;
 			},
+			RequestType::RulesetVerification(request) => {
+				let _ = lc_ruleset_build::ruleset_verify(request.clone())
+					.map_err(|e| Error::RulesetError(format!("error verify ruleset: {:?}", e)))?;
+			},
+
+			// match request.identity.web_type {
+			// 	IdentityWebType::Web2(Web2Network::Discord) => {
+			// 		let _ = lc_ruleset_build::web2::verify_discord_joined_server(
+			// 			request.who.clone(),
+			// 			request.identity.clone(),
+			// 			request.ruleset.clone(),
+			// 		)
+			// 		.map_err(|e| Error::RulesetError(format!("error ruleset web2: {:?}", e)))?;
+			// 	},
+			// 	IdentityWebType::Web2(Web2Network::Twitter) => {
+			// 		unimplemented!()
+			// 	},
+			// 	IdentityWebType::Web2(Web2Network::Github) => {
+			// 		unimplemented!()
+			// 	},
+			// 	IdentityWebType::Web3(Web3Network::Substrate(_)) => {
+			// 		unimplemented!()
+			// 	},
+			// 	IdentityWebType::Web3(Web3Network::Evm(_)) => {
+			// 		unimplemented!()
+			// 	},
+			// },
 			_ => {
 				unimplemented!()
 			},

@@ -25,10 +25,12 @@ use ita_sgx_runtime::IdentityManagement;
 use itp_utils::stringify::account_id_to_string;
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
-	RequestType, Web2IdentityVerificationRequest, Web3IdentityVerificationRequest,
+	RequestType, RulesetVerificationRequest, Web2IdentityVerificationRequest,
+	Web3IdentityVerificationRequest,
 };
 use litentry_primitives::{
-	ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType, ValidationData,
+	ChallengeCode, Identity, IdentityWebType, ParentchainBlockNumber, Ruleset,
+	UserShieldingKeyType, ValidationData, Web2Network,
 };
 use log::*;
 use std::format;
@@ -137,6 +139,26 @@ impl Stf {
 		} else {
 			Err(StfError::RuleSet1VerifyFail)
 		}
+	}
+
+	pub fn verify_ruleset2(who: AccountId, identity: Identity, ruleset: Ruleset) -> StfResult<()> {
+		let v_identity_context =
+		ita_sgx_runtime::pallet_identity_management::Pallet::<Runtime>::get_identity_and_identity_context(&who);
+
+		for identity_ctx in &v_identity_context {
+			if identity_ctx.1.is_verified {
+				if identity_ctx.0.web_type == IdentityWebType::Web2(Web2Network::Discord) {
+					let request: RequestType =
+						RulesetVerificationRequest { who, identity, ruleset }.into();
+
+					let sender = StfRequestSender::new();
+					return sender
+						.send_stf_request(request)
+						.map_err(|_| StfError::VerifyIdentityFailed)
+				}
+			}
+		}
+		Ok(())
 	}
 
 	pub fn query_credit(_account_id: AccountId) -> StfResult<()> {
