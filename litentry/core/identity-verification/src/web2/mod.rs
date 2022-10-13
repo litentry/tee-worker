@@ -179,7 +179,7 @@ where
 
 		let request = &self.verification_request;
 		let payload = response
-			.decrypt_ciphertext(key.clone())
+			.decrypt_ciphertext(key)
 			.map_err(|_| Error::OtherError("decrypt payload error".to_string()))?;
 
 		let user_id = response

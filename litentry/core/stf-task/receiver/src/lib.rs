@@ -83,7 +83,7 @@ impl<
 		Self { shard_identifier, stf_state, shielding_key, enclave_signer, author_api }
 	}
 
-	pub fn submit_trusted_call<'a>(&self, trusted_call: &'a TrustedCall) -> Result<(), Error> {
+	pub fn submit_trusted_call(&self, trusted_call: &TrustedCall) -> Result<(), Error> {
 		let signed_trusted_call = self
 			.enclave_signer
 			.sign_call_with_self(trusted_call, &self.shard_identifier)

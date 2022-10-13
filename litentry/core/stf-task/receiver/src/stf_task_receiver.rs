@@ -22,8 +22,8 @@ use lc_identity_verification::web2::{discord, twitter, HttpVerifier, Web2Identit
 use lc_stf_task_sender::{stf_task_sender, RequestType};
 use litentry_primitives::Web2ValidationData;
 
-// `StfTaskContext` must outlive the function
-pub fn run_stf_task_receiver<'a, K, A, S>(context: &'a StfTaskContext<K, A, S>) -> Result<(), Error>
+// lifetime elision: StfTaskContext is guaranteed to outlive the fn
+pub fn run_stf_task_receiver<K, A, S>(context: &StfTaskContext<K, A, S>) -> Result<(), Error>
 where
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
 	A: AuthorApi<Hash, Hash>,
@@ -80,7 +80,7 @@ where
 				let _ = lc_identity_verification::web3::verify(
 					request.who.clone(),
 					request.identity.clone(),
-					request.challenge_code.clone(),
+					request.challenge_code,
 					request.validation_data.clone(),
 				)
 				.map_err(|e| Error::OtherError(format!("error verify web3: {:?}", e)))?;

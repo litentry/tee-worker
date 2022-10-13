@@ -55,11 +55,11 @@ impl UserInfo for TwitterResponse {
 
 impl<K: ShieldingCryptoDecrypt> DecryptionVerificationPayload<K> for TwitterResponse {
 	fn decrypt_ciphertext(&self, key: K) -> Result<Vec<u8>, Error> {
-		if self.data.len() > 0 {
+		if !self.data.is_empty() {
 			key.decrypt(self.data.get(0).unwrap().text.as_bytes())
 				.map_err(|e| Error::OtherError(format!("decrypt error: {:?}", e)))
 		} else {
-			Err(Error::OtherError(format!("no tweet available")))
+			Err(Error::OtherError("no tweet available".to_string()))
 		}
 
 		// mock data -- to be removed
