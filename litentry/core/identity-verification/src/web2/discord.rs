@@ -37,25 +37,23 @@ impl UserInfo for DiscordResponse {
 }
 
 impl<K: ShieldingCryptoDecrypt> DecryptionVerificationPayload<K> for DiscordResponse {
-	fn decrypt_ciphertext(&self, _key: K) -> Result<VerificationPayload, Error> {
-		// TODO decrypt
-		// if self.data.len() > 0 {
-		// 	key.decrypt(self.data.get(0).unwrap().text.as_bytes());
-		// }
+	fn decrypt_ciphertext(&self, key: K) -> Result<Vec<u8>, Error> {
+		key.decrypt(self.content.as_bytes())
+			.map_err(|e| Error::OtherError(format!("decrypt error: {:?}", e)))
 
-		// mock data
-		let payload = VerificationPayload {
-			owner: "d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d".to_string(), // alice public key
-			code: 1134,
-			//identiy json: {"web_type":{"Web2":"Discord"},"handle":{"String":[108,105,116,101,110,116,114,121]}}
-			identity: Identity {
-				web_type: IdentityWebType::Web2(Web2Network::Discord),
-				handle: IdentityHandle::String(
-					IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
-				),
-			},
-		};
-		Ok(payload)
+		// mock data -- to be removed
+		// let payload = VerificationPayload {
+		// 	owner: "d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d".to_string(), // alice public key
+		// 	code: 1134,
+		// 	//identiy json: {"web_type":{"Web2":"Discord"},"handle":{"String":[108,105,116,101,110,116,114,121]}}
+		// 	identity: Identity {
+		// 		web_type: IdentityWebType::Web2(Web2Network::Discord),
+		// 		handle: IdentityHandle::String(
+		// 			IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
+		// 		),
+		// 	},
+		// };
+		// Ok(payload)
 	}
 }
 

@@ -15,10 +15,10 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
+	ensure,
 	error::{Error, Result},
-	get_expected_message, AccountId, ToString,
+	get_expected_payload, AccountId, ToString,
 };
-use frame_support::pallet_prelude::*;
 use litentry_primitives::{
 	ChallengeCode, Identity, IdentityHandle, IdentityMultiSignature, IdentityWebType,
 	Web3CommonValidationData, Web3Network, Web3ValidationData,
@@ -51,7 +51,7 @@ fn verify_substrate_signature(
 	code: &ChallengeCode,
 	validation_data: &Web3CommonValidationData,
 ) -> Result<()> {
-	let msg = get_expected_message(who, identity, code);
+	let msg = get_expected_payload(who, identity, code);
 
 	ensure!(msg.as_slice() == validation_data.message.as_slice(), Error::UnexpectedMessage);
 
@@ -99,7 +99,7 @@ fn verify_evm_signature(
 	code: &ChallengeCode,
 	validation_data: &Web3CommonValidationData,
 ) -> Result<()> {
-	let msg = get_expected_message(who, identity, code);
+	let msg = get_expected_payload(who, identity, code);
 	let digest = compute_evm_msg_digest(&msg);
 	if let IdentityMultiSignature::Ethereum(sig) = &validation_data.signature {
 		let recovered_evm_address = recover_evm_address(&digest, sig.as_ref())

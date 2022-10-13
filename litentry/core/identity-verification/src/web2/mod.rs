@@ -23,6 +23,7 @@ extern crate sgx_tstd as std;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
+use crate::{ensure, get_expected_payload};
 use codec::{Decode, Encode};
 use futures::executor;
 use http::header::{AUTHORIZATION, CONNECTION};
@@ -35,17 +36,13 @@ use itc_rest_client::{
 	RestGet, RestPath,
 };
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
-use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
-use itp_storage::{storage_double_map_key, StorageHasher};
 use itp_top_pool_author::traits::AuthorApi;
 use lc_stf_task_sender::Web2IdentityVerificationRequest;
 use litentry_primitives::{
-	ChallengeCode, Identity, IdentityHandle, IdentityString, IdentityWebType,
-	TwitterValidationData, ValidationData, Web2Network, Web2ValidationData,
+	IdentityHandle, TwitterValidationData, ValidationData, Web2ValidationData,
 };
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use sp_core::ByteArray;
 use std::{
 	fmt::Debug,
 	format,
@@ -109,17 +106,11 @@ pub struct Web2IdentityVerification<T> {
 }
 
 pub trait DecryptionVerificationPayload<K: ShieldingCryptoDecrypt> {
-	fn decrypt_ciphertext(&self, key: K) -> Result<VerificationPayload, Error>;
+	fn decrypt_ciphertext(&self, key: K) -> Result<Vec<u8>, Error>;
 }
 
 pub trait UserInfo {
 	fn get_user_id(&self) -> Option<String>;
-}
-
-pub struct VerificationPayload {
-	pub owner: String,
-	pub code: u32,
-	pub identity: Identity,
 }
 
 pub struct VerifyContext<
@@ -238,25 +229,6 @@ impl<
 		request_context: &VerifyContext<K, A, S>,
 		response: Self::Response,
 	) -> Result<(), Error> {
-		{
-			// for testing...
-			let key = storage_double_map_key(
-				"IdentityManagement",
-				"ChallengeCodes",
-				&self.verification_request.who,
-				&StorageHasher::Blake2_128Concat,
-				&self.verification_request.identity,
-				&StorageHasher::Blake2_128Concat,
-			);
-			let mut state = itp_sgx_externalities::SgxExternalities::new();
-
-			state.execute_with(|| {
-				log::warn!("storage--key: {:?}", key);
-				let code: Option<ChallengeCode> = ita_stf::helpers::get_storage_by_key_hash(key);
-				log::warn!("code: {:?}", code);
-			});
-		}
-
 		let request = &self.verification_request;
 		let payload = response
 			.decrypt_ciphertext(request_context.shielding_key.clone())
@@ -266,25 +238,28 @@ impl<
 			.get_user_id()
 			.ok_or_else(|| Error::OtherError("can not find user_id".to_string()))?;
 
-		match payload.identity.handle {
+		// the user_id must match, is it case sensitive?
+		match request.identity.handle {
 			IdentityHandle::String(ref handle) => {
 				let handle = std::str::from_utf8(handle.as_slice())
 					.map_err(|_| Error::OtherError("convert IdentityHandle error".to_string()))?;
 				if !user_id.eq(handle) {
-					return Err(Error::OtherError("user_id is not the same".to_string()))
+					return Err(Error::OtherError("user_id not match".to_string()))
 				}
 			},
 			_ => return Err(Error::OtherError("IdentityHandle not support".to_string())),
 		}
 
-		if !payload.identity.eq(&request.identity) {
-			return Err(Error::OtherError("identity is not the same".to_string()))
-		}
-
-		let who_hex = hex::encode(request.who.as_slice());
-		if !payload.owner.eq_ignore_ascii_case(who_hex.as_str()) {
-			return Err(Error::OtherError(format!("owner is not the same as target:{:?}", who_hex)))
-		}
+		// the payload must match
+		ensure!(
+			payload
+				== get_expected_payload(
+					&self.verification_request.who,
+					&self.verification_request.identity,
+					&self.verification_request.challenge_code
+				),
+			Error::OtherError("payload not match".to_string())
+		);
 
 		let enclave_account_id = request_context
 			.enclave_signer

@@ -35,6 +35,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 
 use codec::Encode;
 // this should be ita_stf::AccountId, but we use itp_types to avoid cyclic dep
+use frame_support::pallet_prelude::*;
 use itp_types::AccountId;
 use litentry_primitives::{ChallengeCode, Identity};
 use sp_std::vec::Vec;
@@ -48,9 +49,9 @@ pub mod error;
 
 // verification message format: <challeng-code> + <litentry-AccountId32> + <Identity>,
 // where <> means SCALE-encoded
-pub fn get_expected_message(who: &AccountId, identity: &Identity, code: &ChallengeCode) -> Vec<u8> {
-	let mut msg = code.encode();
-	msg.append(&mut who.encode());
-	msg.append(&mut identity.encode());
-	msg
+pub fn get_expected_payload(who: &AccountId, identity: &Identity, code: &ChallengeCode) -> Vec<u8> {
+	let mut payload = code.encode();
+	payload.append(&mut who.encode());
+	payload.append(&mut identity.encode());
+	payload
 }
