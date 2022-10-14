@@ -48,7 +48,7 @@ impl Stf {
 		identity: Identity,
 		metadata: Option<MetadataOf<Runtime>>,
 		bn: ParentchainBlockNumber,
-	) -> StfResult<()> {
+	) -> StfResult<ChallengeCode> {
 		debug!(
 			"who.str = {:?}, identity = {:?}, metadata = {:?}, bn = {:?}",
 			account_id_to_string(&who),
@@ -76,7 +76,7 @@ impl Stf {
 		.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
 		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
 
-		Ok(())
+		Ok(code)
 	}
 
 	pub fn unlink_identity(who: AccountId, identity: Identity) -> StfResult<()> {

@@ -69,7 +69,7 @@ const TIMEOUT: Duration = Duration::from_secs(3u64);
 #[derive(Debug, thiserror::Error, Clone)]
 pub enum Error {
 	#[error("Request error: {0}")]
-	RquestError(String),
+	RequestError(String),
 
 	#[error("Other error: {0}")]
 	OtherError(String),
@@ -173,7 +173,7 @@ where
 		let response: R = client
 			.client
 			.get_with::<String, R>(client.path, query.as_slice())
-			.map_err(|e| Error::RquestError(format!("{:?}", e)))?;
+			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
 
 		log::debug!("http response:{:?}", response);
 

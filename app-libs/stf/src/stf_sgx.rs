@@ -394,14 +394,22 @@ impl Stf {
 						metadata.clone()
 					);
 					match Self::link_identity(who.clone(), identity.clone(), metadata, bn) {
-						Ok(()) => {
+						Ok(code) => {
 							debug!("link_identity {} OK", account_id_to_string(&who));
 							if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
 								calls.push(OpaqueCall::from_tuple(&(
-									node_metadata_repo
-										.get_from_metadata(|m| m.link_identity_call_indexes())??,
+									node_metadata_repo.get_from_metadata(|m| {
+										m.identity_linked_call_indexes()
+									})??,
 									aes_encrypt_default(&key, &who.encode()),
 									aes_encrypt_default(&key, &identity.encode()),
+								)));
+								calls.push(OpaqueCall::from_tuple(&(
+									node_metadata_repo.get_from_metadata(|m| {
+										m.challenge_code_generated_call_indexes()
+									})??,
+									aes_encrypt_default(&key, &who.encode()),
+									aes_encrypt_default(&key, &code.encode()),
 								)));
 							} else {
 								calls.push(OpaqueCall::from_tuple(&(
@@ -437,7 +445,7 @@ impl Stf {
 							if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
 								calls.push(OpaqueCall::from_tuple(&(
 									node_metadata_repo.get_from_metadata(|m| {
-										m.unlink_identity_call_indexes()
+										m.identity_unlinked_call_indexes()
 									})??,
 									aes_encrypt_default(&key, &who.encode()),
 									aes_encrypt_default(&key, &identity.encode()),
@@ -487,7 +495,7 @@ impl Stf {
 							if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
 								calls.push(OpaqueCall::from_tuple(&(
 									node_metadata_repo.get_from_metadata(|m| {
-										m.verify_identity_call_indexes()
+										m.identity_verified_call_indexes()
 									})??,
 									aes_encrypt_default(&key, &who.encode()),
 									aes_encrypt_default(&key, &identity.encode()),
