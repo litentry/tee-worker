@@ -15,22 +15,13 @@
 
 */
 
-use frame_support::sp_runtime::traits::Block as ParentchainBlockTrait;
-use itp_enclave_api::{sidechain::Sidechain, EnclaveResult};
+/// Interface trait of the sudo pallet.
+pub trait SudoPalletInterface<State> {
+	type AccountId;
 
-/// Mock for Parentchain Api
-pub struct SidechainApiMock;
+	/// Get the root account for a given state.
+	fn get_root(state: &mut State) -> Self::AccountId;
 
-impl Sidechain for SidechainApiMock {
-	fn sync_parentchain<ParentchainBlock: ParentchainBlockTrait>(
-		&self,
-		_blocks: &[sp_runtime::generic::SignedBlock<ParentchainBlock>],
-		_nonce: u32,
-	) -> EnclaveResult<()> {
-		Ok(())
-	}
-
-	fn execute_trusted_calls(&self) -> EnclaveResult<()> {
-		todo!()
-	}
+	/// Get the enclave account for a given state.
+	fn get_enclave_account(state: &mut State) -> Self::AccountId;
 }

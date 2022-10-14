@@ -18,10 +18,10 @@
 extern crate sgx_tstd as std;
 
 use crate::{
-	helpers::generate_challenge_code, stf_sgx_primitives::types::*, AccountId, MetadataOf, Runtime,
-	StfError, StfResult,
+	helpers::generate_challenge_code, AccountId, IdentityManagement, MetadataOf, Runtime, StfError,
+	StfResult, TrustedCallSigned,
 };
-use ita_sgx_runtime::IdentityManagement;
+use frame_support::dispatch::UnfilteredDispatchable;
 use itp_utils::stringify::account_id_to_string;
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
@@ -32,9 +32,8 @@ use litentry_primitives::{
 };
 use log::*;
 use std::format;
-use support::traits::UnfilteredDispatchable;
 
-impl Stf {
+impl TrustedCallSigned {
 	pub fn set_user_shielding_key(who: AccountId, key: UserShieldingKeyType) -> StfResult<()> {
 		debug!("who.str = {:?}, key = {:?}", account_id_to_string(&who), key.clone());
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_user_shielding_key { who, key }
