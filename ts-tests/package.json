@@ -1,0 +1,13 @@
+{
+	"license": "GPL",
+	"dependencies": {
+		"@polkadot/api": "^9.3.3",
+		"micro-base58": "^0.5.1",
+		"websocket-as-promised": "^2.0.1",
+		"ws": "^8.8.1"
+	},
+	"devDependencies": {
+		"@types/ws": "^8.5.3",
+		"ts-node": "^10.9.1"
+	}
+}
