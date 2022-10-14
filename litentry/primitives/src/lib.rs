@@ -31,3 +31,5 @@ pub use parentchain_primitives::{
 };
 // pub use trusted_call::*;
 pub use validation_data::*;
+
+pub type ChallengeCode = [u8; 16];

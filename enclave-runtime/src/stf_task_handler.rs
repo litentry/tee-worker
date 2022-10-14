@@ -27,6 +27,7 @@ use itp_sgx_crypto::{Ed25519Seal, Rsa3072Seal};
 use itp_sgx_io::StaticSealedIO;
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
 use itp_types::ShardIdentifier;
+use lc_stf_task_receiver::{stf_task_receiver::run_stf_task_receiver, StfTaskContext};
 
 use crate::{
 	error::{Error, Result},
@@ -42,7 +43,7 @@ use crate::{
 #[no_mangle]
 pub unsafe extern "C" fn run_stf_task_handler() -> sgx_status_t {
 	if let Err(e) = run_stf_task_handler_internal() {
-		error!("Error while running extrinsic request daemon: {:?}", e);
+		error!("Error while running stf task handler thread: {:?}", e);
 		return e.into()
 	}
 
@@ -98,12 +99,13 @@ fn run_stf_task_handler_internal() -> Result<()> {
 	let stf_enclave_signer =
 		Arc::new(EnclaveStfEnclaveSigner::new(state_observer, ocall_api, shielding_key_repository));
 
-	lc_stf_task_receiver::stf_task_receiver::run_stf_task_receiver(
+	let stf_task_context = StfTaskContext::new(
 		default_shard_identifier,
 		stf_state,
 		shielding_key,
 		stf_enclave_signer,
 		author_api,
-	)
-	.map_err(Error::StfTaskReceiver)
+	);
+
+	run_stf_task_receiver(&stf_task_context).map_err(Error::StfTaskReceiver)
 }

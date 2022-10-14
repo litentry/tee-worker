@@ -453,10 +453,10 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	let last_synced_header = init_light_client(&node_api, enclave.clone()).unwrap();
 
 	// ------------------------------------------------------------------------
-	// Start https client daemon
-	let enclave_api_https_client = enclave.clone();
+	// Start stf task handler thread
+	let enclave_api_stf_task_handler = enclave.clone();
 	thread::spawn(move || {
-		enclave_api_https_client.run_stf_task_handler().unwrap();
+		enclave_api_stf_task_handler.run_stf_task_handler().unwrap();
 	});
 
 	// ------------------------------------------------------------------------

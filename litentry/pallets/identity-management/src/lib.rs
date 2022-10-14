@@ -38,9 +38,9 @@ pub mod identity_context;
 use frame_support::{pallet_prelude::*, traits::StorageVersion};
 use frame_system::pallet_prelude::*;
 pub use identity_context::IdentityContext;
-pub use litentry_primitives::{Identity, ParentchainBlockNumber, UserShieldingKeyType};
-
-pub type ChallengeCodeOf<T> = <T as Config>::ChallengeCode;
+pub use litentry_primitives::{
+	ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType,
+};
 pub type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
 pub type MetadataOf<T> = BoundedVec<u8, <T as Config>::MaxMetadataLength>;
 
@@ -64,8 +64,6 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		/// the manager origin for extrincis
 		type ManageOrigin: EnsureOrigin<Self::Origin>;
-		/// challenge code type
-		type ChallengeCode: Member + Parameter + Default + Copy + MaxEncodedLen;
 		/// maximum metadata length
 		#[pallet::constant]
 		type MaxMetadataLength: Get<u32>;
@@ -80,7 +78,7 @@ pub mod pallet {
 		/// user shielding key was set
 		UserShieldingKeySet { who: T::AccountId, key: UserShieldingKeyType },
 		/// challenge code was set
-		ChallengeCodeSet { who: T::AccountId, identity: Identity, code: ChallengeCodeOf<T> },
+		ChallengeCodeSet { who: T::AccountId, identity: Identity, code: ChallengeCode },
 		/// challenge code was removed
 		ChallengeCodeRemoved { who: T::AccountId, identity: Identity },
 		/// an identity was linked
@@ -120,7 +118,7 @@ pub mod pallet {
 		T::AccountId,
 		Blake2_128Concat,
 		Identity,
-		ChallengeCodeOf<T>,
+		ChallengeCode,
 		OptionQuery,
 	>;
 
@@ -157,7 +155,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			who: T::AccountId,
 			identity: Identity,
-			code: ChallengeCodeOf<T>,
+			code: ChallengeCode,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 			// we don't care if it has already associated with any challenge code

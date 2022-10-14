@@ -297,7 +297,6 @@ impl pallet_parentchain::Config for Runtime {
 impl pallet_identity_management::Config for Runtime {
 	type Event = Event;
 	type ManageOrigin = EnsureRoot<AccountId>;
-	type ChallengeCode = u32;
 	type MaxMetadataLength = ConstU32<128>;
 	type MaxVerificationDelay = ConstU32<20>;
 }

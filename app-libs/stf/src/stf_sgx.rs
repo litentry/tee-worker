@@ -35,7 +35,6 @@ use itp_types::OpaqueCall;
 use itp_utils::stringify::account_id_to_string;
 use its_primitives::types::{BlockHash, BlockNumber as SidechainBlockNumber, Timestamp};
 use its_state::SidechainSystemExt;
-use litentry_primitives::ValidationData;
 use log::*;
 use sp_io::hashing::blake2_256;
 use sp_runtime::MultiAddress;
@@ -395,14 +394,22 @@ impl Stf {
 						metadata.clone()
 					);
 					match Self::link_identity(who.clone(), identity.clone(), metadata, bn) {
-						Ok(()) => {
+						Ok(code) => {
 							debug!("link_identity {} OK", account_id_to_string(&who));
 							if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
 								calls.push(OpaqueCall::from_tuple(&(
-									node_metadata_repo
-										.get_from_metadata(|m| m.link_identity_call_indexes())??,
+									node_metadata_repo.get_from_metadata(|m| {
+										m.identity_linked_call_indexes()
+									})??,
 									aes_encrypt_default(&key, &who.encode()),
 									aes_encrypt_default(&key, &identity.encode()),
+								)));
+								calls.push(OpaqueCall::from_tuple(&(
+									node_metadata_repo.get_from_metadata(|m| {
+										m.challenge_code_generated_call_indexes()
+									})??,
+									aes_encrypt_default(&key, &who.encode()),
+									aes_encrypt_default(&key, &code.encode()),
 								)));
 							} else {
 								calls.push(OpaqueCall::from_tuple(&(
@@ -438,7 +445,7 @@ impl Stf {
 							if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
 								calls.push(OpaqueCall::from_tuple(&(
 									node_metadata_repo.get_from_metadata(|m| {
-										m.unlink_identity_call_indexes()
+										m.identity_unlinked_call_indexes()
 									})??,
 									aes_encrypt_default(&key, &who.encode()),
 									aes_encrypt_default(&key, &identity.encode()),
@@ -472,28 +479,10 @@ impl Stf {
 					bn,
 				) => {
 					ensure_enclave_signer_account(&enclave_account)?;
-					// TODO support other validation_data
-					if let ValidationData::Web2(web2) = validation_data {
-						Self::verify_web2_identity_step1(account, identity, web2, bn)
-					} else {
-						Err(StfError::Dispatch(
-							"validation_data only support Web2ValidationData::Twitter".to_string(),
-						))
-					}
+					Self::verify_identity_step1(account, identity, validation_data, bn)
 				},
-				TrustedCall::verify_identity_step2(
-					_enclave_account,
-					who,
-					identity,
-					_validation_data,
-					bn,
-				) => {
-					// TODO: the verification process
-
-					// TrustedCall::verify_identity_step2 call by mrenclave(shielding key account)
-					// see trait: StfEnclaveSigning
-					// maybe it is more reasonable to call by the enclave account
-					// ensure!(is_root(&root), StfError::MissingPrivileges(root));
+				TrustedCall::verify_identity_step2(enclave_account, who, identity, bn) => {
+					ensure_enclave_signer_account(&enclave_account)?;
 					debug!(
 						"verify_identity, who: {}, identity: {:?}, bn: {:?}",
 						account_id_to_string(&who),
@@ -506,7 +495,7 @@ impl Stf {
 							if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
 								calls.push(OpaqueCall::from_tuple(&(
 									node_metadata_repo.get_from_metadata(|m| {
-										m.verify_identity_call_indexes()
+										m.identity_verified_call_indexes()
 									})??,
 									aes_encrypt_default(&key, &who.encode()),
 									aes_encrypt_default(&key, &identity.encode()),
@@ -536,11 +525,10 @@ impl Stf {
 					debug!("query_credit({:x?}", account.encode(),);
 					Self::query_credit(account)
 				},
-				TrustedCall::set_challenge_code(enclave_account, account, did, challenge_code) => {
+				TrustedCall::set_challenge_code(enclave_account, account, did, code) => {
 					ensure_enclave_signer_account(&enclave_account)?;
-					Self::set_challenge_code(account, did, challenge_code)
+					Self::set_challenge_code(account, did, code)
 				},
-				// TrustedCall::litentry_trusted_call(call) => Ok(()),
 			}?;
 			System::inc_account_nonce(&sender);
 			Ok(())

@@ -45,7 +45,9 @@ use ita_sgx_runtime::{
 };
 use itp_node_api_metadata::Error as MetadataError;
 use itp_node_api_metadata_provider::Error as MetadataProviderError;
-use litentry_primitives::{ParentchainBlockNumber, UserShieldingKeyType, ValidationData};
+use litentry_primitives::{
+	ChallengeCode, ParentchainBlockNumber, UserShieldingKeyType, ValidationData,
+};
 use sp_core::{crypto::AccountId32, ed25519, sr25519, Pair, H256};
 use sp_runtime::{traits::Verify, MultiSignature};
 use std::string::String;
@@ -78,6 +80,8 @@ pub enum StfError {
 	// litentry
 	LayerOneNumberUnavailable,
 	InvalidMetadata,
+	#[display(fmt = "Identity verification failed")]
+	VerifyIdentityFailed,
 	RuleSet1VerifyFail,
 }
 
@@ -270,10 +274,9 @@ pub enum TrustedCall {
 	unlink_identity(AccountId, AccountId, Identity), // (EnclaveSigner, Account, identity)
 	// TODO: rethink the origin
 	verify_identity_step1(AccountId, AccountId, Identity, ValidationData, ParentchainBlockNumber),
-	verify_identity_step2(AccountId, AccountId, Identity, ValidationData, ParentchainBlockNumber),
+	verify_identity_step2(AccountId, AccountId, Identity, ParentchainBlockNumber),
 	query_credit(AccountId),
-	set_challenge_code(AccountId, AccountId, Identity, u32),
-	// litentry_trusted_call(LitentryTrustedCall),
+	set_challenge_code(AccountId, AccountId, Identity, ChallengeCode),
 }
 
 impl TrustedCall {
@@ -296,10 +299,9 @@ impl TrustedCall {
 			TrustedCall::link_identity(account, _, _, _, _) => account,
 			TrustedCall::unlink_identity(account, _, _) => account,
 			TrustedCall::verify_identity_step1(account, _, _, _, _) => account,
-			TrustedCall::verify_identity_step2(account, _, _, _, _) => account,
+			TrustedCall::verify_identity_step2(account, _, _, _) => account,
 			TrustedCall::query_credit(account) => account,
 			TrustedCall::set_challenge_code(account, _, _, _) => account,
-			// TrustedCall::litentry_trusted_call(call) => call.sender_account(),
 		}
 	}
 
