@@ -20,6 +20,13 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
+// re-export module to properly feature gate sgx and regular std environment
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+pub mod sgx_reexport_prelude {
+	pub use thiserror_sgx as thiserror;
+	pub use url_sgx as url;
+}
+
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
@@ -91,12 +98,17 @@ pub fn ruleset2_verification(
 
 #[cfg(test)]
 mod tests {
-	use crate::discord::ruleset_verification;
+	use crate::discord::ruleset2_verification;
 	use log;
+	use std::fmt;
 
 	#[test]
-	fn ruleset_verification_works() {
-		ruleset_verification();
+	fn ruleset2_verification_works() {
+		let guildid: u64 = 919848390156767232;
+		let userid: u64 = 746308249695027224;
+		let guild_id: Vec<u8> = format!("{}", guildid).as_bytes().to_vec();
+		let user_id: Vec<u8> = format!("{}", userid).as_bytes().to_vec();
+		ruleset2_verification();
 		log::info!("ruleset test");
 		let result = 2 + 2;
 		assert_eq!(result, 4);
