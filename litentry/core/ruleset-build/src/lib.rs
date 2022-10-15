@@ -20,6 +20,13 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
+// re-export module to properly feature gate sgx and regular std environment
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+pub mod sgx_reexport_prelude {
+	pub use thiserror_sgx as thiserror;
+	pub use url_sgx as url;
+}
+
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
@@ -46,9 +53,9 @@ use itp_types::AccountId;
 
 use litentry_primitives::{Identity, ParameterString, Ruleset};
 
-pub mod web2;
+pub mod discord;
 
-use crate::web2::ruleset2_verification;
+use crate::discord::ruleset2_verification;
 
 pub type Result<T> = core::result::Result<T, Error>;
 

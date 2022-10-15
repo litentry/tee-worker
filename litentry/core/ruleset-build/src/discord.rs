@@ -23,7 +23,7 @@ extern crate sgx_tstd as std;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use super::*;
+use crate::{CheckJoinDiscordResponse, Error, Result};
 
 use itc_rest_client::{
 	error::Error as HttpError,
@@ -91,7 +91,7 @@ pub fn ruleset2_verification(
 
 #[cfg(test)]
 mod tests {
-	use crate::web2::ruleset_verification;
+	use crate::discord::ruleset_verification;
 	use log;
 
 	#[test]
