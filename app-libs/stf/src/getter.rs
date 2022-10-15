@@ -170,11 +170,7 @@ impl ExecuteGetter for Getter {
 					},
 				// litentry
 				TrustedGetter::user_shielding_key(who) =>
-					if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
-						Some(key.encode())
-					} else {
-						None
-					},
+					IdentityManagement::user_shielding_keys(&who).map(|key| key.encode()),
 			},
 			Getter::public(g) => match g {
 				PublicGetter::some_value => Some(42u32.encode()),
@@ -182,7 +178,7 @@ impl ExecuteGetter for Getter {
 		}
 	}
 
-	fn get_storage_hashes_to_update(self) -> Vec<Vec<u8>> {
+	fn get_storage_hashes_to_update(&self) -> Vec<Vec<u8>> {
 		Vec::new()
 	}
 }

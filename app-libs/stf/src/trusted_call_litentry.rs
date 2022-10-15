@@ -31,7 +31,7 @@ use litentry_primitives::{
 	ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType, ValidationData,
 };
 use log::*;
-use std::format;
+use std::{format, string::ToString};
 
 impl TrustedCallSigned {
 	pub fn set_user_shielding_key(who: AccountId, key: UserShieldingKeyType) -> StfResult<()> {
@@ -51,7 +51,7 @@ impl TrustedCallSigned {
 		debug!(
 			"who.str = {:?}, identity = {:?}, metadata = {:?}, bn = {:?}",
 			account_id_to_string(&who),
-			identity.clone(),
+			identity,
 			metadata,
 			bn
 		);
@@ -79,7 +79,7 @@ impl TrustedCallSigned {
 	}
 
 	pub fn unlink_identity(who: AccountId, identity: Identity) -> StfResult<()> {
-		debug!("who.str = {:?}, identity = {:?}", account_id_to_string(&who), identity.clone(),);
+		debug!("who.str = {:?}, identity = {:?}", account_id_to_string(&who), identity,);
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::unlink_identity { who, identity }
 			.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
 			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
@@ -94,7 +94,7 @@ impl TrustedCallSigned {
 		debug!(
 			"who.str = {:?}, identity = {:?}, bn = {:?}",
 			account_id_to_string(&who),
-			identity.clone(),
+			identity,
 			bn
 		);
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::verify_identity {
@@ -123,9 +123,9 @@ impl TrustedCallSigned {
 		for identity_ctx in &v_identity_context {
 			if identity_ctx.1.is_verified {
 				if identity_ctx.0.is_web2() {
-					web2_cnt = web2_cnt + 1;
+					web2_cnt += 1;
 				} else if identity_ctx.0.is_web3() {
-					web3_cnt = web3_cnt + 1;
+					web3_cnt += 1;
 				}
 			}
 		}
@@ -172,7 +172,7 @@ impl TrustedCallSigned {
 		bn: ParentchainBlockNumber,
 	) -> StfResult<()> {
 		let code = IdentityManagement::challenge_codes(&who, &identity)
-			.ok_or_else(|| StfError::Dispatch(format!("code not found")))?;
+			.ok_or_else(|| StfError::Dispatch("code not found".to_string()))?;
 
 		debug!("who:{:?}, identity:{:?}, code:{:?}", who, identity, code);
 

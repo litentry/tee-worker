@@ -28,8 +28,8 @@ use ita_sgx_runtime::Runtime;
 use ita_stf::{
 	hash::{Hash, TrustedOperationOrHash},
 	stf_sgx::{shards_key_hash, storage_hashes_to_update_per_shard},
-	Getter, ParentchainHeader, ShardIdentifier, Stf, TrustedCallSigned, TrustedGetterSigned,
-	TrustedOperation,
+	Getter, ParentchainHeader, ShardIdentifier, Stf, StfError, TrustedCallSigned,
+	TrustedGetterSigned, TrustedOperation,
 };
 use itp_node_api::metadata::{
 	pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata,
@@ -46,8 +46,8 @@ use itp_types::{storage::StorageEntryVerified, OpaqueCall, H256};
 use log::*;
 use sp_runtime::traits::Header as HeaderTrait;
 use std::{
-	collections::BTreeMap, fmt::Debug, format, marker::PhantomData, result::Result as StdResult,
-	sync::Arc, time::Duration, vec::Vec,
+	boxed::Box, collections::BTreeMap, fmt::Debug, format, marker::PhantomData,
+	result::Result as StdResult, sync::Arc, time::Duration, vec::Vec,
 };
 
 pub struct StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf> {
@@ -120,7 +120,10 @@ where
 		// see issue #208
 		debug!("Update STF storage!");
 
-		let storage_hashes = trusted_call.clone().get_storage_hashes_to_update();
+		// TODO: otherwise I got compile error:
+		//       cannot infer type for type parameter `NodeMetadataRepository` declared on the trait `ExecuteCall`
+		let trusted_call_executor: Box<dyn ExecuteCall<NodeMetadataRepository, Error = StfError>> = Box::new(trusted_call.clone());
+		let storage_hashes = trusted_call_executor.get_storage_hashes_to_update();
 		let update_map = self
 			.ocall_api
 			.get_multiple_storages_verified(storage_hashes, header)

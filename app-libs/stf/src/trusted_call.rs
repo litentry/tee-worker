@@ -423,8 +423,8 @@ where
 				debug!(
 					"link_identity, who: {}, identity: {:?}, metadata: {:?}",
 					account_id_to_string(&who),
-					identity.clone(),
-					metadata.clone()
+					identity,
+					metadata
 				);
 				match Self::link_identity(who.clone(), identity.clone(), metadata, bn) {
 					Ok(code) => {
@@ -469,7 +469,7 @@ where
 				debug!(
 					"link_identity, who: {}, identity: {:?}",
 					account_id_to_string(&who),
-					identity.clone(),
+					identity,
 				);
 				match Self::unlink_identity(who.clone(), identity.clone()) {
 					Ok(()) => {
@@ -517,7 +517,7 @@ where
 				debug!(
 					"verify_identity, who: {}, identity: {:?}, bn: {:?}",
 					account_id_to_string(&who),
-					identity.clone(),
+					identity,
 					bn
 				);
 				match Self::verify_identity(who.clone(), identity.clone(), bn) {
@@ -564,7 +564,7 @@ where
 		Ok(())
 	}
 
-	fn get_storage_hashes_to_update(self) -> Vec<Vec<u8>> {
+	fn get_storage_hashes_to_update(&self) -> Vec<Vec<u8>> {
 		let key_hashes = Vec::new();
 		match self.call {
 			TrustedCall::balance_set_balance(_, _, _, _) => debug!("No storage updates needed..."),
