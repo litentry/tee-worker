@@ -1,7 +1,9 @@
 name: Labels Check
+
+# only triggerable manually in our case
 on:
-  pull_request:
-    types: [opened, labeled, unlabeled, synchronize, ready_for_review]
+  workflow_dispatch:
+
 jobs:
   A-label-check:
     uses: ./.github/workflows/label-checker.yml
