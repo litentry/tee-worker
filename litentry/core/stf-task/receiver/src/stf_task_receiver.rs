@@ -95,8 +95,12 @@ where
 				let _ = context.submit_trusted_call(&c)?;
 			},
 			RequestType::RulesetVerification(request) => {
-				let _ = lc_ruleset_build::ruleset_verify(request.clone())
-					.map_err(|e| Error::RulesetError(format!("error verify ruleset: {:?}", e)))?;
+				let _ = lc_ruleset_build::ruleset_verify(
+					request.who,
+					request.identity,
+					request.ruleset,
+				)
+				.map_err(|e| Error::RulesetError(format!("error verify ruleset: {:?}", e)))?;
 			},
 
 			// match request.identity.web_type {

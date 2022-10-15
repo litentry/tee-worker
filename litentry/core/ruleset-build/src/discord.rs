@@ -20,13 +20,6 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-// re-export module to properly feature gate sgx and regular std environment
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-pub mod sgx_reexport_prelude {
-	pub use thiserror_sgx as thiserror;
-	pub use url_sgx as url;
-}
-
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
@@ -74,10 +67,11 @@ pub fn ruleset2_verification(
 	// let guildid: u64 = 919848390156767232;
 	// let userid: u64 = 746308249695027224;
 
-	let guild_id = str::from_utf8(&guild_id.into_inner()).unwrap();
-	let user_id = str::from_utf8(&user_id.into_inner()).unwrap();
-
-	let path = format!("/discord/joined?guildid={}&userid={}", guild_id, user_id);
+	let path = format!(
+		"/discord/joined?guildid={:?}&userid={:?}",
+		guild_id.into_inner(),
+		user_id.into_inner()
+	);
 	let query = vec![];
 
 	let response: CheckJoinDiscordResponse = client
