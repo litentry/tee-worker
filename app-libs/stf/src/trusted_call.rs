@@ -571,8 +571,6 @@ where
 			TrustedCall::balance_transfer(_, _, _) => debug!("No storage updates needed..."),
 			TrustedCall::balance_unshield(_, _, _, _) => debug!("No storage updates needed..."),
 			TrustedCall::balance_shield(_, _, _) => debug!("No storage updates needed..."),
-			#[cfg(feature = "evm")]
-			_ => debug!("No storage updates needed..."),
 			// litentry
 			TrustedCall::set_user_shielding_key(..) => debug!("No storage updates needed..."),
 			TrustedCall::link_identity(..) => debug!("No storage updates needed..."),
@@ -581,6 +579,8 @@ where
 			TrustedCall::verify_identity_step1(..) => debug!("No storage updates needed..."),
 			TrustedCall::query_credit(..) => debug!("No storage updates needed..."),
 			TrustedCall::set_challenge_code(..) => debug!("No storage updates needed..."),
+			#[cfg(feature = "evm")]
+			_ => debug!("No storage updates needed..."),
 		};
 		key_hashes
 	}
