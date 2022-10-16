@@ -26,46 +26,29 @@ use crate::sgx_reexport_prelude::*;
 use crate::{CheckJoinDiscordResponse, Error, Result};
 
 use itc_rest_client::{
-	error::Error as HttpError,
 	http_client::{DefaultSend, HttpClient},
 	rest_client::RestClient,
-	RestGet, RestPath,
+	RestGet,
 };
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use std::{
-	fmt::Debug,
-	format,
-	marker::PhantomData,
-	str,
-	string::{String, ToString},
-	sync::Arc,
-	time::Duration,
-	vec,
-	vec::Vec,
-};
+use std::{format, str, string::String, time::Duration, vec};
 use url::Url;
 
 use itp_types::AccountId;
 
-use litentry_primitives::{Identity, ParameterString, Ruleset};
+use litentry_primitives::{Identity, ParameterString};
 
-// const TWITTER_BASE_URL: &str = "https://api.twitter.com";
 const DISCORD_BASE_URL: &str = "https://47.57.13.126:8080/";
 const TIMEOUT: Duration = Duration::from_secs(3u64);
 
 pub fn ruleset2_verification(
-	who: AccountId,
-	identity: Identity,
+	_who: AccountId,
+	_identity: Identity,
 	guild_id: ParameterString,
 	user_id: ParameterString,
 ) -> Result<()> {
-	// let base_url = "http://47.57.13.126:8080/".to_string();
 	let base_url = Url::parse(DISCORD_BASE_URL).unwrap();
 	let http_client = HttpClient::new(DefaultSend {}, true, Some(TIMEOUT), None, None);
 	let mut client = RestClient::new(http_client, base_url);
-
-	// let guildid: u64 = 919848390156767232;
-	// let userid: u64 = 746308249695027224;
 
 	let path = format!(
 		"/discord/joined?guildid={:?}&userid={:?}",
@@ -78,7 +61,7 @@ pub fn ruleset2_verification(
 		.get_with::<String, CheckJoinDiscordResponse>(path, query.as_slice())
 		.map_err(|e| Error::Ruleset1Error(format!("{:?}", e)))?;
 
-	log::info!(
+	log::debug!(
 		"get response: data: {:?}, message: {:?}, hasError: {:?}, msgCode: {:?}, success: {:?}",
 		response.data,
 		response.message,
@@ -87,22 +70,39 @@ pub fn ruleset2_verification(
 		response.success
 	);
 
+	// TODO:
+	// generate_vc(who, identity, ...)
+
 	Ok(())
 }
 
 #[cfg(test)]
 mod tests {
 	use crate::discord::ruleset2_verification;
+	use frame_support::BoundedVec;
+	use itp_types::AccountId;
+	use litentry_primitives::{
+		Identity, IdentityHandle, IdentityString, IdentityWebType, Web2Network,
+	};
 	use log;
-	use std::fmt;
 
 	#[test]
 	fn ruleset2_verification_works() {
 		let guildid: u64 = 919848390156767232;
 		let userid: u64 = 746308249695027224;
-		let guild_id: Vec<u8> = format!("{}", guildid).as_bytes().to_vec();
-		let user_id: Vec<u8> = format!("{}", userid).as_bytes().to_vec();
-		ruleset2_verification();
+		let guild_id_vec: Vec<u8> = format!("{}", guildid).as_bytes().to_vec();
+		let user_id_vec: Vec<u8> = format!("{}", userid).as_bytes().to_vec();
+
+		let guild_id = BoundedVec::try_from(guild_id_vec).unwrap();
+		let user_id = BoundedVec::try_from(user_id_vec).unwrap();
+		let who = AccountId::from([0; 32]);
+		let identity: Identity = Identity {
+			web_type: IdentityWebType::Web2(Web2Network::Discord),
+			handle: IdentityHandle::String(
+				IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
+			),
+		};
+		let _ = ruleset2_verification(who, identity, guild_id, user_id);
 		log::info!("ruleset test");
 		let result = 2 + 2;
 		assert_eq!(result, 4);

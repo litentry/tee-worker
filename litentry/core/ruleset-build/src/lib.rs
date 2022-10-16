@@ -32,28 +32,13 @@ pub mod sgx_reexport_prelude {
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use itc_rest_client::{
-	error::Error as HttpError,
-	http_client::{DefaultSend, HttpClient},
-	rest_client::RestClient,
-	RestGet, RestPath,
-};
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use std::{
-	fmt::Debug,
-	format,
-	marker::PhantomData,
-	str,
-	string::{String, ToString},
-	sync::Arc,
-	time::Duration,
-	vec,
-	vec::Vec,
-};
+use itc_rest_client::{error::Error as HttpError, RestPath};
+use serde::{Deserialize, Serialize};
+use std::{fmt::Debug, str, string::String};
 
 use itp_types::AccountId;
 
-use litentry_primitives::{Identity, ParameterString, Ruleset};
+use litentry_primitives::{Identity, Ruleset};
 
 pub mod discord;
 

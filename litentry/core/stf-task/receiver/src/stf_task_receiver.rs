@@ -14,15 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::panic::resume_unwind;
-
 use crate::{
 	format, AuthorApi, Error, Hash, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt,
 	StfEnclaveSigning, StfTaskContext,
 };
 use lc_identity_verification::web2::{discord, twitter, HttpVerifier, Web2IdentityVerification};
 use lc_stf_task_sender::{stf_task_sender, RequestType};
-use litentry_primitives::{IdentityWebType, Ruleset, Web2Network, Web2ValidationData, Web3Network};
+use litentry_primitives::Web2ValidationData;
 
 // lifetime elision: StfTaskContext is guaranteed to outlive the fn
 pub fn run_stf_task_receiver<K, A, S>(context: &StfTaskContext<K, A, S>) -> Result<(), Error>
