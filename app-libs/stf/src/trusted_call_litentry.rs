@@ -25,7 +25,7 @@ use frame_support::dispatch::UnfilteredDispatchable;
 use itp_utils::stringify::account_id_to_string;
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
-	RequestType, RulesetVerificationRequest, Web2IdentityVerificationRequest,
+	MaxIdentityLength, RequestType, RulesetVerificationRequest, Web2IdentityVerificationRequest,
 	Web3IdentityVerificationRequest,
 };
 use litentry_primitives::{
@@ -34,6 +34,9 @@ use litentry_primitives::{
 };
 use log::*;
 use std::{format, string::ToString};
+
+use sp_runtime::BoundedVec;
+use std::vec;
 
 impl TrustedCallSigned {
 	pub fn set_user_shielding_key(who: AccountId, key: UserShieldingKeyType) -> StfResult<()> {
@@ -140,22 +143,26 @@ impl TrustedCallSigned {
 		}
 	}
 
-	pub fn verify_ruleset2(who: AccountId, identity: Identity, ruleset: Ruleset) -> StfResult<()> {
+	pub fn verify_ruleset2(who: AccountId, ruleset: Ruleset) -> StfResult<()> {
 		let v_identity_context =
 		ita_sgx_runtime::pallet_identity_management::Pallet::<Runtime>::get_identity_and_identity_context(&who);
+
+		let mut vec_identity: BoundedVec<Identity, MaxIdentityLength> = vec![].try_into().unwrap();
 
 		for identity_ctx in &v_identity_context {
 			if identity_ctx.1.is_verified
 				&& identity_ctx.0.web_type == IdentityWebType::Web2(Web2Network::Discord)
 			{
-				let request: RequestType =
-					RulesetVerificationRequest { who, identity, ruleset }.into();
-
-				let sender = StfRequestSender::new();
-				return sender.send_stf_request(request).map_err(|_| StfError::VerifyIdentityFailed)
+				vec_identity
+					.try_push(identity_ctx.0.clone())
+					.map_err(|_| StfError::RuleSet2VerifyFail)?;
 			}
 		}
-		Ok(())
+
+		let request: RequestType = RulesetVerificationRequest { who, ruleset, vec_identity }.into();
+
+		let sender = StfRequestSender::new();
+		sender.send_stf_request(request).map_err(|_| StfError::VerifyIdentityFailed)
 	}
 
 	pub fn query_credit(_account_id: AccountId) -> StfResult<()> {

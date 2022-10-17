@@ -30,8 +30,8 @@ pub type ParameterString = BoundedVec<u8, MaxStringLength>;
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 pub enum Ruleset {
 	R1,
-	R2(ParameterString, ParameterString), // (channel_id, guild_id)
-	R3(ParameterString, ParameterString), // (channel_id, guild_id)
+	R2(ParameterString, ParameterString), // (user_id, guild_id)
+	R3(ParameterString, ParameterString), // (user_id, guild_id)
 	R4,
 	R5(ParameterString, ParameterString), // (twitter_account, tweet_id)
 	R6,

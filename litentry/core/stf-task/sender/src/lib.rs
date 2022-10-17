@@ -36,6 +36,8 @@ pub mod error;
 pub mod stf_task_sender;
 pub use error::Result;
 
+use sp_runtime::{traits::ConstU32, BoundedVec};
+
 use codec::{Decode, Encode, MaxEncodedLen};
 use litentry_primitives::{
 	ChallengeCode, Identity, Ruleset, Web2ValidationData, Web3ValidationData,
@@ -60,12 +62,13 @@ pub struct Web3IdentityVerificationRequest {
 	pub bn: litentry_primitives::ParentchainBlockNumber, //Parentchain BlockNumber
 }
 
+pub type MaxIdentityLength = ConstU32<64>;
 /// TODO: adapt struct fields later
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen)]
 pub struct RulesetVerificationRequest {
 	pub who: AccountId,
-	pub identity: Identity,
 	pub ruleset: Ruleset,
+	pub vec_identity: BoundedVec<Identity, MaxIdentityLength>,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen)]
