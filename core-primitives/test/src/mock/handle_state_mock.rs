@@ -119,8 +119,9 @@ pub mod tests {
 
 	use super::*;
 	use codec::{Decode, Encode};
-	use ita_stf::Stf;
+	use ita_stf::stf_sgx_tests::StfState;
 	use itp_sgx_externalities::{SgxExternalitiesTrait, SgxExternalitiesType};
+	use itp_stf_interface::InitState;
 	use itp_types::ShardIdentifier;
 	use sp_core::{blake2_256, crypto::AccountId32};
 
@@ -133,6 +134,14 @@ pub mod tests {
 		let state_handler = HandleStateMock::default();
 		let shard = ShardIdentifier::default();
 		state_handler.initialize_shard(shard).unwrap();
+
+		assert!(state_handler.load(&shard).is_ok());
+		assert!(state_handler.shard_exists(&shard).unwrap());
+	}
+
+	pub fn from_shard_works() {
+		let shard = ShardIdentifier::default();
+		let state_handler = HandleStateMock::from_shard(shard).unwrap();
 
 		assert!(state_handler.load(&shard).is_ok());
 		assert!(state_handler.shard_exists(&shard).unwrap());
@@ -173,7 +182,7 @@ pub mod tests {
 		state_handler.initialize_shard(shard).unwrap();
 
 		let (lock, _) = state_handler.load_for_mutation(&shard).unwrap();
-		let initial_state = Stf::init_state(AccountId32::new([0u8; 32]));
+		let initial_state = StfState::init_state(AccountId32::new([0u8; 32]));
 		let state_hash_before_execution = hash_of(&initial_state.state);
 		state_handler.write_after_mutation(initial_state, lock, &shard).unwrap();
 
@@ -184,7 +193,7 @@ pub mod tests {
 	}
 
 	pub fn ensure_encode_and_encrypt_does_not_affect_state_hash() {
-		let state = Stf::init_state(AccountId32::new([0u8; 32]));
+		let state = StfState::init_state(AccountId32::new([0u8; 32]));
 		let state_hash_before_execution = hash_of(&state.state);
 
 		let encoded_state = state.state.encode();

@@ -17,19 +17,20 @@
 
 //! Implement the sidechain state traits.
 
-use crate::{Error, SidechainDB, SidechainState, StateHash, StateUpdate};
+use crate::{Error, SidechainDB, SidechainState, StateUpdate};
 use codec::{Decode, Encode};
 use frame_support::ensure;
-use itp_sgx_externalities::SgxExternalitiesTrait;
+use itp_sgx_externalities::{SgxExternalitiesTrait, StateHash};
 use itp_storage::keys::storage_value_key;
 use log::{error, info};
-use sp_core::{hashing::blake2_256, H256};
-use sp_io::storage;
+use sp_core::H256;
+use sp_io::{storage, KillStorageResult};
 use std::vec::Vec;
 
 impl<SidechainBlock, T> SidechainState for SidechainDB<SidechainBlock, T>
 where
 	T: SgxExternalitiesTrait + StateHash + Clone,
+	<T as SgxExternalitiesTrait>::SgxExternalitiesType: Encode,
 	SidechainBlock: Clone,
 {
 	type Externalities = T;
@@ -60,6 +61,18 @@ where
 		self.ext_mut().set_with_name(module_prefix, storage_prefix, value)
 	}
 
+	fn clear_with_name(&mut self, module_prefix: &str, storage_prefix: &str) {
+		self.ext_mut().clear_with_name(module_prefix, storage_prefix)
+	}
+
+	fn clear_prefix_with_name(
+		&mut self,
+		module_prefix: &str,
+		storage_prefix: &str,
+	) -> KillStorageResult {
+		self.ext_mut().clear_prefix_with_name(module_prefix, storage_prefix)
+	}
+
 	fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
 		self.ext().get(key).cloned()
 	}
@@ -67,9 +80,20 @@ where
 	fn set(&mut self, key: &[u8], value: &[u8]) {
 		self.ext_mut().set(key, value)
 	}
+
+	fn clear(&mut self, key: &[u8]) {
+		self.ext_mut().clear(key)
+	}
+
+	fn clear_sidechain_prefix(&mut self, prefix: &[u8]) -> KillStorageResult {
+		self.ext_mut().clear_sidechain_prefix(prefix)
+	}
 }
 
-impl<T: SgxExternalitiesTrait + Clone + StateHash> SidechainState for T {
+impl<T: SgxExternalitiesTrait + Clone + StateHash> SidechainState for T
+where
+	<T as SgxExternalitiesTrait>::SgxExternalitiesType: Encode,
+{
 	type Externalities = Self;
 	type StateUpdate = StateUpdate;
 	type Hash = H256;
@@ -128,6 +152,18 @@ impl<T: SgxExternalitiesTrait + Clone + StateHash> SidechainState for T {
 		self.set(&storage_value_key(module_prefix, storage_prefix), &value.encode())
 	}
 
+	fn clear_with_name(&mut self, module_prefix: &str, storage_prefix: &str) {
+		self.clear(&storage_value_key(module_prefix, storage_prefix))
+	}
+
+	fn clear_prefix_with_name(
+		&mut self,
+		module_prefix: &str,
+		storage_prefix: &str,
+	) -> KillStorageResult {
+		self.clear_sidechain_prefix(&storage_value_key(module_prefix, storage_prefix))
+	}
+
 	fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
 		self.get(key).cloned()
 	}
@@ -135,11 +171,13 @@ impl<T: SgxExternalitiesTrait + Clone + StateHash> SidechainState for T {
 	fn set(&mut self, key: &[u8], value: &[u8]) {
 		self.execute_with(|| sp_io::storage::set(key, value))
 	}
-}
 
-impl<E: SgxExternalitiesTrait + Encode> StateHash for E {
-	fn hash(&self) -> H256 {
-		self.state().using_encoded(blake2_256).into()
+	fn clear(&mut self, key: &[u8]) {
+		self.execute_with(|| sp_io::storage::clear(key))
+	}
+
+	fn clear_sidechain_prefix(&mut self, prefix: &[u8]) -> KillStorageResult {
+		self.execute_with(|| sp_io::storage::clear_prefix(prefix, None))
 	}
 }
 
