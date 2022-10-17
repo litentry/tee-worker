@@ -100,29 +100,6 @@ where
 				)
 				.map_err(|e| Error::RulesetError(format!("error verify ruleset: {:?}", e)))?;
 			},
-
-			// match request.identity.web_type {
-			// 	IdentityWebType::Web2(Web2Network::Discord) => {
-			// 		let _ = lc_ruleset_build::web2::verify_discord_joined_server(
-			// 			request.who.clone(),
-			// 			request.identity.clone(),
-			// 			request.ruleset.clone(),
-			// 		)
-			// 		.map_err(|e| Error::RulesetError(format!("error ruleset web2: {:?}", e)))?;
-			// 	},
-			// 	IdentityWebType::Web2(Web2Network::Twitter) => {
-			// 		unimplemented!()
-			// 	},
-			// 	IdentityWebType::Web2(Web2Network::Github) => {
-			// 		unimplemented!()
-			// 	},
-			// 	IdentityWebType::Web3(Web3Network::Substrate(_)) => {
-			// 		unimplemented!()
-			// 	},
-			// 	IdentityWebType::Web3(Web3Network::Evm(_)) => {
-			// 		unimplemented!()
-			// 	},
-			// },
 			_ => {
 				unimplemented!()
 			},
