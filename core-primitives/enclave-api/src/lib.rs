@@ -24,7 +24,6 @@ pub mod remote_attestation;
 pub mod sidechain;
 pub mod stf_task_handler;
 pub mod teeracle_api;
-pub mod teerex_api;
 pub mod utils;
 
 pub type EnclaveResult<T> = Result<T, Error>;

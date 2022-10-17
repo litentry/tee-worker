@@ -18,10 +18,10 @@
 extern crate sgx_tstd as std;
 
 use crate::{
-	helpers::generate_challenge_code, stf_sgx_primitives::types::*, AccountId, MetadataOf, Runtime,
-	StfError, StfResult,
+	helpers::generate_challenge_code, AccountId, IdentityManagement, MetadataOf, Runtime, StfError,
+	StfResult, TrustedCallSigned,
 };
-use ita_sgx_runtime::IdentityManagement;
+use frame_support::dispatch::UnfilteredDispatchable;
 use itp_utils::stringify::account_id_to_string;
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
@@ -31,10 +31,9 @@ use litentry_primitives::{
 	ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType, ValidationData,
 };
 use log::*;
-use std::format;
-use support::traits::UnfilteredDispatchable;
+use std::{format, string::ToString};
 
-impl Stf {
+impl TrustedCallSigned {
 	pub fn set_user_shielding_key(who: AccountId, key: UserShieldingKeyType) -> StfResult<()> {
 		debug!("who.str = {:?}, key = {:?}", account_id_to_string(&who), key.clone());
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_user_shielding_key { who, key }
@@ -52,7 +51,7 @@ impl Stf {
 		debug!(
 			"who.str = {:?}, identity = {:?}, metadata = {:?}, bn = {:?}",
 			account_id_to_string(&who),
-			identity.clone(),
+			identity,
 			metadata,
 			bn
 		);
@@ -80,7 +79,7 @@ impl Stf {
 	}
 
 	pub fn unlink_identity(who: AccountId, identity: Identity) -> StfResult<()> {
-		debug!("who.str = {:?}, identity = {:?}", account_id_to_string(&who), identity.clone(),);
+		debug!("who.str = {:?}, identity = {:?}", account_id_to_string(&who), identity,);
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::unlink_identity { who, identity }
 			.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
 			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
@@ -95,7 +94,7 @@ impl Stf {
 		debug!(
 			"who.str = {:?}, identity = {:?}, bn = {:?}",
 			account_id_to_string(&who),
-			identity.clone(),
+			identity,
 			bn
 		);
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::verify_identity {
@@ -124,9 +123,9 @@ impl Stf {
 		for identity_ctx in &v_identity_context {
 			if identity_ctx.1.is_verified {
 				if identity_ctx.0.is_web2() {
-					web2_cnt = web2_cnt + 1;
+					web2_cnt += 1;
 				} else if identity_ctx.0.is_web3() {
-					web3_cnt = web3_cnt + 1;
+					web3_cnt += 1;
 				}
 			}
 		}
@@ -173,7 +172,7 @@ impl Stf {
 		bn: ParentchainBlockNumber,
 	) -> StfResult<()> {
 		let code = IdentityManagement::challenge_codes(&who, &identity)
-			.ok_or_else(|| StfError::Dispatch(format!("code not found")))?;
+			.ok_or_else(|| StfError::Dispatch("code not found".to_string()))?;
 
 		debug!("who:{:?}, identity:{:?}, code:{:?}", who, identity, code);
 
