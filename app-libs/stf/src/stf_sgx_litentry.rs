@@ -17,28 +17,22 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{stf_sgx_primitives::types::*, AccountId, MetadataOf, Runtime, StfError, StfResult};
+use crate::{
+	helpers::generate_challenge_code, stf_sgx_primitives::types::*, AccountId, MetadataOf, Runtime,
+	StfError, StfResult,
+};
+use ita_sgx_runtime::IdentityManagement;
 use itp_utils::stringify::account_id_to_string;
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
-	RequestType, Web2IdentityVerificationRequest,
+	RequestType, Web2IdentityVerificationRequest, Web3IdentityVerificationRequest,
 };
 use litentry_primitives::{
-	Identity, ParentchainBlockNumber, UserShieldingKeyType, Web2ValidationData,
+	ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType, ValidationData,
 };
 use log::*;
 use std::format;
 use support::traits::UnfilteredDispatchable;
-
-// struct LitentryTrustedCallConverter {}
-//
-// impl litentry_primitives::TrustedCallConverter for LitentryTrustedCallConverter {
-// 	fn encode_litentry_trusted_call(
-// 		trusted_call: litentry_primitives::LitentryTrustedCall,
-// 	) -> Vec<u8> {
-// 		Encode::encode(TrustedCall::litentry_trusted_call(trusted_call))
-// 	}
-// }
 
 impl Stf {
 	pub fn set_user_shielding_key(who: AccountId, key: UserShieldingKeyType) -> StfResult<()> {
@@ -54,7 +48,7 @@ impl Stf {
 		identity: Identity,
 		metadata: Option<MetadataOf<Runtime>>,
 		bn: ParentchainBlockNumber,
-	) -> StfResult<()> {
+	) -> StfResult<ChallengeCode> {
 		debug!(
 			"who.str = {:?}, identity = {:?}, metadata = {:?}, bn = {:?}",
 			account_id_to_string(&who),
@@ -62,17 +56,27 @@ impl Stf {
 			metadata,
 			bn
 		);
-		// let parentchain_number = ita_sgx_runtime::pallet_parentchain::Pallet::<Runtime>::block_number();
+
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::link_identity {
-			who,
-			identity,
+			who: who.clone(),
+			identity: identity.clone(),
 			metadata,
 			linking_request_block: bn,
 		}
 		.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
 		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
-		// TODO: generate challenge code
-		Ok(())
+
+		// generate challenge code
+		let code = generate_challenge_code();
+		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_challenge_code {
+			who,
+			identity,
+			code,
+		}
+		.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+
+		Ok(code)
 	}
 
 	pub fn unlink_identity(who: AccountId, identity: Identity) -> StfResult<()> {
@@ -95,13 +99,18 @@ impl Stf {
 			bn
 		);
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::verify_identity {
-			who,
-			identity,
+			who: who.clone(),
+			identity: identity.clone(),
 			verification_request_block: bn,
 		}
 		.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
 		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
-		// TODO: remove challenge code
+
+		// remove challenge code
+		ita_sgx_runtime::IdentityManagementCall::<Runtime>::remove_challenge_code { who, identity }
+			.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+
 		Ok(())
 	}
 
@@ -145,55 +154,49 @@ impl Stf {
 	pub fn set_challenge_code(
 		account: AccountId,
 		identity: Identity,
-		challenge_code: u32,
+		code: ChallengeCode,
 	) -> StfResult<()> {
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_challenge_code {
 			who: account,
 			identity,
-			code: challenge_code,
+			code,
 		}
 		.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
 		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
 		Ok(())
 	}
 
-	pub fn verify_web2_identity_step1(
-		target: AccountId,
+	pub fn verify_identity_step1(
+		who: AccountId,
 		identity: Identity,
-		validation_data: Web2ValidationData,
+		validation_data: ValidationData,
 		bn: ParentchainBlockNumber,
 	) -> StfResult<()> {
-		// testing.. remove later
-		let key = itp_storage::storage_double_map_key(
-			"IdentityManagement",
-			"ChallengeCodes",
-			&target,
-			&itp_storage::StorageHasher::Blake2_128Concat,
-			&identity,
-			&itp_storage::StorageHasher::Blake2_128Concat,
-		);
+		let code = IdentityManagement::challenge_codes(&who, &identity)
+			.ok_or_else(|| StfError::Dispatch(format!("code not found")))?;
 
-		let value: Option<u32> = crate::helpers::get_storage_by_key_hash(key.clone());
+		debug!("who:{:?}, identity:{:?}, code:{:?}", who, identity, code);
 
-		// let code: Option<u32> = ita_sgx_runtime::pallet_identity_management::ChallengeCodes::<
-		// 	Runtime,
-		// >::get(&target, &identity);
-		let code = Some(1134);
-
-		log::warn!("storage key:{:?}, value:{:?}, pallet:{:?}", key, value, code);
-
-		//TODO change error type
-		code.ok_or_else(|| StfError::Dispatch(format!("code not found")))?;
-		let request = Web2IdentityVerificationRequest {
-			target,
-			identity,
-			challenge_code: code.unwrap(),
-			validation_data,
-			bn,
+		let request: RequestType = match validation_data {
+			ValidationData::Web2(web2) => Web2IdentityVerificationRequest {
+				who,
+				identity,
+				challenge_code: code,
+				validation_data: web2,
+				bn,
+			}
+			.into(),
+			ValidationData::Web3(web3) => Web3IdentityVerificationRequest {
+				who,
+				identity,
+				challenge_code: code,
+				validation_data: web3,
+				bn,
+			}
+			.into(),
 		};
+
 		let sender = StfRequestSender::new();
-		sender
-			.send_stf_request(RequestType::Web2IdentityVerification(request))
-			.map_err(|e| StfError::Dispatch(format!("send extrinsic request error:{:?}", e)))
+		sender.send_stf_request(request).map_err(|_| StfError::VerifyIdentityFailed)
 	}
 }

@@ -16,17 +16,22 @@
 */
 use crate::{AccountId, StfError, StfResult, ENCLAVE_ACCOUNT_KEY};
 use aes_gcm::{
-	aead::{Aead, KeyInit, Payload},
-	Aes256Gcm,
+	aead::{Aead, KeyInit, OsRng, Payload},
+	AeadCore, Aes256Gcm,
 };
 use codec::{Decode, Encode};
 use itp_storage::{storage_double_map_key, storage_map_key, storage_value_key, StorageHasher};
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{AesOutput, UserShieldingKeyType, USER_SHIELDING_KEY_NONCE_LEN};
+use litentry_primitives::{
+	AesOutput, ChallengeCode, UserShieldingKeyType, USER_SHIELDING_KEY_NONCE_LEN,
+};
 use log::*;
 use std::prelude::v1::*;
 
-use aes_gcm::{aead::OsRng, AeadCore};
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+extern crate rand_sgx as rand;
+
+use rand::Rng;
 
 pub fn get_storage_value<V: Decode>(
 	storage_prefix: &'static str,
@@ -121,4 +126,8 @@ pub fn aes_encrypt(
 	let payload = Payload { msg: data, aad };
 	let ciphertext = cipher.encrypt(&nonce.into(), payload).unwrap();
 	AesOutput { ciphertext, aad: aad.to_vec(), nonce }
+}
+
+pub fn generate_challenge_code() -> ChallengeCode {
+	rand::thread_rng().gen::<ChallengeCode>()
 }
