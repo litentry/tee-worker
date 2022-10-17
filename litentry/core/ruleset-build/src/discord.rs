@@ -104,7 +104,5 @@ mod tests {
 		};
 		let _ = ruleset2_verification(who, identity, guild_id, user_id);
 		log::info!("ruleset test");
-		let result = 2 + 2;
-		assert_eq!(result, 4);
 	}
 }

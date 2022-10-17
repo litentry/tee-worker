@@ -145,16 +145,14 @@ impl TrustedCallSigned {
 		ita_sgx_runtime::pallet_identity_management::Pallet::<Runtime>::get_identity_and_identity_context(&who);
 
 		for identity_ctx in &v_identity_context {
-			if identity_ctx.1.is_verified {
-				if identity_ctx.0.web_type == IdentityWebType::Web2(Web2Network::Discord) {
-					let request: RequestType =
-						RulesetVerificationRequest { who, identity, ruleset }.into();
+			if identity_ctx.1.is_verified
+				&& identity_ctx.0.web_type == IdentityWebType::Web2(Web2Network::Discord)
+			{
+				let request: RequestType =
+					RulesetVerificationRequest { who, identity, ruleset }.into();
 
-					let sender = StfRequestSender::new();
-					return sender
-						.send_stf_request(request)
-						.map_err(|_| StfError::VerifyIdentityFailed)
-				}
+				let sender = StfRequestSender::new();
+				return sender.send_stf_request(request).map_err(|_| StfError::VerifyIdentityFailed)
 			}
 		}
 		Ok(())
