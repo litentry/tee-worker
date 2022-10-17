@@ -19,45 +19,44 @@
 use crate::test_genesis::test_genesis_setup;
 
 use crate::{
-	helpers::{aes_encrypt_default, enclave_signer_account, ensure_enclave_signer_account},
-	AccountData, AccountId, Arc, Getter, Index, ParentchainHeader, PublicGetter, ShardIdentifier,
-	State, StateTypeDiff, Stf, StfError, StfResult, TrustedCall, TrustedCallSigned, TrustedGetter,
-	ENCLAVE_ACCOUNT_KEY,
+	helpers::enclave_signer_account, Arc, ShardIdentifier, Stf, StfError, ENCLAVE_ACCOUNT_KEY,
 };
 use codec::Encode;
-use ita_sgx_runtime::{IdentityManagement, Runtime, Sudo, System};
+use frame_support::traits::{OriginTrait, UnfilteredDispatchable};
 use itp_node_api::metadata::{
 	pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata,
 };
 use itp_sgx_externalities::SgxExternalitiesTrait;
+use itp_stf_interface::{
+	parentchain_pallet::ParentchainPalletInterface,
+	sudo_pallet::SudoPalletInterface,
+	system_pallet::{SystemPalletAccountInterface, SystemPalletEventInterface},
+	ExecuteCall, ExecuteGetter, InitState, StateCallInterface, StateGetterInterface, UpdateState,
+};
 use itp_storage::storage_value_key;
 use itp_types::OpaqueCall;
 use itp_utils::stringify::account_id_to_string;
-use its_primitives::types::{BlockHash, BlockNumber as SidechainBlockNumber, Timestamp};
-use its_state::SidechainSystemExt;
 use log::*;
-use sp_io::hashing::blake2_256;
-use sp_runtime::MultiAddress;
-use std::{format, prelude::v1::*, vec};
-use support::{ensure, traits::UnfilteredDispatchable};
+use sp_runtime::traits::StaticLookup;
+use std::{fmt::Debug, format, prelude::v1::*, vec};
 
-#[cfg(feature = "evm")]
-use ita_sgx_runtime::{AddressMapping, HashedAddressMapping};
-
-#[cfg(feature = "evm")]
-use crate::evm_helpers::{
-	create_code_hash, evm_create2_address, evm_create_address, get_evm_account,
-	get_evm_account_codes, get_evm_account_storages,
-};
-
-impl Stf {
-	pub fn init_state(enclave_account: AccountId) -> State {
+impl<Call, Getter, State, Runtime, AccountId> InitState<State, AccountId>
+	for Stf<Call, Getter, State, Runtime>
+where
+	State: SgxExternalitiesTrait + Debug,
+	<State as SgxExternalitiesTrait>::SgxExternalitiesType: core::default::Default,
+	Runtime: frame_system::Config<AccountId = AccountId> + pallet_balances::Config,
+	<<Runtime as frame_system::Config>::Lookup as StaticLookup>::Source:
+		std::convert::From<AccountId>,
+	AccountId: Encode,
+{
+	fn init_state(enclave_account: AccountId) -> State {
 		debug!("initializing stf state, account id {}", account_id_to_string(&enclave_account));
-		let mut ext = State::new();
+		let mut state = State::new(Default::default());
 
-		ext.execute_with(|| {
-			// do not set genesis for pallets that are meant to be on-chain
-			// use get_storage_hashes_to_update instead
+		state.execute_with(|| {
+			// Do not set genesis for pallets that are meant to be on-chain
+			// use get_storage_hashes_to_update instead.
 
 			sp_io::storage::set(&storage_value_key("Balances", "TotalIssuance"), &11u128.encode());
 			sp_io::storage::set(&storage_value_key("Balances", "CreationFee"), &1u128.encode());
@@ -77,592 +76,174 @@ impl Stf {
 		});
 
 		#[cfg(feature = "test")]
-		test_genesis_setup(&mut ext);
+		test_genesis_setup(&mut state);
 
-		ext.execute_with(|| {
+		state.execute_with(|| {
 			sp_io::storage::set(
 				&storage_value_key("Sudo", ENCLAVE_ACCOUNT_KEY),
 				&enclave_account.encode(),
 			);
 
-			if let Err(e) = Self::create_enclave_self_account(&enclave_account) {
+			if let Err(e) = create_enclave_self_account::<Runtime, AccountId>(enclave_account) {
 				error!("Failed to initialize the enclave signer account: {:?}", e);
 			}
 		});
 
-		trace!("Returning updated state: {:?}", ext);
-		ext
+		trace!("Returning updated state: {:?}", state);
+		state
 	}
+}
 
-	pub fn get_state(ext: &mut impl SgxExternalitiesTrait, getter: Getter) -> Option<Vec<u8>> {
-		ext.execute_with(|| match getter {
-			Getter::trusted(g) => match g.getter {
-				TrustedGetter::free_balance(who) => {
-					let info = System::account(&who);
-					debug!("TrustedGetter free_balance");
-					debug!("AccountInfo for {} is {:?}", account_id_to_string(&who), info);
-					debug!("Account free balance is {}", info.data.free);
-					Some(info.data.free.encode())
-				},
-
-				TrustedGetter::reserved_balance(who) => {
-					let info = System::account(&who);
-					debug!("TrustedGetter reserved_balance");
-					debug!("AccountInfo for {} is {:?}", account_id_to_string(&who), info);
-					debug!("Account reserved balance is {}", info.data.reserved);
-					Some(info.data.reserved.encode())
-				},
-				TrustedGetter::nonce(who) => {
-					let nonce = System::account_nonce(&who);
-					debug!("TrustedGetter nonce");
-					debug!("Account nonce is {}", nonce);
-					Some(nonce.encode())
-				},
-				#[cfg(feature = "evm")]
-				TrustedGetter::evm_nonce(who) => {
-					let evm_account = get_evm_account(&who);
-					let evm_account = HashedAddressMapping::into_account_id(evm_account);
-					let nonce = System::account_nonce(&evm_account);
-					debug!("TrustedGetter evm_nonce");
-					debug!("Account nonce is {}", nonce);
-					Some(nonce.encode())
-				},
-				#[cfg(feature = "evm")]
-				TrustedGetter::evm_account_codes(_who, evm_account) =>
-				// TODO: This probably needs some security check if who == evm_account (or assosciated)
-					if let Some(info) = get_evm_account_codes(&evm_account) {
-						debug!("TrustedGetter Evm Account Codes");
-						debug!("AccountCodes for {} is {:?}", evm_account, info);
-						Some(info) // TOOD: encoded?
-					} else {
-						None
-					},
-				#[cfg(feature = "evm")]
-				TrustedGetter::evm_account_storages(_who, evm_account, index) =>
-				// TODO: This probably needs some security check if who == evm_account (or assosciated)
-					if let Some(value) = get_evm_account_storages(&evm_account, &index) {
-						debug!("TrustedGetter Evm Account Storages");
-						debug!("AccountStorages for {} is {:?}", evm_account, value);
-						Some(value.encode())
-					} else {
-						None
-					},
-				// litentry
-				TrustedGetter::user_shielding_key(who) =>
-					if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
-						Some(key.encode())
-					} else {
-						None
-					},
-			},
-			Getter::public(g) => match g {
-				PublicGetter::some_value => Some(42u32.encode()),
-			},
-		})
-	}
-
-	pub fn execute<NodeMetadataRepository>(
-		ext: &mut impl SgxExternalitiesTrait,
-		call: TrustedCallSigned,
-		calls: &mut Vec<OpaqueCall>,
-		node_metadata_repo: Arc<NodeMetadataRepository>,
-	) -> StfResult<()>
-	where
-		NodeMetadataRepository: AccessNodeMetadata,
-		NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPCallIndexes,
-	{
-		let call_hash = blake2_256(&call.encode());
-		ext.execute_with(|| {
-			let sender = call.call.sender_account().clone();
-			ensure!(
-				call.nonce == System::account_nonce(&sender),
-				StfError::InvalidNonce(call.nonce)
-			);
-			match call.call {
-				TrustedCall::balance_set_balance(root, who, free_balance, reserved_balance) => {
-					ensure!(is_root(&root), StfError::MissingPrivileges(root));
-					debug!(
-						"balance_set_balance({}, {}, {})",
-						account_id_to_string(&who),
-						free_balance,
-						reserved_balance
-					);
-					ita_sgx_runtime::BalancesCall::<Runtime>::set_balance {
-						who: MultiAddress::Id(who),
-						new_free: free_balance,
-						new_reserved: reserved_balance,
-					}
-					.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
-					.map_err(|e| {
-						StfError::Dispatch(format!("Balance Set Balance error: {:?}", e.error))
-					})?;
-					Ok(())
-				},
-				TrustedCall::balance_transfer(from, to, value) => {
-					let origin = ita_sgx_runtime::Origin::signed(from.clone());
-					debug!(
-						"balance_transfer({}, {}, {})",
-						account_id_to_string(&from),
-						account_id_to_string(&to),
-						value
-					);
-					ita_sgx_runtime::BalancesCall::<Runtime>::transfer {
-						dest: MultiAddress::Id(to),
-						value,
-					}
-					.dispatch_bypass_filter(origin)
-					.map_err(|e| {
-						StfError::Dispatch(format!("Balance Transfer error: {:?}", e.error))
-					})?;
-					Ok(())
-				},
-				TrustedCall::balance_unshield(account_incognito, beneficiary, value, shard) => {
-					debug!(
-						"balance_unshield({}, {}, {}, {})",
-						account_id_to_string(&account_incognito),
-						account_id_to_string(&beneficiary),
-						value,
-						shard
-					);
-
-					Self::unshield_funds(account_incognito, value)?;
-					calls.push(OpaqueCall::from_tuple(&(
-						node_metadata_repo
-							.get_from_metadata(|m| m.unshield_funds_call_indexes())??,
-						beneficiary,
-						value,
-						shard,
-						call_hash,
-					)));
-					Ok(())
-				},
-				TrustedCall::balance_shield(enclave_account, who, value) => {
-					ensure_enclave_signer_account(&enclave_account)?;
-					debug!("balance_shield({}, {})", account_id_to_string(&who), value);
-					Self::shield_funds(who, value)?;
-					Ok(())
-				},
-				#[cfg(feature = "evm")]
-				TrustedCall::evm_withdraw(from, address, value) => {
-					debug!("evm_withdraw({}, {}, {})", account_id_to_string(&from), address, value);
-					ita_sgx_runtime::EvmCall::<Runtime>::withdraw { address, value }
-						.dispatch_bypass_filter(ita_sgx_runtime::Origin::signed(from))
-						.map_err(|e| {
-							StfError::Dispatch(format!("Evm Withdraw error: {:?}", e.error))
-						})?;
-					Ok(())
-				},
-				#[cfg(feature = "evm")]
-				TrustedCall::evm_call(
-					from,
-					source,
-					target,
-					input,
-					value,
-					gas_limit,
-					max_fee_per_gas,
-					max_priority_fee_per_gas,
-					nonce,
-					access_list,
-				) => {
-					debug!(
-						"evm_call(from: {}, source: {}, target: {})",
-						account_id_to_string(&from),
-						source,
-						target
-					);
-					ita_sgx_runtime::EvmCall::<Runtime>::call {
-						source,
-						target,
-						input,
-						value,
-						gas_limit,
-						max_fee_per_gas,
-						max_priority_fee_per_gas,
-						nonce,
-						access_list,
-					}
-					.dispatch_bypass_filter(ita_sgx_runtime::Origin::signed(from))
-					.map_err(|e| StfError::Dispatch(format!("Evm Call error: {:?}", e.error)))?;
-					Ok(())
-				},
-				#[cfg(feature = "evm")]
-				TrustedCall::evm_create(
-					from,
-					source,
-					init,
-					value,
-					gas_limit,
-					max_fee_per_gas,
-					max_priority_fee_per_gas,
-					nonce,
-					access_list,
-				) => {
-					debug!(
-						"evm_create(from: {}, source: {}, value: {})",
-						account_id_to_string(&from),
-						source,
-						value
-					);
-					let nonce_evm_account =
-						System::account_nonce(&HashedAddressMapping::into_account_id(source));
-					ita_sgx_runtime::EvmCall::<Runtime>::create {
-						source,
-						init,
-						value,
-						gas_limit,
-						max_fee_per_gas,
-						max_priority_fee_per_gas,
-						nonce,
-						access_list,
-					}
-					.dispatch_bypass_filter(ita_sgx_runtime::Origin::signed(from))
-					.map_err(|e| StfError::Dispatch(format!("Evm Create error: {:?}", e.error)))?;
-					let contract_address = evm_create_address(source, nonce_evm_account);
-					info!("Trying to create evm contract with address {:?}", contract_address);
-					Ok(())
-				},
-				#[cfg(feature = "evm")]
-				TrustedCall::evm_create2(
-					from,
-					source,
-					init,
-					salt,
-					value,
-					gas_limit,
-					max_fee_per_gas,
-					max_priority_fee_per_gas,
-					nonce,
-					access_list,
-				) => {
-					debug!(
-						"evm_create2(from: {}, source: {}, value: {})",
-						account_id_to_string(&from),
-						source,
-						value
-					);
-					let code_hash = create_code_hash(&init);
-					ita_sgx_runtime::EvmCall::<Runtime>::create2 {
-						source,
-						init,
-						salt,
-						value,
-						gas_limit,
-						max_fee_per_gas,
-						max_priority_fee_per_gas,
-						nonce,
-						access_list,
-					}
-					.dispatch_bypass_filter(ita_sgx_runtime::Origin::signed(from))
-					.map_err(|e| StfError::Dispatch(format!("Evm Create2 error: {:?}", e.error)))?;
-					let contract_address = evm_create2_address(source, salt, code_hash);
-					info!("Trying to create evm contract with address {:?}", contract_address);
-					Ok(())
-				},
-				// litentry
-				TrustedCall::set_user_shielding_key(enclave_account, who, key) => {
-					ensure_enclave_signer_account(&enclave_account)?;
-					// TODO: we only checked if the extrinsic dispatch is successful,
-					//       is that enough? (i.e. is the state changed already?)
-					match Self::set_user_shielding_key(who.clone(), key) {
-						Ok(()) => {
-							calls.push(OpaqueCall::from_tuple(&(
-								node_metadata_repo.get_from_metadata(|m| {
-									m.user_shielding_key_set_call_indexes()
-								})??,
-								aes_encrypt_default(&key, &who.encode()),
-							)));
-						},
-						Err(err) => {
-							debug!("set_user_shielding_key error: {}", err);
-							calls.push(OpaqueCall::from_tuple(&(
-								node_metadata_repo
-									.get_from_metadata(|m| m.some_error_call_indexes())??,
-								"set_user_shielding_key".as_bytes(),
-								format!("{:?}", err).as_bytes(),
-							)));
-						},
-					}
-					Ok(())
-				},
-				TrustedCall::link_identity(enclave_account, who, identity, metadata, bn) => {
-					ensure_enclave_signer_account(&enclave_account)?;
-					debug!(
-						"link_identity, who: {}, identity: {:?}, metadata: {:?}",
-						account_id_to_string(&who),
-						identity.clone(),
-						metadata.clone()
-					);
-					match Self::link_identity(who.clone(), identity.clone(), metadata, bn) {
-						Ok(code) => {
-							debug!("link_identity {} OK", account_id_to_string(&who));
-							if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
-								calls.push(OpaqueCall::from_tuple(&(
-									node_metadata_repo.get_from_metadata(|m| {
-										m.identity_linked_call_indexes()
-									})??,
-									aes_encrypt_default(&key, &who.encode()),
-									aes_encrypt_default(&key, &identity.encode()),
-								)));
-								calls.push(OpaqueCall::from_tuple(&(
-									node_metadata_repo.get_from_metadata(|m| {
-										m.challenge_code_generated_call_indexes()
-									})??,
-									aes_encrypt_default(&key, &who.encode()),
-									aes_encrypt_default(&key, &code.encode()),
-								)));
-							} else {
-								calls.push(OpaqueCall::from_tuple(&(
-									node_metadata_repo
-										.get_from_metadata(|m| m.some_error_call_indexes())??,
-									"get_user_shielding_key".as_bytes(),
-									"error".as_bytes(),
-								)));
-							}
-						},
-						Err(err) => {
-							debug!("link_identity {} error: {}", account_id_to_string(&who), err);
-							calls.push(OpaqueCall::from_tuple(&(
-								node_metadata_repo
-									.get_from_metadata(|m| m.some_error_call_indexes())??,
-								"link_identity".as_bytes(),
-								format!("{:?}", err).as_bytes(),
-							)));
-						},
-					}
-					Ok(())
-				},
-				TrustedCall::unlink_identity(enclave_account, who, identity) => {
-					ensure_enclave_signer_account(&enclave_account)?;
-					debug!(
-						"link_identity, who: {}, identity: {:?}",
-						account_id_to_string(&who),
-						identity.clone(),
-					);
-					match Self::unlink_identity(who.clone(), identity.clone()) {
-						Ok(()) => {
-							debug!("unlink_identity {} OK", account_id_to_string(&who));
-							if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
-								calls.push(OpaqueCall::from_tuple(&(
-									node_metadata_repo.get_from_metadata(|m| {
-										m.identity_unlinked_call_indexes()
-									})??,
-									aes_encrypt_default(&key, &who.encode()),
-									aes_encrypt_default(&key, &identity.encode()),
-								)));
-							} else {
-								calls.push(OpaqueCall::from_tuple(&(
-									node_metadata_repo
-										.get_from_metadata(|m| m.some_error_call_indexes())??,
-									"get_user_shielding_key".as_bytes(),
-									"error".as_bytes(),
-								)));
-							}
-						},
-						Err(err) => {
-							debug!("unlink_identity {} error: {}", account_id_to_string(&who), err);
-							calls.push(OpaqueCall::from_tuple(&(
-								node_metadata_repo
-									.get_from_metadata(|m| m.some_error_call_indexes())??,
-								"unlink_identity".as_bytes(),
-								format!("{:?}", err).as_bytes(),
-							)));
-						},
-					}
-					Ok(())
-				},
-				TrustedCall::verify_identity_step1(
-					enclave_account,
-					account,
-					identity,
-					validation_data,
-					bn,
-				) => {
-					ensure_enclave_signer_account(&enclave_account)?;
-					Self::verify_identity_step1(account, identity, validation_data, bn)
-				},
-				TrustedCall::verify_identity_step2(enclave_account, who, identity, bn) => {
-					ensure_enclave_signer_account(&enclave_account)?;
-					debug!(
-						"verify_identity, who: {}, identity: {:?}, bn: {:?}",
-						account_id_to_string(&who),
-						identity.clone(),
-						bn
-					);
-					match Self::verify_identity(who.clone(), identity.clone(), bn) {
-						Ok(()) => {
-							debug!("verify_identity {} OK", account_id_to_string(&who));
-							if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
-								calls.push(OpaqueCall::from_tuple(&(
-									node_metadata_repo.get_from_metadata(|m| {
-										m.identity_verified_call_indexes()
-									})??,
-									aes_encrypt_default(&key, &who.encode()),
-									aes_encrypt_default(&key, &identity.encode()),
-								)));
-							} else {
-								calls.push(OpaqueCall::from_tuple(&(
-									node_metadata_repo
-										.get_from_metadata(|m| m.some_error_call_indexes())??,
-									"get_user_shielding_key".as_bytes(),
-									"error".as_bytes(),
-								)));
-							}
-						},
-						Err(err) => {
-							debug!("link_identity {} error: {}", account_id_to_string(&who), err);
-							calls.push(OpaqueCall::from_tuple(&(
-								node_metadata_repo
-									.get_from_metadata(|m| m.some_error_call_indexes())??,
-								"verify_identity".as_bytes(),
-								format!("{:?}", err).as_bytes(),
-							)));
-						},
-					}
-					Ok(())
-				},
-				TrustedCall::query_credit(account) => {
-					debug!("query_credit({:x?}", account.encode(),);
-					Self::query_credit(account)
-				},
-				TrustedCall::set_challenge_code(enclave_account, account, did, code) => {
-					ensure_enclave_signer_account(&enclave_account)?;
-					Self::set_challenge_code(account, did, code)
-				},
-			}?;
-			System::inc_account_nonce(&sender);
-			Ok(())
-		})
-	}
-
-	/// Creates valid enclave account with a balance that is above the existential deposit.
-	/// !! Requires a root to be set.
-	fn create_enclave_self_account(enclave_account: &AccountId) -> StfResult<()> {
-		ita_sgx_runtime::BalancesCall::<Runtime>::set_balance {
-			who: MultiAddress::Id(enclave_account.clone()),
-			new_free: 1000,
-			new_reserved: 0,
-		}
-		.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
-		.map_err(|e| {
-			StfError::Dispatch(format!(
-				"Set Balance for enclave signer account error: {:?}",
-				e.error
-			))
-		})
-		.map(|_| ())
-	}
-
-	fn shield_funds(account: AccountId, amount: u128) -> StfResult<()> {
-		let account_info = System::account(&account);
-		ita_sgx_runtime::BalancesCall::<Runtime>::set_balance {
-			who: MultiAddress::Id(account),
-			new_free: account_info.data.free + amount,
-			new_reserved: account_info.data.reserved,
-		}
-		.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
-		.map_err(|e| StfError::Dispatch(format!("Shield funds error: {:?}", e.error)))?;
-
-		Ok(())
-	}
-
-	fn unshield_funds(account: AccountId, amount: u128) -> StfResult<()> {
-		let account_info = System::account(&account);
-		if account_info.data.free < amount {
-			return Err(StfError::MissingFunds)
-		}
-
-		ita_sgx_runtime::BalancesCall::<Runtime>::set_balance {
-			who: MultiAddress::Id(account),
-			new_free: account_info.data.free - amount,
-			new_reserved: account_info.data.reserved,
-		}
-		.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
-		.map_err(|e| StfError::Dispatch(format!("Unshield funds error: {:?}", e.error)))?;
-		Ok(())
-	}
-
-	pub fn update_storage(ext: &mut impl SgxExternalitiesTrait, map_update: &StateTypeDiff) {
-		ext.execute_with(|| {
-			map_update.iter().for_each(|(k, v)| {
+impl<Call, Getter, State, Runtime>
+	UpdateState<State, <State as SgxExternalitiesTrait>::SgxExternalitiesDiffType>
+	for Stf<Call, Getter, State, Runtime>
+where
+	State: SgxExternalitiesTrait + Debug,
+	<State as SgxExternalitiesTrait>::SgxExternalitiesType: core::default::Default,
+	<State as SgxExternalitiesTrait>::SgxExternalitiesDiffType:
+		IntoIterator<Item = (Vec<u8>, Option<Vec<u8>>)>,
+{
+	fn apply_state_diff(
+		state: &mut State,
+		map_update: <State as SgxExternalitiesTrait>::SgxExternalitiesDiffType,
+	) {
+		state.execute_with(|| {
+			map_update.into_iter().for_each(|(k, v)| {
 				match v {
-					Some(value) => sp_io::storage::set(k, value),
-					None => sp_io::storage::clear(k),
+					Some(value) => sp_io::storage::set(&k, &value),
+					None => sp_io::storage::clear(&k),
 				};
 			});
 		});
 	}
 
-	/// Updates the block number, block hash and parent hash of the parentchain block.
-	pub fn update_parentchain_block(
-		ext: &mut impl SgxExternalitiesTrait,
-		header: ParentchainHeader,
-	) -> StfResult<()> {
-		ext.execute_with(|| {
-			ita_sgx_runtime::ParentchainCall::<Runtime>::set_block { header }
-				.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
-				.map_err(|e| {
-					StfError::Dispatch(format!("Update parentchain block error: {:?}", e.error))
-				})
-		})?;
-		Ok(())
+	fn storage_hashes_to_update_on_block() -> Vec<Vec<u8>> {
+		// Get all shards that are currently registered.
+		vec![shards_key_hash()]
+	}
+}
+
+impl<Call, Getter, State, Runtime, NodeMetadataRepository>
+	StateCallInterface<Call, State, NodeMetadataRepository> for Stf<Call, Getter, State, Runtime>
+where
+	Call: ExecuteCall<NodeMetadataRepository>,
+	State: SgxExternalitiesTrait + Debug,
+	NodeMetadataRepository: AccessNodeMetadata,
+	NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPCallIndexes,
+{
+	type Error = Call::Error;
+
+	fn execute_call(
+		state: &mut State,
+		call: Call,
+		calls: &mut Vec<OpaqueCall>,
+		node_metadata_repo: Arc<NodeMetadataRepository>,
+	) -> Result<(), Self::Error> {
+		state.execute_with(|| call.execute(calls, node_metadata_repo))
+	}
+}
+
+impl<Call, Getter, State, Runtime> StateGetterInterface<Getter, State>
+	for Stf<Call, Getter, State, Runtime>
+where
+	Getter: ExecuteGetter,
+	State: SgxExternalitiesTrait + Debug,
+{
+	fn execute_getter(state: &mut State, getter: Getter) -> Option<Vec<u8>> {
+		state.execute_with(|| getter.execute())
+	}
+}
+
+impl<Call, Getter, State, Runtime> SudoPalletInterface<State> for Stf<Call, Getter, State, Runtime>
+where
+	State: SgxExternalitiesTrait,
+	Runtime: frame_system::Config + pallet_sudo::Config,
+{
+	type AccountId = Runtime::AccountId;
+
+	fn get_root(state: &mut State) -> Self::AccountId {
+		state.execute_with(|| pallet_sudo::Pallet::<Runtime>::key().expect("No root account"))
 	}
 
-	pub fn get_storage_hashes_to_update(call: &TrustedCallSigned) -> Vec<Vec<u8>> {
-		let key_hashes = Vec::new();
-		match call.call {
-			TrustedCall::balance_set_balance(_, _, _, _) => debug!("No storage updates needed..."),
-			TrustedCall::balance_transfer(_, _, _) => debug!("No storage updates needed..."),
-			TrustedCall::balance_unshield(_, _, _, _) => debug!("No storage updates needed..."),
-			TrustedCall::balance_shield(_, _, _) => debug!("No storage updates needed..."),
-			// litentry
-			TrustedCall::set_user_shielding_key(..) => debug!("No storage updates needed..."),
-			TrustedCall::link_identity(..) => debug!("No storage updates needed..."),
-			TrustedCall::unlink_identity(..) => debug!("No storage updates needed..."),
-			TrustedCall::verify_identity_step2(..) => debug!("No storage updates needed..."),
-			TrustedCall::verify_identity_step1(..) => debug!("No storage updates needed..."),
-			TrustedCall::query_credit(..) => debug!("No storage updates needed..."),
-			TrustedCall::set_challenge_code(..) => debug!("No storage updates needed..."),
-			#[cfg(feature = "evm")]
-			_ => debug!("No storage updates needed..."),
-		};
-		key_hashes
+	fn get_enclave_account(state: &mut State) -> Self::AccountId {
+		state.execute_with(enclave_signer_account::<Self::AccountId>)
 	}
+}
 
-	pub fn get_storage_hashes_to_update_for_getter(getter: &Getter) -> Vec<Vec<u8>> {
-		debug!(
-			"No specific storage updates needed for getter. Returning those for on block: {:?}",
-			getter
-		);
-		Self::storage_hashes_to_update_on_block()
-	}
+impl<Call, Getter, State, Runtime, AccountId> SystemPalletAccountInterface<State, AccountId>
+	for Stf<Call, Getter, State, Runtime>
+where
+	State: SgxExternalitiesTrait,
+	Runtime: frame_system::Config<AccountId = AccountId>,
+	AccountId: Encode,
+{
+	type Index = Runtime::Index;
+	type AccountData = Runtime::AccountData;
 
-	pub fn storage_hashes_to_update_on_block() -> Vec<Vec<u8>> {
-		let mut key_hashes = Vec::new();
-
-		// get all shards that are currently registered
-		key_hashes.push(shards_key_hash());
-		key_hashes
-	}
-
-	pub fn get_root(ext: &mut impl SgxExternalitiesTrait) -> AccountId {
-		ext.execute_with(|| Sudo::key().expect("No root account"))
-	}
-
-	pub fn get_enclave_account(ext: &mut impl SgxExternalitiesTrait) -> AccountId {
-		ext.execute_with(|| enclave_signer_account())
-	}
-
-	pub fn account_nonce(ext: &mut impl SgxExternalitiesTrait, account: &AccountId) -> Index {
-		ext.execute_with(|| {
-			let nonce = System::account_nonce(account);
-			debug!("Account {} nonce is {}", account_id_to_string(&account), nonce);
+	fn get_account_nonce(state: &mut State, account: &AccountId) -> Self::Index {
+		state.execute_with(|| {
+			let nonce = frame_system::Pallet::<Runtime>::account_nonce(account);
+			debug!("Account {} nonce is {:?}", account_id_to_string(account), nonce);
 			nonce
 		})
 	}
 
-	pub fn account_data(ext: &mut impl SgxExternalitiesTrait, account: &AccountId) -> AccountData {
-		ext.execute_with(|| System::account(account).data)
+	fn get_account_data(state: &mut State, account: &AccountId) -> Self::AccountData {
+		state.execute_with(|| frame_system::Pallet::<Runtime>::account(account).data)
+	}
+}
+
+impl<Call, Getter, State, Runtime> SystemPalletEventInterface<State>
+	for Stf<Call, Getter, State, Runtime>
+where
+	State: SgxExternalitiesTrait,
+	Runtime: frame_system::Config,
+{
+	type EventRecord = frame_system::EventRecord<Runtime::Event, Runtime::Hash>;
+	type EventIndex = u32; // For some reason this is not a pub type in frame_system
+	type BlockNumber = Runtime::BlockNumber;
+	type Hash = Runtime::Hash;
+
+	fn get_events(state: &mut State) -> Vec<Box<Self::EventRecord>> {
+		state.execute_with(|| frame_system::Pallet::<Runtime>::read_events_no_consensus())
+	}
+
+	fn get_event_count(state: &mut State) -> Self::EventIndex {
+		state.execute_with(|| frame_system::Pallet::<Runtime>::event_count())
+	}
+
+	fn get_event_topics(
+		state: &mut State,
+		topic: &Self::Hash,
+	) -> Vec<(Self::BlockNumber, Self::EventIndex)> {
+		state.execute_with(|| frame_system::Pallet::<Runtime>::event_topics(topic))
+	}
+
+	fn reset_events(state: &mut State) {
+		state.execute_with(|| frame_system::Pallet::<Runtime>::reset_events())
+	}
+}
+
+impl<Call, Getter, State, Runtime, ParentchainHeader>
+	ParentchainPalletInterface<State, ParentchainHeader> for Stf<Call, Getter, State, Runtime>
+where
+	State: SgxExternalitiesTrait,
+	Runtime: frame_system::Config<Header = ParentchainHeader> + pallet_parentchain::Config,
+{
+	type Error = StfError;
+
+	fn update_parentchain_block(
+		state: &mut State,
+		header: ParentchainHeader,
+	) -> Result<(), Self::Error> {
+		state.execute_with(|| {
+			pallet_parentchain::Call::<Runtime>::set_block { header }
+				.dispatch_bypass_filter(Runtime::Origin::root())
+				.map_err(|e| {
+					Self::Error::Dispatch(format!("Update parentchain block error: {:?}", e.error))
+				})
+		})?;
+		Ok(())
 	}
 }
 
@@ -676,60 +257,24 @@ pub fn shards_key_hash() -> Vec<u8> {
 	vec![]
 }
 
-pub fn is_root(account: &AccountId) -> bool {
-	Sudo::key().map_or(false, |k| account == &k)
-}
-/// Trait extension to simplify sidechain data access from the STF.
-///
-/// This should be removed when the refactoring of the STF has been done: #269
-pub trait SidechainExt {
-	/// get the block number of the sidechain state
-	fn get_sidechain_block_number<S: SidechainSystemExt>(ext: &S) -> Option<SidechainBlockNumber>;
-
-	/// set the block number of the sidechain state
-	fn set_sidechain_block_number<S: SidechainSystemExt>(
-		ext: &mut S,
-		number: &SidechainBlockNumber,
-	);
-
-	/// get the last block hash of the sidechain state
-	fn get_last_block_hash<S: SidechainSystemExt>(ext: &S) -> Option<BlockHash>;
-
-	/// set the last block hash of the sidechain state
-	fn set_last_block_hash<S: SidechainSystemExt>(ext: &mut S, hash: &BlockHash);
-
-	/// get the timestamp of the sidechain state
-	fn get_timestamp<S: SidechainSystemExt>(ext: &S) -> Option<Timestamp>;
-
-	/// set the timestamp of the sidechain state
-	fn set_timestamp<S: SidechainSystemExt>(ext: &mut S, timestamp: &Timestamp);
-}
-
-impl SidechainExt for Stf {
-	fn get_sidechain_block_number<S: SidechainSystemExt>(ext: &S) -> Option<SidechainBlockNumber> {
-		ext.get_block_number()
+/// Creates valid enclave account with a balance that is above the existential deposit.
+/// !! Requires a root to be set.
+fn create_enclave_self_account<Runtime, AccountId>(
+	enclave_account: AccountId,
+) -> Result<(), StfError>
+where
+	Runtime: frame_system::Config<AccountId = AccountId> + pallet_balances::Config,
+	<<Runtime as frame_system::Config>::Lookup as StaticLookup>::Source: From<AccountId>,
+	Runtime::Balance: From<u32>,
+{
+	pallet_balances::Call::<Runtime>::set_balance {
+		who: enclave_account.into(),
+		new_free: 1000.into(),
+		new_reserved: 0.into(),
 	}
-
-	fn set_sidechain_block_number<S: SidechainSystemExt>(
-		ext: &mut S,
-		number: &SidechainBlockNumber,
-	) {
-		ext.set_block_number(number)
-	}
-
-	fn get_last_block_hash<S: SidechainSystemExt>(ext: &S) -> Option<BlockHash> {
-		ext.get_last_block_hash()
-	}
-
-	fn set_last_block_hash<S: SidechainSystemExt>(ext: &mut S, hash: &BlockHash) {
-		ext.set_last_block_hash(hash)
-	}
-
-	fn get_timestamp<S: SidechainSystemExt>(ext: &S) -> Option<Timestamp> {
-		ext.get_timestamp()
-	}
-
-	fn set_timestamp<S: SidechainSystemExt>(ext: &mut S, timestamp: &Timestamp) {
-		ext.set_timestamp(timestamp)
-	}
+	.dispatch_bypass_filter(Runtime::Origin::root())
+	.map_err(|e| {
+		StfError::Dispatch(format!("Set Balance for enclave signer account error: {:?}", e.error))
+	})
+	.map(|_| ())
 }
