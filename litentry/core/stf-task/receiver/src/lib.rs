@@ -109,7 +109,7 @@ impl<
 		Ok(())
 	}
 
-	pub fn create_identity_verify_trusted_call(
+	pub fn create_verify_identity_trusted_call(
 		&self,
 		who: AccountId,
 		identity: Identity,

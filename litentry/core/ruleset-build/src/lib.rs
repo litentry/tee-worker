@@ -70,7 +70,7 @@ impl RestPath<String> for CheckJoinDiscordResponse {
 	}
 }
 
-pub fn ruleset_verify(who: AccountId, identity: Identity, ruleset: Ruleset) -> Result<()> {
+pub fn build_ruleset(who: AccountId, identity: Identity, ruleset: Ruleset) -> Result<()> {
 	match ruleset {
 		Ruleset::R2(guilt_id, user_id) => ruleset2_verification(who, identity, guilt_id, user_id),
 		_ => Ok(()),

@@ -69,7 +69,7 @@ where
 					},
 				};
 
-				let c = context.create_identity_verify_trusted_call(
+				let c = context.create_verify_identity_trusted_call(
 					request.who,
 					request.identity,
 					request.bn,
@@ -85,7 +85,7 @@ where
 				)
 				.map_err(|e| Error::OtherError(format!("error verify web3: {:?}", e)))?;
 
-				let c = context.create_identity_verify_trusted_call(
+				let c = context.create_verify_identity_trusted_call(
 					request.who,
 					request.identity,
 					request.bn,
@@ -94,7 +94,7 @@ where
 			},
 			RequestType::RulesetVerification(request) =>
 				for identity in request.vec_identity {
-					let result = lc_ruleset_build::ruleset_verify(
+					let result = lc_ruleset_build::build_ruleset(
 						request.who.clone(),
 						identity,
 						request.ruleset.clone(),
@@ -102,6 +102,7 @@ where
 					.map_err(|e| Error::RulesetError(format!("error verify ruleset: {:?}", e)));
 
 					if result.is_ok() {
+						// When result is Ok,
 						break
 					}
 				},

@@ -118,7 +118,7 @@ impl TrustedCallSigned {
 		Ok(())
 	}
 
-	pub fn verify_ruleset1(who: AccountId) -> StfResult<()> {
+	pub fn build_ruleset1(who: AccountId) -> StfResult<()> {
 		let v_identity_context =
 		ita_sgx_runtime::pallet_identity_management::Pallet::<Runtime>::get_identity_and_identity_context(&who);
 
@@ -143,7 +143,7 @@ impl TrustedCallSigned {
 		}
 	}
 
-	pub fn verify_ruleset2(who: AccountId, ruleset: Ruleset) -> StfResult<()> {
+	pub fn build_ruleset2(who: AccountId, ruleset: Ruleset) -> StfResult<()> {
 		let v_identity_context =
 		ita_sgx_runtime::pallet_identity_management::Pallet::<Runtime>::get_identity_and_identity_context(&who);
 
