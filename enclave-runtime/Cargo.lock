@@ -2514,6 +2514,40 @@ dependencies = [
 ]
 
 [[package]]
+name = "lc-ruleset-build"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "futures 0.3.8",
+ "hex 0.4.0",
+ "http",
+ "http_req",
+ "ita-stf",
+ "itc-rest-client",
+ "itp-ocall-api",
+ "itp-sgx-crypto",
+ "itp-sgx-externalities",
+ "itp-stf-executor",
+ "itp-storage",
+ "itp-top-pool-author",
+ "itp-types",
+ "itp-utils",
+ "lazy_static",
+ "lc-stf-task-sender",
+ "litentry-primitives",
+ "log",
+ "parity-scale-codec",
+ "serde 1.0.145",
+ "serde_json 1.0.86",
+ "sgx_tstd",
+ "sp-core",
+ "sp-io",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.28)",
+ "thiserror 1.0.9",
+ "url",
+]
+
+[[package]]
 name = "lc-stf-task-receiver"
 version = "0.1.0"
 dependencies = [
@@ -2534,6 +2568,7 @@ dependencies = [
  "itp-utils",
  "lazy_static",
  "lc-identity-verification",
+ "lc-ruleset-build",
  "lc-stf-task-sender",
  "litentry-primitives",
  "log",
@@ -2564,6 +2599,7 @@ dependencies = [
  "serde 1.0.145",
  "serde_json 1.0.86",
  "sgx_tstd",
+ "sp-runtime",
  "thiserror 1.0.9",
  "url",
 ]
@@ -3003,7 +3039,7 @@ dependencies = [
 [[package]]
 name = "pallet-identity-management"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#0804daae9816e5e26a735728c0edff6709f2efb9"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#f77fc8bbecbdc2cc7202e63e9a929cf1c3894416"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3266,7 +3302,7 @@ dependencies = [
 [[package]]
 name = "primitives"
 version = "0.9.10"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#0804daae9816e5e26a735728c0edff6709f2efb9"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#f77fc8bbecbdc2cc7202e63e9a929cf1c3894416"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -3324,9 +3360,9 @@ checksum = "bc881b2c22681370c6a780e47af9840ef841837bc98118431d4e1868bd0c1086"
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.46"
+version = "1.0.47"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "94e2ef8dbfc347b10c094890f778ee2e36ca9bb4262e86dc99cd217e35f3470b"
+checksum = "5ea3d908b0e36316caf9e9e2c4625cdde190a7e6f440d794667ed17a1855e725"
 dependencies = [
  "unicode-ident",
 ]
@@ -4458,7 +4494,7 @@ dependencies = [
 [[package]]
 name = "sp-std"
 version = "4.0.0"
-source = "git+https://github.com/paritytech/substrate.git?branch=master#0ee03277c33b6334ddba7434e014fa637dcb6107"
+source = "git+https://github.com/paritytech/substrate.git?branch=master#6f453b5c2b6d7479189da06fd03e403b95503bdd"
 
 [[package]]
 name = "sp-std"

@@ -92,6 +92,7 @@ pub enum StfError {
 	#[display(fmt = "Identity verification failed")]
 	VerifyIdentityFailed,
 	RuleSet1VerifyFail,
+	RuleSet2VerifyFail,
 }
 
 impl From<MetadataError> for StfError {

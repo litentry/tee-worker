@@ -36,8 +36,12 @@ pub mod error;
 pub mod stf_task_sender;
 pub use error::Result;
 
+use sp_runtime::{traits::ConstU32, BoundedVec};
+
 use codec::{Decode, Encode, MaxEncodedLen};
-use litentry_primitives::{ChallengeCode, Identity, Web2ValidationData, Web3ValidationData};
+use litentry_primitives::{
+	ChallengeCode, Identity, Ruleset, Web2ValidationData, Web3ValidationData,
+};
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen)]
 pub struct Web2IdentityVerificationRequest {
@@ -58,20 +62,13 @@ pub struct Web3IdentityVerificationRequest {
 	pub bn: litentry_primitives::ParentchainBlockNumber, //Parentchain BlockNumber
 }
 
+pub type MaxIdentityLength = ConstU32<64>;
+/// TODO: adapt struct fields later
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen)]
-pub struct Assertion1Request {
+pub struct RulesetVerificationRequest {
 	pub who: AccountId,
-}
-
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen)]
-pub struct Assertion2Request {
-	pub who: AccountId,
-	pub identity: Identity,
-}
-
-pub enum AssertionType {
-	AssertionType1(Assertion1Request), // TODO: The type names can be adapted later
-	AssertionType2(Assertion2Request),
+	pub ruleset: Ruleset,
+	pub vec_identity: BoundedVec<Identity, MaxIdentityLength>,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen)]
@@ -84,7 +81,7 @@ pub struct SetChallengeCodeRequest {
 pub enum RequestType {
 	Web2IdentityVerification(Web2IdentityVerificationRequest),
 	Web3IdentityVerification(Web3IdentityVerificationRequest),
-	Assertion(AssertionType),
+	RulesetVerification(RulesetVerificationRequest),
 	SetChallengeCode(SetChallengeCodeRequest),
 }
 
@@ -100,9 +97,9 @@ impl From<Web3IdentityVerificationRequest> for RequestType {
 	}
 }
 
-impl From<AssertionType> for RequestType {
-	fn from(r: AssertionType) -> Self {
-		RequestType::Assertion(r)
+impl From<RulesetVerificationRequest> for RequestType {
+	fn from(r: RulesetVerificationRequest) -> Self {
+		RequestType::RulesetVerification(r)
 	}
 }
 

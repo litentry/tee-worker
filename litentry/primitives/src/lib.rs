@@ -21,6 +21,7 @@ extern crate sgx_tstd as std;
 mod ethereum_signature;
 mod identity;
 // mod trusted_call;
+mod ruleset;
 mod validation_data;
 
 pub use ethereum_signature::*;
@@ -30,6 +31,7 @@ pub use parentchain_primitives::{
 	USER_SHIELDING_KEY_NONCE_LEN, USER_SHIELDING_KEY_TAG_LEN,
 };
 // pub use trusted_call::*;
+pub use ruleset::*;
 pub use validation_data::*;
 
 pub type ChallengeCode = [u8; 16];

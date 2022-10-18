@@ -48,6 +48,9 @@ pub enum Error {
 	#[error("Request error: {0}")]
 	RequestError(String),
 
+	#[error("Ruleset error: {0}")]
+	RulesetError(String),
+
 	#[error("Other error: {0}")]
 	OtherError(String),
 }
