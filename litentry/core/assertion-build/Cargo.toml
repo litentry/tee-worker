@@ -47,6 +47,7 @@ frame-support = { git = "https://github.com/paritytech/substrate", branch = "pol
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28", default-features = false }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28", default-features = false }
 
 lc-stf-task-sender = { path = "../stf-task/sender", default-features = false }
 litentry-primitives = { path = "../../primitives", default-features = false }
@@ -73,6 +74,7 @@ std = [
     "itp-storage/std",
     "sp-std/std",
     "sp-io/std",
+    "sp-runtime/std",
     "frame-support/std",
     "litentry-primitives/std",
     "lc-stf-task-sender/std",

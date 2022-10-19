@@ -36,13 +36,10 @@ use itc_rest_client::{error::Error as HttpError, RestPath};
 use serde::{Deserialize, Serialize};
 use std::{fmt::Debug, str, string::String};
 
-use itp_types::AccountId;
+pub mod assertion1;
+pub mod assertion2;
 
-use litentry_primitives::{Assertion, Identity};
-
-pub mod discord;
-
-use crate::discord::assertion2_verification;
+pub use crate::{assertion1::build_assertion1, assertion2::build_assertion2};
 
 pub type Result<T> = core::result::Result<T, Error>;
 
@@ -50,6 +47,9 @@ pub type Result<T> = core::result::Result<T, Error>;
 pub enum Error {
 	#[error("Assertion error: {0}")]
 	Assertion1Error(String),
+
+	#[error("Assertion error: {0}")]
+	Assertion2Error(String),
 
 	#[error("Other error: {0}")]
 	AssertionOtherError(String),
@@ -67,13 +67,5 @@ pub struct CheckJoinDiscordResponse {
 impl RestPath<String> for CheckJoinDiscordResponse {
 	fn get_path(path: String) -> core::result::Result<String, HttpError> {
 		Ok(path)
-	}
-}
-
-pub fn build_assertion(who: AccountId, identity: Identity, assertion: Assertion) -> Result<()> {
-	match assertion {
-		Assertion::Assert2(guilt_id, user_id) =>
-			assertion2_verification(who, identity, guilt_id, user_id),
-		_ => Ok(()),
 	}
 }

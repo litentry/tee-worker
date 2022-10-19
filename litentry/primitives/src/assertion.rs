@@ -14,10 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-// This file includes the predefined assertions and the corresponding parameters
+// This file includes the predefined rulesets and the corresponding parameters
 // when requesting VCs.
 //
-// See: https://www.notion.so/litentry/Expected-parameters-in-predefined-assertions-14f74928aa2b43509167da12a3e75507
+// See: https://www.notion.so/litentry/Expected-parameters-in-predefined-rulesets-14f74928aa2b43509167da12a3e75507
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
@@ -30,8 +30,8 @@ pub type ParameterString = BoundedVec<u8, MaxStringLength>;
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 pub enum Assertion {
 	Assert1,
-	Assert2(ParameterString, ParameterString), // (user_id, guild_id)
-	Assert3(ParameterString, ParameterString), // (user_id, guild_id)
+	Assert2(ParameterString, ParameterString), // (guild_id, user_id)
+	Assert3(ParameterString, ParameterString), // (guild_id, user_id)
 	Assert4,
 	Assert5(ParameterString, ParameterString), // (twitter_account, tweet_id)
 	Assert6,

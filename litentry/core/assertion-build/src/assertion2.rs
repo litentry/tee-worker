@@ -33,19 +33,12 @@ use itc_rest_client::{
 use std::{format, str, string::String, time::Duration, vec};
 use url::Url;
 
-use itp_types::AccountId;
-
-use litentry_primitives::{Identity, ParameterString};
+use litentry_primitives::ParameterString;
 
 const DISCORD_BASE_URL: &str = "https://47.57.13.126:8080/";
 const TIMEOUT: Duration = Duration::from_secs(3u64);
 
-pub fn assertion2_verification(
-	_who: AccountId,
-	_identity: Identity,
-	guild_id: ParameterString,
-	user_id: ParameterString,
-) -> Result<()> {
+pub fn build_assertion2(guild_id: ParameterString, user_id: ParameterString) -> Result<()> {
 	let base_url = Url::parse(DISCORD_BASE_URL).unwrap();
 	let http_client = HttpClient::new(DefaultSend {}, true, Some(TIMEOUT), None, None);
 	let mut client = RestClient::new(http_client, base_url);
@@ -59,7 +52,7 @@ pub fn assertion2_verification(
 
 	let response: CheckJoinDiscordResponse = client
 		.get_with::<String, CheckJoinDiscordResponse>(path, query.as_slice())
-		.map_err(|e| Error::Assertion1Error(format!("{:?}", e)))?;
+		.map_err(|e| Error::Assertion2Error(format!("{:?}", e)))?;
 
 	log::debug!(
 		"get response: data: {:?}, message: {:?}, hasError: {:?}, msgCode: {:?}, success: {:?}",
@@ -78,7 +71,7 @@ pub fn assertion2_verification(
 
 #[cfg(test)]
 mod tests {
-	use crate::discord::assertion2_verification;
+	use crate::assertion2::build_assertion2;
 	use frame_support::BoundedVec;
 	use itp_types::AccountId;
 	use litentry_primitives::{
@@ -95,14 +88,14 @@ mod tests {
 
 		let guild_id = BoundedVec::try_from(guild_id_vec).unwrap();
 		let user_id = BoundedVec::try_from(user_id_vec).unwrap();
-		let who = AccountId::from([0; 32]);
-		let identity: Identity = Identity {
-			web_type: IdentityWebType::Web2(Web2Network::Discord),
-			handle: IdentityHandle::String(
-				IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
-			),
-		};
-		let _ = assertion2_verification(who, identity, guild_id, user_id);
+		// let who = AccountId::from([0; 32]);
+		// let identity: Identity = Identity {
+		// 	web_type: IdentityWebType::Web2(Web2Network::Discord),
+		// 	handle: IdentityHandle::String(
+		// 		IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
+		// 	),
+		// };
+		let _ = build_assertion2(guild_id, user_id);
 		log::info!("assertion test");
 	}
 }
