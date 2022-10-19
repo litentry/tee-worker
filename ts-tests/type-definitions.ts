@@ -1,7 +1,8 @@
-import {ApiPromise} from "@polkadot/api";
+import {ApiPromise, Keyring} from "@polkadot/api";
 import {KeyObject} from "crypto";
 import {HexString} from "@polkadot/util/types";
 import WebSocketAsPromised = require("websocket-as-promised");
+import {KeyringPair} from "@polkadot/keyring/types";
 
 export const teeTypes = {
     WorkerRpcReturnString: {
@@ -117,6 +118,7 @@ export type IntegrationTestContext = {
     substrate: ApiPromise,
     teeShieldingKey: KeyObject,
     shard: HexString
+    defaultSigner: KeyringPair
 }
 
 export class AESOutput {

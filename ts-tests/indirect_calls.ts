@@ -1,10 +1,9 @@
-import {AESOutput, IntegrationTestContext, LitentryIdentity} from "./type-definitions";
-import {decryptWithAES, encryptWithTeeShieldingKey, listenEncryptedEvents} from "./utils";
+import {IntegrationTestContext, LitentryIdentity} from "./type-definitions";
+import {encryptWithTeeShieldingKey, listenEncryptedEvents} from "./utils";
 import {KeyringPair} from "@polkadot/keyring/types";
 import {HexString} from "@polkadot/util/types";
-import {u8aToHex} from "@polkadot/util";
 
-export async function setUserShieldingKey(context: IntegrationTestContext, signer: KeyringPair, aesKey: HexString) {
+export async function setUserShieldingKey(context: IntegrationTestContext, signer: KeyringPair, aesKey: HexString): Promise<HexString> {
     const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, aesKey).toString('hex')
     await context.substrate.tx.identityManagement.setUserShieldingKey(context.shard, `0x${ciphertext}`).signAndSend(signer)
     const event = await listenEncryptedEvents(context, aesKey, {
@@ -13,12 +12,11 @@ export async function setUserShieldingKey(context: IntegrationTestContext, signe
         eventName: "UserShieldingKeySet"
     })
     const [who] = event.eventData;
-    if (who == u8aToHex(signer.addressRaw)) {
-        console.log("set user shielding key success...")
-    }
+    return who
+
 }
 
-export async function linkIdentity(context: IntegrationTestContext, signer: KeyringPair, aesKey: HexString, identity: LitentryIdentity) {
+export async function linkIdentity(context: IntegrationTestContext, signer: KeyringPair, aesKey: HexString, identity: LitentryIdentity): Promise<HexString[]> {
     const encode = context.substrate.createType("LitentryIdentity", identity).toHex()
     const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex')
     await context.substrate.tx.identityManagement.linkIdentity(context.shard, `0x${ciphertext}`, null).signAndSend(signer)
@@ -27,11 +25,11 @@ export async function linkIdentity(context: IntegrationTestContext, signer: Keyr
         extrinsicName: "challengeCodeGenerated",
         eventName: "ChallengeCodeGenerated"
     })
-    const [_who, _identity, challengeCode] = event.eventData;
-    console.log("challengeCode: ", challengeCode)
+    const [who, _identity, challengeCode] = event.eventData;
+    return [who, challengeCode]
 }
 
-export async function unlinkIdentity(context: IntegrationTestContext, signer: KeyringPair, aesKey: HexString, identity: LitentryIdentity) {
+export async function unlinkIdentity(context: IntegrationTestContext, signer: KeyringPair, aesKey: HexString, identity: LitentryIdentity): Promise<HexString> {
     const encode = context.substrate.createType("LitentryIdentity", identity).toHex()
     const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex')
     await context.substrate.tx.identityManagement.unlinkIdentity(context.shard, `0x${ciphertext}`).signAndSend(signer)
@@ -41,9 +39,7 @@ export async function unlinkIdentity(context: IntegrationTestContext, signer: Ke
         eventName: "IdentityUnlinked"
     })
     const [who, _identity] = event.eventData;
-    if (who == u8aToHex(signer.addressRaw)) {
-        console.log("unlink identity successful. identity:", identity)
-    }
+    return who
 }
 
 export async function verifyIdentity(context: IntegrationTestContext, signer: KeyringPair, aesKey: HexString, identity: LitentryIdentity) {

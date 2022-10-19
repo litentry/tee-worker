@@ -1,13 +1,14 @@
 import WebSocketAsPromised = require("websocket-as-promised");
 import WebSocket = require("ws");
 import Options = require("websocket-as-promised/types/options");
-import {ApiPromise, WsProvider} from "@polkadot/api";
-import {GenericEvent, Vec} from "@polkadot/types";
+import {ApiPromise, Keyring, WsProvider} from "@polkadot/api";
+import {Vec} from "@polkadot/types";
 import {
     AESOutput,
-    teeTypes,
     IntegrationTestContext,
+    LitentryIdentity,
     PubicKeyJson,
+    teeTypes,
     WorkerRpcReturnString,
     WorkerRpcReturnValue
 } from "./type-definitions";
@@ -71,6 +72,7 @@ export async function initIntegrationTestContext(workerEndpoint: string, substra
         provider, types: teeTypes
     })
     await cryptoWaitReady()
+    const keyring = new Keyring({type: 'sr25519'});
 
 
     const teeShieldingKey = await getTEEShieldingKey(wsp, api)
@@ -78,7 +80,8 @@ export async function initIntegrationTestContext(workerEndpoint: string, substra
         tee: wsp,
         substrate: api,
         teeShieldingKey,
-        shard
+        shard,
+        defaultSigner: keyring.addFromUri('//Alice', {name: 'Alice'})
     }
 }
 
@@ -184,3 +187,51 @@ export function encryptWithTeeShieldingKey(teeShieldingKey: KeyObject, plaintext
         oaepHash: 'sha256'
     }, hexToU8a(plaintext))
 }
+
+//<challeng-code> + <litentry-AccountId32> + <Identity>
+export function generateVerificationMessage(context: IntegrationTestContext, challengeCode: Uint8Array, signerAddress: Uint8Array, identity: LitentryIdentity): Buffer {
+    // const code = hexToU8a(challengeCode);
+    const encode = context.substrate.createType("LitentryIdentity", identity).toU8a()
+    const msg = Buffer.concat([challengeCode, signerAddress, encode])
+    return encryptWithTeeShieldingKey(context.teeShieldingKey, `0x${msg.toString('hex')}`)
+}
+
+export function createTestIdentity(): LitentryIdentity {
+    return <LitentryIdentity>{
+        handle: {
+            PlainString: `0x${Buffer.from('litentry', 'utf8').toString("hex")}`
+        },
+        web_type: {
+            Web2: "Twitter"
+        }
+    }
+}
+
+
+export function describeLitentry(title: string, cb: (context: IntegrationTestContext) => void) {
+    describe(title, function () {
+        // Set timeout to 6000 seconds
+        this.timeout(6000000);
+        let context: IntegrationTestContext = {
+            defaultSigner: {} as KeyringPair,
+            shard: "0x11" as HexString,
+            substrate: {} as ApiPromise,
+            tee: {} as WebSocketAsPromised,
+            teeShieldingKey: {} as KeyObject
+        };
+
+        before('Starting Litentry(parachain&tee)', async function () {
+            const tmp = await initIntegrationTestContext("wss://localhost:2000", "ws://integritee-node:9912")
+            context.defaultSigner = tmp.defaultSigner
+            context.shard = tmp.shard
+            context.substrate = tmp.substrate
+            context.tee = tmp.tee
+            context.teeShieldingKey = tmp.teeShieldingKey
+        });
+
+        after(async function () {
+        });
+        cb(context);
+    });
+}
+
