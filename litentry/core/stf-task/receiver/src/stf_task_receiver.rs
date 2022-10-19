@@ -92,6 +92,20 @@ where
 				)?;
 				let _ = context.submit_trusted_call(&c)?;
 			},
+			RequestType::RulesetVerification(request) =>
+				for identity in request.vec_identity {
+					let result = lc_ruleset_build::build_ruleset(
+						request.who.clone(),
+						identity,
+						request.ruleset.clone(),
+					)
+					.map_err(|e| Error::RulesetError(format!("error verify ruleset: {:?}", e)));
+
+					if result.is_ok() {
+						// When result is Ok,
+						break
+					}
+				},
 			_ => {
 				unimplemented!()
 			},

@@ -1835,9 +1835,9 @@ dependencies = [
 
 [[package]]
 name = "cxx"
-version = "1.0.78"
+version = "1.0.79"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19f39818dcfc97d45b03953c1292efc4e80954e1583c4aa770bac1383e2310a4"
+checksum = "3f83d0ebf42c6eafb8d7c52f7e5f2d3003b89c7aa4fd2b79229209459a849af8"
 dependencies = [
  "cc",
  "cxxbridge-flags",
@@ -1847,9 +1847,9 @@ dependencies = [
 
 [[package]]
 name = "cxx-build"
-version = "1.0.78"
+version = "1.0.79"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e580d70777c116df50c390d1211993f62d40302881e54d4b79727acb83d0199"
+checksum = "07d050484b55975889284352b0ffc2ecbda25c0c55978017c132b29ba0818a86"
 dependencies = [
  "cc",
  "codespan-reporting",
@@ -1862,15 +1862,15 @@ dependencies = [
 
 [[package]]
 name = "cxxbridge-flags"
-version = "1.0.78"
+version = "1.0.79"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "56a46460b88d1cec95112c8c363f0e2c39afdb237f60583b0b36343bf627ea9c"
+checksum = "99d2199b00553eda8012dfec8d3b1c75fce747cf27c169a270b3b99e3448ab78"
 
 [[package]]
 name = "cxxbridge-macro"
-version = "1.0.78"
+version = "1.0.79"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "747b608fecf06b0d72d440f27acc99288207324b793be2c17991839f3d4995ea"
+checksum = "dcb67a6de1f602736dd7eaead0080cf3435df806c61b24b13328db128c58868f"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3684,9 +3684,9 @@ dependencies = [
 
 [[package]]
 name = "iana-time-zone-haiku"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fde6edd6cef363e9359ed3c98ba64590ba9eecba2293eb5a723ab32aee8926aa"
+checksum = "0703ae284fc167426161c2e3f1da3ea71d94b21bedbcc9494e92b28e334e3dca"
 dependencies = [
  "cxx",
  "cxx-build",
@@ -5659,6 +5659,46 @@ dependencies = [
 ]
 
 [[package]]
+name = "lc-ruleset-build"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "futures 0.3.24",
+ "futures 0.3.8",
+ "hex 0.4.0",
+ "hex 0.4.3",
+ "http 0.2.1",
+ "http 0.2.8",
+ "http_req 0.8.1 (git+https://github.com/integritee-network/http_req?branch=master)",
+ "http_req 0.8.1 (git+https://github.com/integritee-network/http_req)",
+ "ita-stf",
+ "itc-rest-client",
+ "itp-ocall-api",
+ "itp-sgx-crypto",
+ "itp-sgx-externalities",
+ "itp-stf-executor",
+ "itp-storage",
+ "itp-top-pool-author",
+ "itp-types",
+ "itp-utils",
+ "lazy_static",
+ "lc-stf-task-sender",
+ "litentry-primitives",
+ "log 0.4.17",
+ "parity-scale-codec",
+ "serde 1.0.145",
+ "serde_json 1.0.86",
+ "sgx_tstd",
+ "sp-core",
+ "sp-io 6.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.28)",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.28)",
+ "thiserror 1.0.37",
+ "thiserror 1.0.9",
+ "url 2.1.1",
+ "url 2.3.1",
+]
+
+[[package]]
 name = "lc-stf-task-receiver"
 version = "0.1.0"
 dependencies = [
@@ -5683,6 +5723,7 @@ dependencies = [
  "itp-utils",
  "lazy_static",
  "lc-identity-verification",
+ "lc-ruleset-build",
  "lc-stf-task-sender",
  "litentry-primitives",
  "log 0.4.17",
@@ -5717,6 +5758,7 @@ dependencies = [
  "serde 1.0.145",
  "serde_json 1.0.86",
  "sgx_tstd",
+ "sp-runtime",
  "thiserror 1.0.37",
  "thiserror 1.0.9",
  "url 2.1.1",
@@ -6417,7 +6459,7 @@ dependencies = [
 [[package]]
 name = "litmus-parachain-runtime"
 version = "0.9.10"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#3740e4985ed1e546f4f90d0603952e1720e13740"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#f77fc8bbecbdc2cc7202e63e9a929cf1c3894416"
 dependencies = [
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
@@ -6834,7 +6876,7 @@ dependencies = [
 [[package]]
 name = "mock-tee-primitives"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#3740e4985ed1e546f4f90d0603952e1720e13740"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#f77fc8bbecbdc2cc7202e63e9a929cf1c3894416"
 dependencies = [
  "parity-scale-codec",
  "primitives",
@@ -7667,7 +7709,7 @@ dependencies = [
 [[package]]
 name = "pallet-asset-manager"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#3740e4985ed1e546f4f90d0603952e1720e13740"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#f77fc8bbecbdc2cc7202e63e9a929cf1c3894416"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7845,7 +7887,7 @@ dependencies = [
 [[package]]
 name = "pallet-bridge"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#3740e4985ed1e546f4f90d0603952e1720e13740"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#f77fc8bbecbdc2cc7202e63e9a929cf1c3894416"
 dependencies = [
  "blake2-rfc",
  "frame-benchmarking",
@@ -7863,7 +7905,7 @@ dependencies = [
 [[package]]
 name = "pallet-bridge-transfer"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#3740e4985ed1e546f4f90d0603952e1720e13740"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#f77fc8bbecbdc2cc7202e63e9a929cf1c3894416"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7954,7 +7996,7 @@ dependencies = [
 [[package]]
 name = "pallet-drop3"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#3740e4985ed1e546f4f90d0603952e1720e13740"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#f77fc8bbecbdc2cc7202e63e9a929cf1c3894416"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8033,7 +8075,7 @@ dependencies = [
 [[package]]
 name = "pallet-extrinsic-filter"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#3740e4985ed1e546f4f90d0603952e1720e13740"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#f77fc8bbecbdc2cc7202e63e9a929cf1c3894416"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8108,7 +8150,7 @@ dependencies = [
 [[package]]
 name = "pallet-identity-management"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#3740e4985ed1e546f4f90d0603952e1720e13740"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#f77fc8bbecbdc2cc7202e63e9a929cf1c3894416"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8127,7 +8169,7 @@ dependencies = [
 [[package]]
 name = "pallet-identity-management-mock"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#3740e4985ed1e546f4f90d0603952e1720e13740"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#f77fc8bbecbdc2cc7202e63e9a929cf1c3894416"
 dependencies = [
  "aes-gcm 0.10.1",
  "frame-benchmarking",
@@ -8286,7 +8328,7 @@ dependencies = [
 [[package]]
 name = "pallet-parachain-staking"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#3740e4985ed1e546f4f90d0603952e1720e13740"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#f77fc8bbecbdc2cc7202e63e9a929cf1c3894416"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -8619,7 +8661,7 @@ dependencies = [
 [[package]]
 name = "pallet-vc-management"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#3740e4985ed1e546f4f90d0603952e1720e13740"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#f77fc8bbecbdc2cc7202e63e9a929cf1c3894416"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -10235,7 +10277,7 @@ dependencies = [
 [[package]]
 name = "primitives"
 version = "0.9.10"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#3740e4985ed1e546f4f90d0603952e1720e13740"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#f77fc8bbecbdc2cc7202e63e9a929cf1c3894416"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -10308,9 +10350,9 @@ checksum = "bc881b2c22681370c6a780e47af9840ef841837bc98118431d4e1868bd0c1086"
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.46"
+version = "1.0.47"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "94e2ef8dbfc347b10c094890f778ee2e36ca9bb4262e86dc99cd217e35f3470b"
+checksum = "5ea3d908b0e36316caf9e9e2c4625cdde190a7e6f440d794667ed17a1855e725"
 dependencies = [
  "unicode-ident",
 ]
@@ -10945,7 +10987,7 @@ dependencies = [
 [[package]]
 name = "runtime-common"
 version = "0.9.10"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#3740e4985ed1e546f4f90d0603952e1720e13740"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#f77fc8bbecbdc2cc7202e63e9a929cf1c3894416"
 dependencies = [
  "cumulus-pallet-parachain-system",
  "cumulus-primitives-core",
@@ -10963,6 +11005,7 @@ dependencies = [
  "pallet-extrinsic-filter",
  "pallet-membership",
  "pallet-multisig",
+ "pallet-teerex",
  "pallet-transaction-payment",
  "pallet-treasury",
  "pallet-vesting",
@@ -13571,7 +13614,7 @@ dependencies = [
 [[package]]
 name = "sp-std"
 version = "4.0.0"
-source = "git+https://github.com/paritytech/substrate.git?branch=master#0ee03277c33b6334ddba7434e014fa637dcb6107"
+source = "git+https://github.com/paritytech/substrate.git?branch=master#6f453b5c2b6d7479189da06fd03e403b95503bdd"
 
 [[package]]
 name = "sp-std"

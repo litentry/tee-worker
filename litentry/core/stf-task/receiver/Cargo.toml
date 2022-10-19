@@ -46,6 +46,7 @@ itp-utils = { path = "../../../../core-primitives/utils", default-features = fal
 
 # litentry
 lc-identity-verification = { path = "../../identity-verification", default-features = false }
+lc-ruleset-build = { path = "../../ruleset-build", default-features = false }
 lc-stf-task-sender = { path = "../sender", default-features = false }
 litentry-primitives = { path = "../../../primitives", default-features = false }
 
@@ -71,6 +72,7 @@ std = [
     "litentry-primitives/std",
     "lc-stf-task-sender/std",
     "lc-identity-verification/std",
+    "lc-ruleset-build/std",
 ]
 sgx = [
     "futures_sgx",
@@ -90,4 +92,5 @@ sgx = [
     "litentry-primitives/sgx",
     "lc-stf-task-sender/sgx",
     "lc-identity-verification/sgx",
+    "lc-ruleset-build/sgx",
 ]
