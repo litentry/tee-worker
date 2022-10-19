@@ -1,5 +1,5 @@
 [package]
-name = "lc-ruleset-build"
+name = "lc-assertion-build"
 version = "0.1.0"
 authors = ["Litentry dev"]
 edition = "2021"

@@ -25,11 +25,11 @@ use frame_support::dispatch::UnfilteredDispatchable;
 use itp_utils::stringify::account_id_to_string;
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
-	MaxIdentityLength, RequestType, RulesetVerificationRequest, Web2IdentityVerificationRequest,
+	AssertionVerificationRequest, MaxIdentityLength, RequestType, Web2IdentityVerificationRequest,
 	Web3IdentityVerificationRequest,
 };
 use litentry_primitives::{
-	ChallengeCode, Identity, IdentityWebType, ParentchainBlockNumber, Ruleset,
+	Assertion, ChallengeCode, Identity, IdentityWebType, ParentchainBlockNumber,
 	UserShieldingKeyType, ValidationData, Web2Network,
 };
 use log::*;
@@ -118,7 +118,7 @@ impl TrustedCallSigned {
 		Ok(())
 	}
 
-	pub fn build_ruleset1(who: AccountId) -> StfResult<()> {
+	pub fn build_assertion1(who: AccountId) -> StfResult<()> {
 		let v_identity_context =
 		ita_sgx_runtime::pallet_identity_management::Pallet::<Runtime>::get_identity_and_identity_context(&who);
 
@@ -139,11 +139,11 @@ impl TrustedCallSigned {
 			// TODO: generate_vc();
 			Ok(())
 		} else {
-			Err(StfError::RuleSet1VerifyFail)
+			Err(StfError::Assertion1VerifyFail)
 		}
 	}
 
-	pub fn build_ruleset2(who: AccountId, ruleset: Ruleset) -> StfResult<()> {
+	pub fn build_assertion2(who: AccountId, assertion: Assertion) -> StfResult<()> {
 		let v_identity_context =
 		ita_sgx_runtime::pallet_identity_management::Pallet::<Runtime>::get_identity_and_identity_context(&who);
 
@@ -155,11 +155,12 @@ impl TrustedCallSigned {
 			{
 				vec_identity
 					.try_push(identity_ctx.0.clone())
-					.map_err(|_| StfError::RuleSet2VerifyFail)?;
+					.map_err(|_| StfError::Assertion2VerifyFail)?;
 			}
 		}
 
-		let request: RequestType = RulesetVerificationRequest { who, ruleset, vec_identity }.into();
+		let request: RequestType =
+			AssertionVerificationRequest { who, assertion, vec_identity }.into();
 
 		let sender = StfRequestSender::new();
 		sender.send_stf_request(request).map_err(|_| StfError::VerifyIdentityFailed)

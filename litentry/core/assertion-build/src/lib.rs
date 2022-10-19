@@ -38,21 +38,21 @@ use std::{fmt::Debug, str, string::String};
 
 use itp_types::AccountId;
 
-use litentry_primitives::{Identity, Ruleset};
+use litentry_primitives::{Assertion, Identity};
 
 pub mod discord;
 
-use crate::discord::ruleset2_verification;
+use crate::discord::assertion2_verification;
 
 pub type Result<T> = core::result::Result<T, Error>;
 
 #[derive(Debug, thiserror::Error, Clone)]
 pub enum Error {
-	#[error("Ruleset error: {0}")]
-	Ruleset1Error(String),
+	#[error("Assertion error: {0}")]
+	Assertion1Error(String),
 
 	#[error("Other error: {0}")]
-	RulesetOtherError(String),
+	AssertionOtherError(String),
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -70,9 +70,10 @@ impl RestPath<String> for CheckJoinDiscordResponse {
 	}
 }
 
-pub fn build_ruleset(who: AccountId, identity: Identity, ruleset: Ruleset) -> Result<()> {
-	match ruleset {
-		Ruleset::R2(guilt_id, user_id) => ruleset2_verification(who, identity, guilt_id, user_id),
+pub fn build_assertion(who: AccountId, identity: Identity, assertion: Assertion) -> Result<()> {
+	match assertion {
+		Assertion::Assert2(guilt_id, user_id) =>
+			assertion2_verification(who, identity, guilt_id, user_id),
 		_ => Ok(()),
 	}
 }

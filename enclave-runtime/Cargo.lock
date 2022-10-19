@@ -2482,7 +2482,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 
 [[package]]
-name = "lc-identity-verification"
+name = "lc-assertion-build"
 version = "0.1.0"
 dependencies = [
  "frame-support",
@@ -2495,7 +2495,9 @@ dependencies = [
  "itp-ocall-api",
  "itp-sgx-crypto",
  "itp-sgx-externalities",
+ "itp-stf-executor",
  "itp-storage",
+ "itp-top-pool-author",
  "itp-types",
  "itp-utils",
  "lazy_static",
@@ -2514,7 +2516,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "lc-ruleset-build"
+name = "lc-identity-verification"
 version = "0.1.0"
 dependencies = [
  "frame-support",
@@ -2527,9 +2529,7 @@ dependencies = [
  "itp-ocall-api",
  "itp-sgx-crypto",
  "itp-sgx-externalities",
- "itp-stf-executor",
  "itp-storage",
- "itp-top-pool-author",
  "itp-types",
  "itp-utils",
  "lazy_static",
@@ -2567,8 +2567,8 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "lazy_static",
+ "lc-assertion-build",
  "lc-identity-verification",
- "lc-ruleset-build",
  "lc-stf-task-sender",
  "litentry-primitives",
  "log",

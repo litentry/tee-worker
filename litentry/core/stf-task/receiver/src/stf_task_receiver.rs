@@ -92,14 +92,14 @@ where
 				)?;
 				let _ = context.submit_trusted_call(&c)?;
 			},
-			RequestType::RulesetVerification(request) =>
+			RequestType::AssertionVerification(request) =>
 				for identity in request.vec_identity {
-					let result = lc_ruleset_build::build_ruleset(
+					let result = lc_assertion_build::build_assertion(
 						request.who.clone(),
 						identity,
-						request.ruleset.clone(),
+						request.assertion.clone(),
 					)
-					.map_err(|e| Error::RulesetError(format!("error verify ruleset: {:?}", e)));
+					.map_err(|e| Error::AssertionError(format!("error verify assertion: {:?}", e)));
 
 					if result.is_ok() {
 						// When result is Ok,

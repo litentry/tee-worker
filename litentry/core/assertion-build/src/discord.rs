@@ -40,7 +40,7 @@ use litentry_primitives::{Identity, ParameterString};
 const DISCORD_BASE_URL: &str = "https://47.57.13.126:8080/";
 const TIMEOUT: Duration = Duration::from_secs(3u64);
 
-pub fn ruleset2_verification(
+pub fn assertion2_verification(
 	_who: AccountId,
 	_identity: Identity,
 	guild_id: ParameterString,
@@ -59,7 +59,7 @@ pub fn ruleset2_verification(
 
 	let response: CheckJoinDiscordResponse = client
 		.get_with::<String, CheckJoinDiscordResponse>(path, query.as_slice())
-		.map_err(|e| Error::Ruleset1Error(format!("{:?}", e)))?;
+		.map_err(|e| Error::Assertion1Error(format!("{:?}", e)))?;
 
 	log::debug!(
 		"get response: data: {:?}, message: {:?}, hasError: {:?}, msgCode: {:?}, success: {:?}",
@@ -78,7 +78,7 @@ pub fn ruleset2_verification(
 
 #[cfg(test)]
 mod tests {
-	use crate::discord::ruleset2_verification;
+	use crate::discord::assertion2_verification;
 	use frame_support::BoundedVec;
 	use itp_types::AccountId;
 	use litentry_primitives::{
@@ -87,7 +87,7 @@ mod tests {
 	use log;
 
 	#[test]
-	fn ruleset2_verification_works() {
+	fn assertion2_verification_works() {
 		let guildid: u64 = 919848390156767232;
 		let userid: u64 = 746308249695027224;
 		let guild_id_vec: Vec<u8> = format!("{}", guildid).as_bytes().to_vec();
@@ -102,7 +102,7 @@ mod tests {
 				IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
 			),
 		};
-		let _ = ruleset2_verification(who, identity, guild_id, user_id);
-		log::info!("ruleset test");
+		let _ = assertion2_verification(who, identity, guild_id, user_id);
+		log::info!("assertion test");
 	}
 }
