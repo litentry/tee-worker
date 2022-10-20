@@ -69,8 +69,8 @@ export const teeTypes = {
     },
     IdentityWebType: {
         _enum: {
-            Web2: "Web2Network",
-            Web3: "Web3Network"
+            Web2Identity: "Web2Network",
+            Web3Identity: "Web3Network"
         }
     },
     Web2Network: {
@@ -94,6 +94,41 @@ export const teeTypes = {
             Address20: '[u8;20]',
             PlainString: 'Vec<u8>'
         }
+    },
+
+    /// Validation Data
+    LitentryValidationData: {
+        _enum: {
+            Web2Validation: "Web2ValidationData",
+            Web3Validation: "Web3ValidationData"
+        }
+    },
+    Web2ValidationData: {
+        _enum: {
+            Twitter: "TwitterValidationData",
+            Discord: "DiscordValidationData"
+        }
+    },
+    TwitterValidationData: {
+        tweet_id: "Vec<u8>"
+    },
+    DiscordValidationData: {
+        channel_id: "Vec<u8>",
+        message_id: "Vec<u8>",
+        guild_id: "Vec<u8>"
+    },
+    Web3ValidationData: {
+        _enum: {
+            Substrate: "Web3CommonValidationData",
+            Evm: "Web3CommonValidationData"
+        }
+    },
+    Web3CommonValidationData: {
+        message: "Vec<u8>",
+        signature: "IdentityMultiSignature"
+    },
+    IdentityMultiSignature: {
+        _enum: {}
     }
 }
 
@@ -133,8 +168,8 @@ export type LitentryIdentity = {
 }
 
 export type IdentityWebType = {
-    Web2?: Web2Network
-    Web3?: Web3Network
+    Web2Identity?: Web2Network
+    Web3Identity?: Web3Network
 }
 
 export type IdentityHandle = {
@@ -142,6 +177,28 @@ export type IdentityHandle = {
     Address20: `0x${string},`
     PlainString: `0x${string}`
 }
+
+export type LitentryValidationData = {
+    Web2Validation?: Web2ValidationData,
+    Web3Validation?: string,
+}
+
+export type Web2ValidationData = {
+    Twitter?: TwitterValidationData,
+    Discord?: DiscordValidationData
+}
+
+export type TwitterValidationData = {
+    tweet_id: HexString
+}
+
+export type DiscordValidationData = {
+    channel_id: HexString,
+    message_id: HexString,
+    guild_id: HexString
+}
+
+// export type DiscordValidationData = {}
 
 export type Web3Network = {
     Substrate: SubstrateNetwork

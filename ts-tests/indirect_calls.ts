@@ -1,4 +1,4 @@
-import {IntegrationTestContext, LitentryIdentity} from "./type-definitions";
+import {IntegrationTestContext, LitentryIdentity, LitentryValidationData} from "./type-definitions";
 import {encryptWithTeeShieldingKey, listenEncryptedEvents} from "./utils";
 import {KeyringPair} from "@polkadot/keyring/types";
 import {HexString} from "@polkadot/util/types";
@@ -42,8 +42,17 @@ export async function unlinkIdentity(context: IntegrationTestContext, signer: Ke
     return who
 }
 
-export async function verifyIdentity(context: IntegrationTestContext, signer: KeyringPair, aesKey: HexString, identity: LitentryIdentity) {
-    const encode = context.substrate.createType("LitentryIdentity", identity).toHex()
-    const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex')
-    await context.substrate.tx.identityManagement.unlinkIdentity(context.shard, `0x${ciphertext}`).signAndSend(signer)
+export async function verifyIdentity(context: IntegrationTestContext, signer: KeyringPair, aesKey: HexString, identity: LitentryIdentity, data: LitentryValidationData) {
+    const identity_encode = context.substrate.createType("LitentryIdentity", identity).toHex()
+    const validation_encode = context.substrate.createType("LitentryValidationData", data).toHex()
+    const identity_ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, identity_encode).toString('hex')
+    const validation_ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, validation_encode).toString('hex')
+    await context.substrate.tx.identityManagement.verifyIdentity(context.shard, `0x${identity_ciphertext}`, `0x${validation_ciphertext}`).signAndSend(signer)
+    const event = await listenEncryptedEvents(context, aesKey, {
+        moduleName: "identityManagement",
+        extrinsicName: "identityVerified",
+        eventName: "IdentityVerified"
+    })
+    const [who, _identity] = event.eventData;
+    return who
 }

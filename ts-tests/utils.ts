@@ -12,13 +12,14 @@ import {
     WorkerRpcReturnString,
     WorkerRpcReturnValue
 } from "./type-definitions";
-import {cryptoWaitReady} from "@polkadot/util-crypto";
+import {blake2AsHex, cryptoWaitReady} from "@polkadot/util-crypto";
 import {KeyringPair} from "@polkadot/keyring/types";
 import {Codec} from "@polkadot/types/types";
 import {HexString} from "@polkadot/util/types";
 import {hexToU8a, u8aToHex} from "@polkadot/util";
 import {KeyObject} from "crypto";
 import {EventRecord} from "@polkadot/types/interfaces";
+import {after, before, describe} from "mocha";
 
 const base58 = require('micro-base58');
 const crypto = require("crypto");
@@ -26,6 +27,11 @@ const crypto = require("crypto");
 // TODO add self signed certificate ??
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
+export function sleep(secs: number) {
+    return new Promise((resolve) => {
+        setTimeout(resolve, secs * 1000);
+    });
+}
 
 export async function sendRequest(wsClient: WebSocketAsPromised, request: any, api: ApiPromise): Promise<WorkerRpcReturnValue> {
     const resp = await wsClient.sendRequest(request, {requestId: 1, timeout: 6000})
@@ -55,7 +61,7 @@ export async function getTEEShieldingKey(wsClient: WebSocketAsPromised, api: Api
 
 export async function initIntegrationTestContext(workerEndpoint: string, substrateEndpoint: string): Promise<IntegrationTestContext> {
     //TODO how to get the shard
-    const shard = '0x7cf5d42a86f1bb70d08c1eb687da3a51277383d5e1fa467fb25f017b80834db5'
+    const shard = '0x190f0e3f1d364c0f52b5011a9c03f05353f92b6bb348bd6643748b90ce750a6e'
     // const endpoint = "wss://localhost:2000"
     const wsp = new WebSocketAsPromised(workerEndpoint, <Options>{
         createWebSocket: (url: any) => new WebSocket(url),
@@ -189,24 +195,12 @@ export function encryptWithTeeShieldingKey(teeShieldingKey: KeyObject, plaintext
 }
 
 //<challeng-code> + <litentry-AccountId32> + <Identity>
-export function generateVerificationMessage(context: IntegrationTestContext, challengeCode: Uint8Array, signerAddress: Uint8Array, identity: LitentryIdentity): Buffer {
-    // const code = hexToU8a(challengeCode);
+export function generateVerificationMessage(context: IntegrationTestContext, challengeCode: Uint8Array, signerAddress: Uint8Array, identity: LitentryIdentity): HexString {
     const encode = context.substrate.createType("LitentryIdentity", identity).toU8a()
     const msg = Buffer.concat([challengeCode, signerAddress, encode])
-    return encryptWithTeeShieldingKey(context.teeShieldingKey, `0x${msg.toString('hex')}`)
+    // return encryptWithTeeShieldingKey(context.teeShieldingKey, `0x${msg.toString('hex')}`)
+    return blake2AsHex(msg, 256)
 }
-
-export function createTestIdentity(): LitentryIdentity {
-    return <LitentryIdentity>{
-        handle: {
-            PlainString: `0x${Buffer.from('litentry', 'utf8').toString("hex")}`
-        },
-        web_type: {
-            Web2: "Twitter"
-        }
-    }
-}
-
 
 export function describeLitentry(title: string, cb: (context: IntegrationTestContext) => void) {
     describe(title, function () {
