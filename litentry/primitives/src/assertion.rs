@@ -28,18 +28,18 @@ type MaxStringLength = ConstU32<64>;
 pub type ParameterString = BoundedVec<u8, MaxStringLength>;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
-pub enum Ruleset {
-	R1,
-	R2(ParameterString, ParameterString), // (user_id, guild_id)
-	R3(ParameterString, ParameterString), // (user_id, guild_id)
-	R4,
-	R5(ParameterString, ParameterString), // (twitter_account, tweet_id)
-	R6,
-	R7(Balance, u32), // (DOT_amount, year)
-	R8(u64),          // (tx_amount)
-	R9,
-	R10(Balance, u32), // (WBTC_amount, year)
-	R11(Balance, u32), // (ETH_amount, year)
-	R12(Balance, u32), // (LIT_amount, year)
-	R13(u32),          // (Karma_amount) - TODO: unsupported
+pub enum Assertion {
+	A1,
+	A2(ParameterString, ParameterString), // (guild_id, user_id)
+	A3(ParameterString, ParameterString), // (guild_id, user_id)
+	A4,
+	A5(ParameterString, ParameterString), // (twitter_account, tweet_id)
+	A6,
+	A7(Balance, u32), // (DOT_amount, year)
+	A8(u64),          // (tx_amount)
+	A9,
+	A10(Balance, u32), // (WBTC_amount, year)
+	A11(Balance, u32), // (ETH_amount, year)
+	A12(Balance, u32), // (LIT_amount, year)
+	A13(u32),          // (Karma_amount) - TODO: unsupported
 }

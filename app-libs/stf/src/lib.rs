@@ -91,8 +91,7 @@ pub enum StfError {
 	InvalidMetadata,
 	#[display(fmt = "Identity verification failed")]
 	VerifyIdentityFailed,
-	RuleSet1VerifyFail,
-	RuleSet2VerifyFail,
+	AssertionBuildFail,
 }
 
 impl From<MetadataError> for StfError {

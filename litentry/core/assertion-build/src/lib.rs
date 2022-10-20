@@ -36,23 +36,21 @@ use itc_rest_client::{error::Error as HttpError, RestPath};
 use serde::{Deserialize, Serialize};
 use std::{fmt::Debug, str, string::String};
 
-use itp_types::AccountId;
-
-use litentry_primitives::{Identity, Ruleset};
-
-pub mod discord;
-
-use crate::discord::ruleset2_verification;
+pub mod a1;
+pub mod a2;
 
 pub type Result<T> = core::result::Result<T, Error>;
 
 #[derive(Debug, thiserror::Error, Clone)]
 pub enum Error {
-	#[error("Ruleset error: {0}")]
-	Ruleset1Error(String),
+	#[error("Assertion error: {0}")]
+	Assertion1Error(String),
+
+	#[error("Assertion error: {0}")]
+	Assertion2Error(String),
 
 	#[error("Other error: {0}")]
-	RulesetOtherError(String),
+	AssertionOtherError(String),
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -67,12 +65,5 @@ pub struct CheckJoinDiscordResponse {
 impl RestPath<String> for CheckJoinDiscordResponse {
 	fn get_path(path: String) -> core::result::Result<String, HttpError> {
 		Ok(path)
-	}
-}
-
-pub fn build_ruleset(who: AccountId, identity: Identity, ruleset: Ruleset) -> Result<()> {
-	match ruleset {
-		Ruleset::R2(guilt_id, user_id) => ruleset2_verification(who, identity, guilt_id, user_id),
-		_ => Ok(()),
 	}
 }

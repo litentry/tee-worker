@@ -45,8 +45,8 @@ itp-top-pool-author = { path = "../../../../core-primitives/top-pool-author", de
 itp-utils = { path = "../../../../core-primitives/utils", default-features = false }
 
 # litentry
+lc-assertion-build = { path = "../../assertion-build", default-features = false }
 lc-identity-verification = { path = "../../identity-verification", default-features = false }
-lc-ruleset-build = { path = "../../ruleset-build", default-features = false }
 lc-stf-task-sender = { path = "../sender", default-features = false }
 litentry-primitives = { path = "../../../primitives", default-features = false }
 
@@ -72,7 +72,7 @@ std = [
     "litentry-primitives/std",
     "lc-stf-task-sender/std",
     "lc-identity-verification/std",
-    "lc-ruleset-build/std",
+    "lc-assertion-build/std",
 ]
 sgx = [
     "futures_sgx",
@@ -92,5 +92,5 @@ sgx = [
     "litentry-primitives/sgx",
     "lc-stf-task-sender/sgx",
     "lc-identity-verification/sgx",
-    "lc-ruleset-build/sgx",
+    "lc-assertion-build/sgx",
 ]

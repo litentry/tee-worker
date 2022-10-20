@@ -40,7 +40,7 @@ use sp_runtime::{traits::ConstU32, BoundedVec};
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use litentry_primitives::{
-	ChallengeCode, Identity, Ruleset, Web2ValidationData, Web3ValidationData,
+	Assertion, ChallengeCode, Identity, Web2ValidationData, Web3ValidationData,
 };
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen)]
@@ -65,9 +65,9 @@ pub struct Web3IdentityVerificationRequest {
 pub type MaxIdentityLength = ConstU32<64>;
 /// TODO: adapt struct fields later
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen)]
-pub struct RulesetVerificationRequest {
+pub struct AssertionBuildRequest {
 	pub who: AccountId,
-	pub ruleset: Ruleset,
+	pub assertion: Assertion,
 	pub vec_identity: BoundedVec<Identity, MaxIdentityLength>,
 }
 
@@ -81,7 +81,7 @@ pub struct SetChallengeCodeRequest {
 pub enum RequestType {
 	Web2IdentityVerification(Web2IdentityVerificationRequest),
 	Web3IdentityVerification(Web3IdentityVerificationRequest),
-	RulesetVerification(RulesetVerificationRequest),
+	AssertionVerification(AssertionBuildRequest),
 	SetChallengeCode(SetChallengeCodeRequest),
 }
 
@@ -97,9 +97,9 @@ impl From<Web3IdentityVerificationRequest> for RequestType {
 	}
 }
 
-impl From<RulesetVerificationRequest> for RequestType {
-	fn from(r: RulesetVerificationRequest) -> Self {
-		RequestType::RulesetVerification(r)
+impl From<AssertionBuildRequest> for RequestType {
+	fn from(r: AssertionBuildRequest) -> Self {
+		RequestType::AssertionVerification(r)
 	}
 }
 
