@@ -46,20 +46,23 @@ describeLitentry('Test Identity', (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12'
 
     step('set user shielding key', async function () {
-        const who = await setUserShieldingKey(context, context.defaultSigner, aesKey)
+        const who = await setUserShieldingKey(context, context.defaultSigner, aesKey, false)
         assert.equal(who, u8aToHex(context.defaultSigner.addressRaw), "check caller error")
     })
 
     step('link twitter identity', async function () {
-        const [_who, challengeCode] = await linkIdentity(context, context.defaultSigner, aesKey, twitterIdentity)
-        console.log("challengeCode: ", challengeCode)
-        const msg = generateVerificationMessage(context, hexToU8a(challengeCode), context.defaultSigner.addressRaw, twitterIdentity)
-        console.log("post verification msg to twitter: ", msg)
-        assert.isNotEmpty(challengeCode, "challengeCode empty")
+        const r = await linkIdentity(context, context.defaultSigner, aesKey, true, twitterIdentity)
+        if (r) {
+            const [_who, challengeCode] = r
+            console.log("challengeCode: ", challengeCode)
+            const msg = generateVerificationMessage(context, hexToU8a(challengeCode), context.defaultSigner.addressRaw, twitterIdentity)
+            console.log("post verification msg to twitter: ", msg)
+            assert.isNotEmpty(challengeCode, "challengeCode empty")
+        }
     })
 
     step('verify twitter identity', async function () {
-        const who = await verifyIdentity(context, context.defaultSigner, aesKey, twitterIdentity, twitterValidationData)
+        const who = await verifyIdentity(context, context.defaultSigner, aesKey, true, twitterIdentity, twitterValidationData)
         assert.equal(who, u8aToHex(context.defaultSigner.addressRaw), "check caller error")
     })
 
