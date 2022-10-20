@@ -25,7 +25,7 @@ use frame_support::dispatch::UnfilteredDispatchable;
 use itp_utils::stringify::account_id_to_string;
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
-	AssertionVerificationRequest, MaxIdentityLength, RequestType, Web2IdentityVerificationRequest,
+	AssertionBuildRequest, MaxIdentityLength, RequestType, Web2IdentityVerificationRequest,
 	Web3IdentityVerificationRequest,
 };
 use litentry_primitives::{
@@ -118,31 +118,6 @@ impl TrustedCallSigned {
 		Ok(())
 	}
 
-	// pub fn build_assertion1(who: AccountId) -> StfResult<()> {
-	// 	let v_identity_context =
-	// 	ita_sgx_runtime::pallet_identity_management::Pallet::<Runtime>::get_identity_and_identity_context(&who);
-
-	// 	let mut web2_cnt = 0;
-	// 	let mut web3_cnt = 0;
-
-	// 	for identity_ctx in &v_identity_context {
-	// 		if identity_ctx.1.is_verified {
-	// 			if identity_ctx.0.is_web2() {
-	// 				web2_cnt += 1;
-	// 			} else if identity_ctx.0.is_web3() {
-	// 				web3_cnt += 1;
-	// 			}
-	// 		}
-	// 	}
-
-	// 	if web2_cnt > 0 && web3_cnt > 0 {
-	// 		// TODO: generate_vc();
-	// 		Ok(())
-	// 	} else {
-	// 		Err(StfError::AssertionBuildFail)
-	// 	}
-	// }
-
 	pub fn build_assertion(who: AccountId, assertion: Assertion) -> StfResult<()> {
 		let v_identity_context =
 		ita_sgx_runtime::pallet_identity_management::Pallet::<Runtime>::get_identity_and_identity_context(&who);
@@ -157,8 +132,7 @@ impl TrustedCallSigned {
 			}
 		}
 
-		let request: RequestType =
-			AssertionVerificationRequest { who, assertion, vec_identity }.into();
+		let request: RequestType = AssertionBuildRequest { who, assertion, vec_identity }.into();
 
 		let sender = StfRequestSender::new();
 		sender.send_stf_request(request).map_err(|_| StfError::AssertionBuildFail)

@@ -65,7 +65,7 @@ pub struct Web3IdentityVerificationRequest {
 pub type MaxIdentityLength = ConstU32<64>;
 /// TODO: adapt struct fields later
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen)]
-pub struct AssertionVerificationRequest {
+pub struct AssertionBuildRequest {
 	pub who: AccountId,
 	pub assertion: Assertion,
 	pub vec_identity: BoundedVec<Identity, MaxIdentityLength>,
@@ -81,7 +81,7 @@ pub struct SetChallengeCodeRequest {
 pub enum RequestType {
 	Web2IdentityVerification(Web2IdentityVerificationRequest),
 	Web3IdentityVerification(Web3IdentityVerificationRequest),
-	AssertionVerification(AssertionVerificationRequest),
+	AssertionVerification(AssertionBuildRequest),
 	SetChallengeCode(SetChallengeCodeRequest),
 }
 
@@ -97,8 +97,8 @@ impl From<Web3IdentityVerificationRequest> for RequestType {
 	}
 }
 
-impl From<AssertionVerificationRequest> for RequestType {
-	fn from(r: AssertionVerificationRequest) -> Self {
+impl From<AssertionBuildRequest> for RequestType {
+	fn from(r: AssertionBuildRequest) -> Self {
 		RequestType::AssertionVerification(r)
 	}
 }

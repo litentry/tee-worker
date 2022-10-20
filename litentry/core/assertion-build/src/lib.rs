@@ -36,10 +36,8 @@ use itc_rest_client::{error::Error as HttpError, RestPath};
 use serde::{Deserialize, Serialize};
 use std::{fmt::Debug, str, string::String};
 
-pub mod assertion1;
-pub mod assertion2;
-
-pub use crate::{assertion1::build_assertion1, assertion2::build_assertion2};
+pub mod a1;
+pub mod a2;
 
 pub type Result<T> = core::result::Result<T, Error>;
 

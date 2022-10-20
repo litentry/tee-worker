@@ -38,7 +38,7 @@ use litentry_primitives::ParameterString;
 const DISCORD_BASE_URL: &str = "https://47.57.13.126:8080/";
 const TIMEOUT: Duration = Duration::from_secs(3u64);
 
-pub fn build_assertion2(guild_id: ParameterString, user_id: ParameterString) -> Result<()> {
+pub fn build(guild_id: ParameterString, user_id: ParameterString) -> Result<()> {
 	let base_url = Url::parse(DISCORD_BASE_URL).unwrap();
 	let http_client = HttpClient::new(DefaultSend {}, true, Some(TIMEOUT), None, None);
 	let mut client = RestClient::new(http_client, base_url);
@@ -71,7 +71,7 @@ pub fn build_assertion2(guild_id: ParameterString, user_id: ParameterString) -> 
 
 #[cfg(test)]
 mod tests {
-	use crate::assertion2::build_assertion2;
+	use crate::a2::build;
 	use frame_support::BoundedVec;
 	use itp_types::AccountId;
 	use litentry_primitives::{
@@ -95,7 +95,7 @@ mod tests {
 		// 		IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
 		// 	),
 		// };
-		let _ = build_assertion2(guild_id, user_id);
+		let _ = build(guild_id, user_id);
 		log::info!("assertion test");
 	}
 }

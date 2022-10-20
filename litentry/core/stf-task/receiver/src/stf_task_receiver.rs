@@ -94,12 +94,16 @@ where
 			},
 			RequestType::AssertionVerification(request) => {
 				match request.assertion {
-					Assertion::Assert1 => {},
-					Assertion::Assert2(guilt_id, user_id) => {
+					Assertion::A1 => {
+						lc_assertion_build::a1::build(request.vec_identity).map_err(|e| {
+							Error::AssertionError(format!("error verify assertion: {:?}", e))
+						})?;
+					},
+					Assertion::A2(guild_id, user_id) => {
 						for identity in request.vec_identity {
 							if identity.web_type == IdentityWebType::Web2(Web2Network::Discord) {
-								let result = lc_assertion_build::build_assertion2(
-									guilt_id.clone(),
+								let result = lc_assertion_build::a2::build(
+									guild_id.clone(),
 									user_id.clone(),
 								)
 								.map_err(|e| {
