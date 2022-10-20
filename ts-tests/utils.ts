@@ -91,7 +91,7 @@ export async function initIntegrationTestContext(workerEndpoint: string, substra
     }
 }
 
-export async function listenEncryptedEvents(context: IntegrationTestContext, aesKey: HexString, filterObj: { "moduleName": string, "extrinsicName": string, "eventName": string }) {
+export async function listenEncryptedEvents(context: IntegrationTestContext, aesKey: HexString, filterObj: { "module": string, "method": string, "event": string }) {
     return new Promise<{ eventData: HexString[] }>(async (resolve, reject) => {
         let startBlock = 0;
         let timeout = 10; // 10 block number timeout
@@ -106,13 +106,13 @@ export async function listenEncryptedEvents(context: IntegrationTestContext, aes
             const signedBlock = await context.substrate.rpc.chain.getBlock(header.hash);
             const allEvents = await context.substrate.query.system.events.at(header.hash) as Vec<EventRecord>;
             signedBlock.block.extrinsics.forEach((ex, index) => {
-                if (!(ex.method.section === filterObj.moduleName && ex.method.method === filterObj.extrinsicName)) {
+                if (!(ex.method.section === filterObj.module && ex.method.method === filterObj.method)) {
                     return;
                 }
                 allEvents
                     .filter(({phase, event}) => {
                         return phase.isApplyExtrinsic && phase.asApplyExtrinsic.eq(index)
-                            && event.section == filterObj.moduleName && event.method == filterObj.eventName
+                            && event.section == filterObj.module && event.method == filterObj.event
                     })
                     .forEach(({event}) => {
                         // const eventData = event.data as AESOutput;

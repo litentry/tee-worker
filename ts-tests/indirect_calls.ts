@@ -8,9 +8,9 @@ export async function setUserShieldingKey(context: IntegrationTestContext, signe
     await context.substrate.tx.identityManagement.setUserShieldingKey(context.shard, `0x${ciphertext}`).signAndSend(signer)
     if (listening) {
         const event = await listenEncryptedEvents(context, aesKey, {
-            moduleName: "identityManagement",
-            extrinsicName: "userShieldingKeySet",
-            eventName: "UserShieldingKeySet"
+            module: "identityManagement",
+            method: "userShieldingKeySet",
+            event: "UserShieldingKeySet"
         })
         const [who] = event.eventData;
         return who
@@ -24,9 +24,9 @@ export async function linkIdentity(context: IntegrationTestContext, signer: Keyr
     await context.substrate.tx.identityManagement.linkIdentity(context.shard, `0x${ciphertext}`, null).signAndSend(signer)
     if (listening) {
         const event = await listenEncryptedEvents(context, aesKey, {
-            moduleName: "identityManagement",
-            extrinsicName: "challengeCodeGenerated",
-            eventName: "ChallengeCodeGenerated"
+            module: "identityManagement",
+            method: "challengeCodeGenerated",
+            event: "ChallengeCodeGenerated"
         })
         const [who, _identity, challengeCode] = event.eventData;
         return [who, challengeCode]
@@ -41,9 +41,9 @@ export async function unlinkIdentity(context: IntegrationTestContext, signer: Ke
     await context.substrate.tx.identityManagement.unlinkIdentity(context.shard, `0x${ciphertext}`).signAndSend(signer)
     if (listening) {
         const event = await listenEncryptedEvents(context, aesKey, {
-            moduleName: "identityManagement",
-            extrinsicName: "identityUnlinked",
-            eventName: "IdentityUnlinked"
+            module: "identityManagement",
+            method: "identityUnlinked",
+            event: "IdentityUnlinked"
         })
         const [who, _identity] = event.eventData;
         return who
@@ -59,9 +59,9 @@ export async function verifyIdentity(context: IntegrationTestContext, signer: Ke
     await context.substrate.tx.identityManagement.verifyIdentity(context.shard, `0x${identity_ciphertext}`, `0x${validation_ciphertext}`).signAndSend(signer)
     if (listening) {
         const event = await listenEncryptedEvents(context, aesKey, {
-            moduleName: "identityManagement",
-            extrinsicName: "identityVerified",
-            eventName: "IdentityVerified"
+            module: "identityManagement",
+            method: "identityVerified",
+            event: "IdentityVerified"
         })
         const [who, _identity] = event.eventData;
         return who
