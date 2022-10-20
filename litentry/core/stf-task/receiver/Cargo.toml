@@ -45,8 +45,8 @@ itp-top-pool-author = { path = "../../../../core-primitives/top-pool-author", de
 itp-utils = { path = "../../../../core-primitives/utils", default-features = false }
 
 # litentry
-lc-identity-verification = { path = "../../identity-verification", default-features = false }
 lc-assertion-build = { path = "../../assertion-build", default-features = false }
+lc-identity-verification = { path = "../../identity-verification", default-features = false }
 lc-stf-task-sender = { path = "../sender", default-features = false }
 litentry-primitives = { path = "../../../primitives", default-features = false }
 
