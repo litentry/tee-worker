@@ -33,10 +33,8 @@ use litentry_primitives::{
 	UserShieldingKeyType, ValidationData, Web2Network,
 };
 use log::*;
-use std::{format, string::ToString};
-
 use sp_runtime::BoundedVec;
-use std::vec;
+use std::{format, string::ToString, vec};
 
 impl TrustedCallSigned {
 	pub fn set_user_shielding_key(who: AccountId, key: UserShieldingKeyType) -> StfResult<()> {

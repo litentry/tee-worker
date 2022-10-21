@@ -38,7 +38,7 @@ impl UserInfo for DiscordResponse {
 
 impl<K: ShieldingCryptoDecrypt> DecryptionVerificationPayload<K> for DiscordResponse {
 	fn decrypt_ciphertext(&self, _key: K) -> Result<Vec<u8>, Error> {
-		let data = self.content;
+		let data = &self.content;
 		if data.starts_with("0x") {
 			let bytes = &data.as_bytes()[b"0x".len()..];
 			hex::decode(bytes).map_err(|e| Error::OtherError(format!("Hex error: {:?}", e)))
