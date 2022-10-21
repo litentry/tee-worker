@@ -40,7 +40,7 @@ use sp_runtime::{traits::ConstU32, BoundedVec};
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use litentry_primitives::{
-	ChallengeCode, Identity, Ruleset, Web2ValidationData, Web3ValidationData,
+	ChallengeCode, Identity, Ruleset, UserShieldingKeyType, Web2ValidationData, Web3ValidationData,
 };
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen)]
@@ -78,11 +78,21 @@ pub struct SetChallengeCodeRequest {
 	pub challenge_code: u32,
 }
 
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen)]
+pub struct SetUserShieldingKeyRequest {
+	pub who: AccountId,
+	pub key: UserShieldingKeyType,
+}
+
 pub enum RequestType {
 	Web2IdentityVerification(Web2IdentityVerificationRequest),
 	Web3IdentityVerification(Web3IdentityVerificationRequest),
 	RulesetVerification(RulesetVerificationRequest),
 	SetChallengeCode(SetChallengeCodeRequest),
+	// set the user shielding key async - more for demo purpose to
+	// show how to read/write the storage in stf-task-receiver
+	// we can of course do it synchronously
+	SetUserShieldingKey(SetUserShieldingKeyRequest),
 }
 
 impl From<Web2IdentityVerificationRequest> for RequestType {
@@ -106,5 +116,11 @@ impl From<RulesetVerificationRequest> for RequestType {
 impl From<SetChallengeCodeRequest> for RequestType {
 	fn from(r: SetChallengeCodeRequest) -> Self {
 		RequestType::SetChallengeCode(r)
+	}
+}
+
+impl From<SetUserShieldingKeyRequest> for RequestType {
+	fn from(r: SetUserShieldingKeyRequest) -> Self {
+		RequestType::SetUserShieldingKey(r)
 	}
 }

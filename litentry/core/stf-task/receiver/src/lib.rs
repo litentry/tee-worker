@@ -36,12 +36,15 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 
 use codec::Encode;
 use futures::executor;
-use ita_stf::{AccountId, Hash, ShardIdentifier, State as StfState, TrustedCall, TrustedOperation};
+use ita_stf::{AccountId, Hash, ShardIdentifier, TrustedCall, TrustedOperation};
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
-use itp_stf_executor::traits::StfEnclaveSigning;
+use itp_sgx_externalities::SgxExternalitiesTrait;
+use itp_stf_executor::traits::{StfEnclaveSigning, StfExecuteGenericUpdate};
 use itp_top_pool_author::traits::AuthorApi;
 use litentry_primitives::{Identity, ParentchainBlockNumber};
-use std::{format, string::String, sync::Arc};
+use std::{fmt::Debug, format, string::String, sync::Arc};
+
+use std::boxed::Box;
 
 #[derive(Debug, thiserror::Error, Clone)]
 pub enum Error {
@@ -62,34 +65,36 @@ pub struct StfTaskContext<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
 	A: AuthorApi<Hash, Hash>,
 	S: StfEnclaveSigning,
+	E: StfExecuteGenericUpdate,
 > {
+	shard: ShardIdentifier,
 	shielding_key: K,
-	stf_state: Arc<StfState>,
-	shard_identifier: ShardIdentifier,
-	enclave_signer: Arc<S>,
 	author_api: Arc<A>,
+	enclave_signer: Arc<S>,
+	pub stf_executor: Arc<E>,
 }
 
 impl<
 		K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
 		A: AuthorApi<Hash, Hash>,
 		S: StfEnclaveSigning,
-	> StfTaskContext<K, A, S>
+		E: StfExecuteGenericUpdate,
+	> StfTaskContext<K, A, S, E>
 {
 	pub fn new(
-		shard_identifier: ShardIdentifier,
-		stf_state: Arc<StfState>,
+		shard: ShardIdentifier,
 		shielding_key: K,
-		enclave_signer: Arc<S>,
 		author_api: Arc<A>,
+		enclave_signer: Arc<S>,
+		stf_executor: Arc<E>,
 	) -> Self {
-		Self { shard_identifier, stf_state, shielding_key, enclave_signer, author_api }
+		Self { shard, shielding_key, author_api, enclave_signer, stf_executor }
 	}
 
 	pub fn submit_trusted_call(&self, trusted_call: &TrustedCall) -> Result<(), Error> {
 		let signed_trusted_call = self
 			.enclave_signer
-			.sign_call_with_self(trusted_call, &self.shard_identifier)
+			.sign_call_with_self(trusted_call, &self.shard)
 			.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
 
 		let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
@@ -99,9 +104,8 @@ impl<
 			.encrypt(&trusted_operation.encode())
 			.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
 
-		let top_submit_future = async {
-			self.author_api.submit_top(encrypted_trusted_call, self.shard_identifier).await
-		};
+		let top_submit_future =
+			async { self.author_api.submit_top(encrypted_trusted_call, self.shard).await };
 		executor::block_on(top_submit_future).map_err(|e| {
 			Error::OtherError(format!("Error adding indirect trusted call to TOP pool: {:?}", e))
 		})?;
@@ -121,5 +125,24 @@ impl<
 			.map_err(|e| Error::OtherError(format!("Error get enclave signer: {:?}", e)))?;
 
 		Ok(TrustedCall::verify_identity_step2(enclave_account_id, who, identity, bn))
+	}
+
+	// directly read or write the state associated with stf_executor
+	// you simply provide `read_or_update_function` that encapsulates the
+	// actual business logic.
+	//
+	// TODO: is it the best form that we can do?
+	pub fn read_or_update_state<F, R>(&self, read_or_update_function: F) -> Result<R, Error>
+	where
+		F: FnOnce() -> Result<R, Error>,
+	{
+		let inner_fn: Box<dyn FnOnce(E::Externalities) -> Result<(E::Externalities, R), Error>> =
+			Box::new(|mut ext| {
+				let r = ext.execute_with(read_or_update_function)?;
+				Ok((ext, r))
+			});
+		let (r, _) = E::execute_update::<_, _, Error>(&self.stf_executor, &self.shard, inner_fn)
+			.map_err(|e| Error::OtherError(format!("Error read_or_update_state: {:?}", e)))?;
+		Ok(r)
 	}
 }

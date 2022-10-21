@@ -18,14 +18,13 @@ use log::*;
 use sgx_types::sgx_status_t;
 use std::{string::ToString, sync::Arc};
 
-use ita_stf::State as StfState;
 use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, LightClientState};
 use itp_component_container::ComponentGetter;
 use itp_extrinsics_factory::ExtrinsicsFactory;
 use itp_nonce_cache::GLOBAL_NONCE_CACHE;
 use itp_sgx_crypto::{Ed25519Seal, Rsa3072Seal};
 use itp_sgx_io::StaticSealedIO;
-use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
+use itp_stf_state_handler::query_shard_state::QueryShardState;
 use itp_types::ShardIdentifier;
 use lc_stf_task_receiver::{stf_task_receiver::run_stf_task_receiver, StfTaskContext};
 
@@ -35,7 +34,7 @@ use crate::{
 		EnclaveStfEnclaveSigner, GLOBAL_NODE_METADATA_REPOSITORY_COMPONENT,
 		GLOBAL_OCALL_API_COMPONENT, GLOBAL_PARENTCHAIN_BLOCK_VALIDATOR_ACCESS_COMPONENT,
 		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_OBSERVER_COMPONENT,
-		GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
+		GLOBAL_STF_EXECUTOR_COMPONENT, GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 	},
 	GLOBAL_STATE_HANDLER_COMPONENT,
 };
@@ -87,9 +86,7 @@ fn run_stf_task_handler_internal() -> Result<()> {
 		Err(Error::Stf("Could not retrieve shard".to_string()))
 	}?;
 
-	let stf_state: StfState =
-		state_handler.load(&default_shard_identifier).map_err(Error::StfStateHandler)?;
-	let stf_state = Arc::new(stf_state);
+	let stf_executor = GLOBAL_STF_EXECUTOR_COMPONENT.get()?;
 
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 	let shielding_key = Rsa3072Seal::unseal_from_static_file().unwrap();
@@ -101,10 +98,10 @@ fn run_stf_task_handler_internal() -> Result<()> {
 
 	let stf_task_context = StfTaskContext::new(
 		default_shard_identifier,
-		stf_state,
 		shielding_key,
-		stf_enclave_signer,
 		author_api,
+		stf_enclave_signer,
+		stf_executor,
 	);
 
 	run_stf_task_receiver(&stf_task_context).map_err(Error::StfTaskReceiver)

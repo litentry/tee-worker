@@ -16,18 +16,22 @@
 
 use crate::{
 	format, AuthorApi, Error, Hash, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt,
-	StfEnclaveSigning, StfTaskContext,
+	StfEnclaveSigning, StfExecuteGenericUpdate, StfTaskContext,
 };
+use frame_support::traits::UnfilteredDispatchable;
+use ita_sgx_runtime::Runtime;
 use lc_identity_verification::web2::{discord, twitter, HttpVerifier, Web2IdentityVerification};
 use lc_stf_task_sender::{stf_task_sender, RequestType};
 use litentry_primitives::Web2ValidationData;
+use log::*;
 
 // lifetime elision: StfTaskContext is guaranteed to outlive the fn
-pub fn run_stf_task_receiver<K, A, S>(context: &StfTaskContext<K, A, S>) -> Result<(), Error>
+pub fn run_stf_task_receiver<K, A, S, E>(context: &StfTaskContext<K, A, S, E>) -> Result<(), Error>
 where
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
 	A: AuthorApi<Hash, Hash>,
 	S: StfEnclaveSigning,
+	E: StfExecuteGenericUpdate,
 {
 	let receiver = stf_task_sender::init_stf_task_sender_storage()
 		.map_err(|e| Error::OtherError(format!("read storage error:{:?}", e)))?;
@@ -106,6 +110,30 @@ where
 						break
 					}
 				},
+
+			RequestType::SetUserShieldingKey(request) => {
+				// demonstrate how to read storage, an alternative is to use `ext.get()` in the upper level
+				let key = context.read_or_update_state(|| {
+					let k = ita_sgx_runtime::IdentityManagement::user_shielding_keys(
+						request.who.clone(),
+					);
+
+					Ok(k)
+				})?;
+
+				warn!("demo current shielding key is {:?}", key);
+
+				// demonstrate how to write storage
+				let _ = context.read_or_update_state(|| {
+					let _ = ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_user_shielding_key {
+						who: request.who.clone(),
+						key: request.key,
+					}
+					.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+					.map_err(|e| Error::RulesetError(format!("error user_shielding_key: {:?}", e)))?;
+					Ok(())
+				})?;
+			},
 			_ => {
 				unimplemented!()
 			},

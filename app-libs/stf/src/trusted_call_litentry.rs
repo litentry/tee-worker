@@ -25,8 +25,8 @@ use frame_support::dispatch::UnfilteredDispatchable;
 use itp_utils::stringify::account_id_to_string;
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
-	MaxIdentityLength, RequestType, RulesetVerificationRequest, Web2IdentityVerificationRequest,
-	Web3IdentityVerificationRequest,
+	MaxIdentityLength, RequestType, RulesetVerificationRequest, SetUserShieldingKeyRequest,
+	Web2IdentityVerificationRequest, Web3IdentityVerificationRequest,
 };
 use litentry_primitives::{
 	ChallengeCode, Identity, IdentityWebType, ParentchainBlockNumber, Ruleset,
@@ -41,10 +41,9 @@ use std::vec;
 impl TrustedCallSigned {
 	pub fn set_user_shielding_key(who: AccountId, key: UserShieldingKeyType) -> StfResult<()> {
 		debug!("who.str = {:?}, key = {:?}", account_id_to_string(&who), key.clone());
-		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_user_shielding_key { who, key }
-			.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
-			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
-		Ok(())
+		let request = SetUserShieldingKeyRequest { who, key }.into();
+		let sender = StfRequestSender::new();
+		sender.send_stf_request(request).map_err(|_| StfError::VerifyIdentityFailed)
 	}
 
 	pub fn link_identity(
@@ -178,12 +177,12 @@ impl TrustedCallSigned {
 	}
 
 	pub fn set_challenge_code(
-		account: AccountId,
+		who: AccountId,
 		identity: Identity,
 		code: ChallengeCode,
 	) -> StfResult<()> {
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_challenge_code {
-			who: account,
+			who,
 			identity,
 			code,
 		}

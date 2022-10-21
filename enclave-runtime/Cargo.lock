@@ -2551,10 +2551,12 @@ dependencies = [
 name = "lc-stf-task-receiver"
 version = "0.1.0"
 dependencies = [
+ "frame-support",
  "futures 0.3.8",
  "hex 0.4.0",
  "http",
  "http_req",
+ "ita-sgx-runtime",
  "ita-stf",
  "itc-rest-client",
  "itp-extrinsics-factory",
