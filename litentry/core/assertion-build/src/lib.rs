@@ -38,6 +38,7 @@ use std::{fmt::Debug, str, string::String};
 
 pub mod a1;
 pub mod a2;
+pub mod a3;
 
 pub type Result<T> = core::result::Result<T, Error>;
 
@@ -54,7 +55,7 @@ pub enum Error {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct CheckJoinDiscordResponse {
+pub struct IDHubberResponse {
 	data: bool,
 	message: String,
 	has_errors: bool,
@@ -62,7 +63,7 @@ pub struct CheckJoinDiscordResponse {
 	success: bool,
 }
 
-impl RestPath<String> for CheckJoinDiscordResponse {
+impl RestPath<String> for IDHubberResponse {
 	fn get_path(path: String) -> core::result::Result<String, HttpError> {
 		Ok(path)
 	}

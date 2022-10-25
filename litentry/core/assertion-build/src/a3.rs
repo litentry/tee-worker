@@ -47,39 +47,34 @@ pub fn build(guild_id: ParameterString, handler: ParameterString) -> Result<()> 
 	let mut client = RestClient::new(http_client, base_url);
 
 	let path = format!(
-		"/discord/joined?guildid={:?}&handler={:?}",
-		guild_id.clone().into_inner(),
-		base64::encode(handler.clone().into_inner())
+		" /discord/commented/idhubber?handler={:?}&guildid={:?}",
+		base64::encode(handler.into_inner()),
+		guild_id.into_inner()
 	);
+	// let query = vec![];
+	let post_data = IDHubberResponse {
+		data: true,
+		message: String::from("IDHubber"),
+		has_errors: false,
+		msg_code: 0,
+		success: true,
+	};
 
-	let get_response: IDHubberResponse = client
-		.get::<String, IDHubberResponse>(path)
-		.map_err(|e| Error::Assertion2Error(format!("{:?}", e)))?;
+	// let post_response: = client
+	// 	.post::<String, IDHubberResponse>(path, &post_data)
+	// 	.map_err(|e| Error::Assertion2Error(format!("{:?}", e)))?;
 
-	log::debug!(
-		"get_response: data: {:?}, message: {:?}, hasError: {:?}, msgCode: {:?}, success: {:?}",
-		get_response.data,
-		get_response.message,
-		get_response.has_errors,
-		get_response.msg_code,
-		get_response.success
-	);
+	// log::debug!(
+	// 	"post_response: data: {:?}, message: {:?}, hasError: {:?}, msgCode: {:?}, success: {:?}",
+	// 	post_response.data,
+	// 	post_response.message,
+	// 	post_response.has_errors,
+	// 	post_response.msg_code,
+	// 	post_response.success
+	// );
 
 	// TODO:
 	// generate_vc(who, identity, ...)
-
-	// Assign ID-Hubber role:
-
-	// let path = format!(
-	// 	"/discord/assgin/idhubber?handler={:?}&guildid={:?}",
-	// 	guild_id.into_inner(),
-	// 	base64::encode(handler.into_inner())
-	// );
-
-	// let response: IDHubberResponse =
-	// 	client
-	// 		.post::<String, IDHubberResponse>(path)
-	// 		.map_err(|e| Error::Assertion2Error(format!("{:?}", e)))?;
 
 	Ok(())
 }
@@ -88,21 +83,29 @@ pub fn build(guild_id: ParameterString, handler: ParameterString) -> Result<()> 
 mod tests {
 	use crate::a2::build;
 	use frame_support::BoundedVec;
+	use itp_types::AccountId;
+	use litentry_primitives::{
+		Identity, IdentityHandle, IdentityString, IdentityWebType, Web2Network,
+	};
 	use log;
 
 	#[test]
 	fn assertion2_verification_works() {
 		let guildid: u64 = 919848390156767232;
-		// let userid: u64 = 746308249695027224;
+		let userid: u64 = 746308249695027224;
 		let guild_id_vec: Vec<u8> = format!("{}", guildid).as_bytes().to_vec();
-		// let user_id_vec: Vec<u8> = format!("{}", userid).as_bytes().to_vec();
-		let handler_vec: Vec<u8> = "againstwar%234779".to_string().as_bytes().to_vec();
+		let user_id_vec: Vec<u8> = format!("{}", userid).as_bytes().to_vec();
 
 		let guild_id = BoundedVec::try_from(guild_id_vec).unwrap();
-		// let user_id = BoundedVec::try_from(user_id_vec).unwrap();
-		let handler = BoundedVec::try_from(handler_vec).unwrap();
-
-		let _ = build(guild_id, handler);
+		let user_id = BoundedVec::try_from(user_id_vec).unwrap();
+		// let who = AccountId::from([0; 32]);
+		// let identity: Identity = Identity {
+		// 	web_type: IdentityWebType::Web2(Web2Network::Discord),
+		// 	handle: IdentityHandle::String(
+		// 		IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
+		// 	),
+		// };
+		let _ = build(guild_id, user_id);
 		log::info!("assertion test");
 	}
 }
