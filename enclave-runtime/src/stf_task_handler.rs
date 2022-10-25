@@ -35,7 +35,7 @@ use crate::{
 		EnclaveStfEnclaveSigner, GLOBAL_NODE_METADATA_REPOSITORY_COMPONENT,
 		GLOBAL_OCALL_API_COMPONENT, GLOBAL_PARENTCHAIN_BLOCK_VALIDATOR_ACCESS_COMPONENT,
 		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_OBSERVER_COMPONENT,
-		GLOBAL_STF_EXECUTOR_COMPONENT, GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
+		GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 	},
 	GLOBAL_STATE_HANDLER_COMPONENT,
 };
@@ -90,7 +90,7 @@ fn run_stf_task_handler_internal() -> Result<()> {
 	let stf_state: StfState =
 		state_handler.load(&default_shard_identifier).map_err(Error::StfStateHandler)?;
 	let stf_state = Arc::new(stf_state);
-	let stf_executor = GLOBAL_STF_EXECUTOR_COMPONENT.get()?;
+	// let stf_executor = GLOBAL_STF_EXECUTOR_COMPONENT.get()?;
 
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 	let shielding_key = Rsa3072Seal::unseal_from_static_file().unwrap();
@@ -110,7 +110,6 @@ fn run_stf_task_handler_internal() -> Result<()> {
 		shielding_key,
 		stf_enclave_signer,
 		author_api,
-		stf_executor,
 	);
 
 	run_stf_task_receiver(&stf_task_context).map_err(Error::StfTaskReceiver)

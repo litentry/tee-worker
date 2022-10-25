@@ -115,10 +115,10 @@ where
 			.get_pending_trusted_calls(shard.clone())
 			.iter()
 			.filter(|v| match v {
-				TrustedOperation::indirect_call(ref signedCall) =>
-					signedCall.call.sender_account().eq(&enclave_account_id),
-				TrustedOperation::direct_call(ref signedCall) =>
-					signedCall.call.sender_account().eq(&enclave_account_id),
+				TrustedOperation::indirect_call(ref call) =>
+					call.call.sender_account().eq(&enclave_account_id),
+				TrustedOperation::direct_call(ref call) =>
+					call.call.sender_account().eq(&enclave_account_id),
 				_ => false,
 			})
 			.count();
