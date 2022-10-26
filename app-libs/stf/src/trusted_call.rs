@@ -441,6 +441,7 @@ where
 									m.challenge_code_generated_call_indexes()
 								})??,
 								aes_encrypt_default(&key, &who.encode()),
+								aes_encrypt_default(&key, &identity.encode()),
 								aes_encrypt_default(&key, &code.encode()),
 							)));
 						} else {
@@ -467,7 +468,7 @@ where
 			TrustedCall::unlink_identity(enclave_account, who, identity) => {
 				ensure_enclave_signer_account(&enclave_account)?;
 				debug!(
-					"link_identity, who: {}, identity: {:?}",
+					"unlink_identity, who: {}, identity: {:?}",
 					account_id_to_string(&who),
 					identity,
 				);

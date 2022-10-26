@@ -2046,6 +2046,7 @@ dependencies = [
  "itp-storage",
  "itp-test",
  "itp-time-utils",
+ "itp-top-pool-author",
  "itp-types",
  "log",
  "parity-scale-codec",
@@ -2482,39 +2483,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 
 [[package]]
-name = "lc-identity-verification"
-version = "0.1.0"
-dependencies = [
- "frame-support",
- "futures 0.3.8",
- "hex 0.4.0",
- "http",
- "http_req",
- "ita-stf",
- "itc-rest-client",
- "itp-ocall-api",
- "itp-sgx-crypto",
- "itp-sgx-externalities",
- "itp-storage",
- "itp-types",
- "itp-utils",
- "lazy_static",
- "lc-stf-task-sender",
- "litentry-primitives",
- "log",
- "parity-scale-codec",
- "serde 1.0.145",
- "serde_json 1.0.86",
- "sgx_tstd",
- "sp-core",
- "sp-io",
- "sp-std 4.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.28)",
- "thiserror 1.0.9",
- "url",
-]
-
-[[package]]
-name = "lc-ruleset-build"
+name = "lc-assertion-build"
 version = "0.1.0"
 dependencies = [
  "frame-support",
@@ -2530,6 +2499,39 @@ dependencies = [
  "itp-stf-executor",
  "itp-storage",
  "itp-top-pool-author",
+ "itp-types",
+ "itp-utils",
+ "lazy_static",
+ "lc-stf-task-sender",
+ "litentry-primitives",
+ "log",
+ "parity-scale-codec",
+ "serde 1.0.145",
+ "serde_json 1.0.86",
+ "sgx_tstd",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.28)",
+ "thiserror 1.0.9",
+ "url",
+]
+
+[[package]]
+name = "lc-identity-verification"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "futures 0.3.8",
+ "hex 0.4.0",
+ "http",
+ "http_req",
+ "ita-stf",
+ "itc-rest-client",
+ "itp-ocall-api",
+ "itp-sgx-crypto",
+ "itp-sgx-externalities",
+ "itp-storage",
  "itp-types",
  "itp-utils",
  "lazy_static",
@@ -2569,8 +2571,8 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "lazy_static",
+ "lc-assertion-build",
  "lc-identity-verification",
- "lc-ruleset-build",
  "lc-stf-task-sender",
  "litentry-primitives",
  "log",

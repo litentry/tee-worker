@@ -93,8 +93,12 @@ fn run_stf_task_handler_internal() -> Result<()> {
 
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 
-	let stf_enclave_signer =
-		Arc::new(EnclaveStfEnclaveSigner::new(state_observer, ocall_api, shielding_key_repository));
+	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
+		state_observer,
+		ocall_api,
+		shielding_key_repository,
+		author_api.clone(),
+	));
 
 	let stf_task_context = StfTaskContext::new(
 		default_shard_identifier,

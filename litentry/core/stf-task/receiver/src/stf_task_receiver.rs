@@ -22,7 +22,7 @@ use frame_support::traits::UnfilteredDispatchable;
 use ita_sgx_runtime::Runtime;
 use lc_identity_verification::web2::{discord, twitter, HttpVerifier, Web2IdentityVerification};
 use lc_stf_task_sender::{stf_task_sender, RequestType};
-use litentry_primitives::Web2ValidationData;
+use litentry_primitives::{Assertion, IdentityWebType, Web2Network, Web2ValidationData};
 use log::*;
 
 // lifetime elision: StfTaskContext is guaranteed to outlive the fn
@@ -96,21 +96,39 @@ where
 				)?;
 				let _ = context.submit_trusted_call(&c)?;
 			},
-			RequestType::RulesetVerification(request) =>
-				for identity in request.vec_identity {
-					let result = lc_ruleset_build::build_ruleset(
-						request.who.clone(),
-						identity,
-						request.ruleset.clone(),
-					)
-					.map_err(|e| Error::RulesetError(format!("error verify ruleset: {:?}", e)));
+			RequestType::AssertionVerification(request) => {
+				match request.assertion {
+					Assertion::A1 => {
+						lc_assertion_build::a1::build(request.vec_identity).map_err(|e| {
+							Error::AssertionError(format!("error verify assertion: {:?}", e))
+						})?;
+					},
+					Assertion::A2(guild_id, user_id) => {
+						for identity in request.vec_identity {
+							if identity.web_type == IdentityWebType::Web2(Web2Network::Discord) {
+								let result = lc_assertion_build::a2::build(
+									guild_id.clone(),
+									user_id.clone(),
+								)
+								.map_err(|e| {
+									Error::AssertionError(format!(
+										"error verify assertion: {:?}",
+										e
+									))
+								});
 
-					if result.is_ok() {
-						// When result is Ok,
-						break
-					}
-				},
-
+								if result.is_ok() {
+									// When result is Ok,
+									break
+								}
+							}
+						}
+					},
+					_ => {
+						unimplemented!()
+					},
+				}
+			},
 			RequestType::SetUserShieldingKey(request) => {
 				// demonstrate how to read storage, an alternative is to use `ext.get()` in the upper level
 				let key = context.read_or_update_state(|| {
@@ -130,7 +148,7 @@ where
 						key: request.key,
 					}
 					.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
-					.map_err(|e| Error::RulesetError(format!("error user_shielding_key: {:?}", e)))?;
+					.map_err(|e| Error::OtherError(format!("error user_shielding_key: {:?}", e)))?;
 					Ok(())
 				})?;
 			},
