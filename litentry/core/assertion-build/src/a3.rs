@@ -59,7 +59,7 @@ pub fn build(guild_id: ParameterString, handler: ParameterString) -> Result<()> 
 
 	let _response = client
 		.post::<String, IDHubberResponse>(post_path, &dummy_data)
-		.map_err(|e| Error::Assertion2Error(format!("{:?}", e)));
+		.map_err(|e| Error::Assertion2Error(format!("{:?}", e)))?;
 
 	// TODO:
 	// generate_vc(who, identity, ...)
