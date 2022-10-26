@@ -30,9 +30,6 @@ lazy_static = { version = "1.1.0", features = ["spin_no_std"] }
 log = { version = "0.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
-base64 = { version = "0.13", default-features = false, features = ["alloc"], optional = true }
-base64_sgx = { package = "base64", rev = "sgx_1.1.3", git = "https://github.com/mesalock-linux/rust-base64-sgx", optional = true }
-
 
 # internal dependencies
 ita-stf = { path = "../../../app-libs/stf", default-features = false }
@@ -68,7 +65,6 @@ std = [
     "serde_json/std",
     "thiserror",
     "url",
-    "base64/std",
     "ita-stf/std",
     "itp-types/std",
     "itp-utils/std",
@@ -92,7 +88,6 @@ sgx = [
     "sgx_tstd",
     "thiserror_sgx",
     "url_sgx",
-    "base64_sgx",
     "ita-stf/sgx",
     "itp-stf-executor/sgx",
     "itp-sgx-externalities/sgx",
