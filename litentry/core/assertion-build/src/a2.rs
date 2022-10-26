@@ -21,9 +21,6 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
-use base64_sgx as base64;
-
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
 use crate::{Error, IDHubberResponse, Result};
@@ -33,7 +30,7 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestGet, RestPost,
 };
-use std::{format, str, string::String, time::Duration, vec};
+use std::{format, str, string::String, time::Duration};
 use url::Url;
 
 use litentry_primitives::ParameterString;
@@ -46,14 +43,14 @@ pub fn build(guild_id: ParameterString, handler: ParameterString) -> Result<()> 
 	let http_client = HttpClient::new(DefaultSend {}, true, Some(TIMEOUT), None, None);
 	let mut client = RestClient::new(http_client, base_url);
 
-	let path = format!(
+	let get_path = format!(
 		"/discord/joined?guildid={:?}&handler={:?}",
 		guild_id.clone().into_inner(),
-		base64::encode(handler.clone().into_inner())
+		handler.clone().into_inner()
 	);
 
 	let get_response: IDHubberResponse = client
-		.get::<String, IDHubberResponse>(path)
+		.get::<String, IDHubberResponse>(get_path)
 		.map_err(|e| Error::Assertion2Error(format!("{:?}", e)))?;
 
 	log::debug!(
@@ -69,17 +66,23 @@ pub fn build(guild_id: ParameterString, handler: ParameterString) -> Result<()> 
 	// generate_vc(who, identity, ...)
 
 	// Assign ID-Hubber role:
+	let post_path = format!(
+		"/discord/assgin/idhubber?guildid={:?}&handler={:?}",
+		guild_id.into_inner(),
+		handler.into_inner()
+	);
 
-	// let path = format!(
-	// 	"/discord/assgin/idhubber?handler={:?}&guildid={:?}",
-	// 	guild_id.into_inner(),
-	// 	base64::encode(handler.into_inner())
-	// );
+	let dummy_data = IDHubberResponse {
+		data: true,
+		message: String::from("IDHubber"),
+		has_errors: false,
+		msg_code: 0,
+		success: true,
+	};
 
-	// let response: IDHubberResponse =
-	// 	client
-	// 		.post::<String, IDHubberResponse>(path)
-	// 		.map_err(|e| Error::Assertion2Error(format!("{:?}", e)))?;
+	let _response = client
+		.post::<String, IDHubberResponse>(post_path, &dummy_data)
+		.map_err(|e| Error::Assertion2Error(format!("{:?}", e)));
 
 	Ok(())
 }
@@ -103,6 +106,6 @@ mod tests {
 		let handler = BoundedVec::try_from(handler_vec).unwrap();
 
 		let _ = build(guild_id, handler);
-		log::info!("assertion test");
+		log::info!("assertion2 test");
 	}
 }
