@@ -309,6 +309,7 @@ fn initialize_parentchain_import_dispatcher<WorkerModeProvider: ProvideWorkerMod
 		state_observer,
 		ocall_api,
 		shielding_key_repository.clone(),
+		top_pool_author.clone(),
 	));
 	let indirect_calls_executor = Arc::new(IndirectCallsExecutor::new(
 		shielding_key_repository,

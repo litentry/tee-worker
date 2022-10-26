@@ -100,6 +100,7 @@ pub type EnclaveStfEnclaveSigner = StfEnclaveSigner<
 	EnclaveStateObserver,
 	EnclaveShieldingKeyRepository,
 	EnclaveStf,
+	EnclaveTopPoolAuthor,
 >;
 pub type EnclaveExtrinsicsFactory =
 	ExtrinsicsFactory<Pair, NonceCache, EnclaveNodeMetadataRepository>;
