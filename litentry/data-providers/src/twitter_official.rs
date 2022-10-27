@@ -20,7 +20,7 @@ use crate::sgx_reexport_prelude::*;
 use crate::{base_url::TWITTER_OFFICIAL, build_client, vec_to_string, Error, HttpError, UserInfo};
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use std::{
 	format,
 	string::{String, ToString},

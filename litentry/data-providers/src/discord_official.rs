@@ -25,13 +25,14 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestGet, RestPath,
 };
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use std::{
 	format,
 	string::{String, ToString},
 	vec,
 	vec::Vec,
 };
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DiscordMessage {
 	pub id: String, // message_id
@@ -95,13 +96,10 @@ mod tests {
 
 	#[test]
 	fn query_message() {
-		std::env::set_var(
-			"DISCORD_AUTHORIZATION_TOKEN",
-			"",
-		);
+		std::env::set_var("DISCORD_AUTHORIZATION_TOKEN", "");
 		let mut client = DiscordOfficialClient::new();
 		let channel_id = "919848392035794945".as_bytes().to_vec();
-		let message_id = "859641379851337798".as_bytes().to_vec();
+		let message_id = "".as_bytes().to_vec();
 		let result = client.query_message(channel_id, message_id);
 		assert!(result.is_ok(), "query discord error: {:?}", result);
 	}

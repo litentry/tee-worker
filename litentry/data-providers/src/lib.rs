@@ -49,6 +49,7 @@ use url::Url;
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
 pub mod discord_official;
+pub mod twitter_litentry;
 pub mod twitter_official;
 
 const TIMEOUT: Duration = Duration::from_secs(3u64);
@@ -56,7 +57,7 @@ const TIMEOUT: Duration = Duration::from_secs(3u64);
 // #[cfg(not(test))]
 pub mod base_url {
 	pub(crate) const TWITTER_OFFICIAL: &str = "https://api.twitter.com";
-	pub(crate) const TWITTER_LITENTRY: &str = "https://api.twitter.com";
+	pub(crate) const TWITTER_LITENTRY: &str = "http://47.57.13.126:8080";
 
 	pub(crate) const DISCORD_OFFICIAL: &str = "https://discordapp.com";
 }
