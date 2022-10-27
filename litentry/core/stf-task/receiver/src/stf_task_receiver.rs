@@ -18,9 +18,9 @@ use crate::{
 	format, AuthorApi, Error, Hash, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt,
 	StfEnclaveSigning, StfTaskContext,
 };
-use lc_identity_verification::web2::{discord, twitter, HttpVerifier, Web2IdentityVerification};
 use lc_stf_task_sender::{stf_task_sender, RequestType};
-use litentry_primitives::{Assertion, IdentityWebType, Web2Network, Web2ValidationData};
+use litentry_primitives::{Assertion, IdentityWebType, Web2Network};
+use log::log;
 
 // lifetime elision: StfTaskContext is guaranteed to outlive the fn
 pub fn run_stf_task_receiver<K, A, S>(context: &StfTaskContext<K, A, S>) -> Result<(), Error>
@@ -42,39 +42,23 @@ where
 		match request_type {
 			// TODO: further simplify this
 			RequestType::Web2IdentityVerification(request) => {
-				match request.validation_data {
-					Web2ValidationData::Twitter(_) => {
-						let verifier = Web2IdentityVerification::<twitter::TwitterResponse> {
-							verification_request: request.clone(),
-							_marker: Default::default(),
-						};
+				if let Err(e) = lc_identity_verification::web2::verify(request.clone()) {
+					log::error!("error verify web2: {:?}", e)
+				}
 
-						let _ = verifier
-							.make_http_request_and_verify(context.shielding_key.clone())
-							.map_err(|e| {
-								Error::OtherError(format!("error send request {:?}", e))
-							})?;
-					},
-					Web2ValidationData::Discord(_) => {
-						let verifier = Web2IdentityVerification::<discord::DiscordResponse> {
-							verification_request: request.clone(),
-							_marker: Default::default(),
-						};
-
-						let _ = verifier
-							.make_http_request_and_verify(context.shielding_key.clone())
-							.map_err(|e| {
-								Error::OtherError(format!("error send request {:?}", e))
-							})?;
-					},
-				};
-
-				let c = context.create_verify_identity_trusted_call(
+				match context.create_verify_identity_trusted_call(
 					request.who,
 					request.identity,
 					request.bn,
-				)?;
-				let _ = context.submit_trusted_call(&c)?;
+				) {
+					Ok(c) =>
+						if let Err(e) = context.submit_trusted_call(&c) {
+							log::error!("submit call(verify_identity) error: {:?}", e)
+						},
+					Err(e) => {
+						log::error!("create call error: {:?}", e)
+					},
+				}
 			},
 			RequestType::Web3IdentityVerification(request) => {
 				let _ = lc_identity_verification::web3::verify(
