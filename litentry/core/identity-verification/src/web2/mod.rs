@@ -33,12 +33,12 @@ use std::{
 };
 
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
-use lc_stf_task_sender::Web2IdentityVerificationRequest;
-use litentry_data_providers::{
+use lc_data_providers::{
 	discord_official::{DiscordMessage, DiscordOfficialClient},
 	twitter_official::{Tweet, TwitterOfficialClient},
 	UserInfo,
 };
+use lc_stf_task_sender::Web2IdentityVerificationRequest;
 use litentry_primitives::{
 	DiscordValidationData, IdentityHandle, TwitterValidationData, Web2ValidationData,
 };

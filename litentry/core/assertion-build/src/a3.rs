@@ -23,7 +23,7 @@ extern crate sgx_tstd as std;
 use crate::{Error, Result};
 use std::format;
 
-use litentry_data_providers::discord_litentry::DiscordLitentryClient;
+use lc_data_providers::discord_litentry::DiscordLitentryClient;
 use litentry_primitives::ParameterString;
 
 pub fn build(guild_id: ParameterString, handler: ParameterString) -> Result<()> {

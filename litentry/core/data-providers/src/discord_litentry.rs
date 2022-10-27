@@ -33,6 +33,7 @@ use std::{
 };
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct DiscordResponse {
 	data: bool,
 	message: String,
