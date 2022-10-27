@@ -1,6 +1,6 @@
 import {describeLitentry, generateVerificationMessage,} from './utils'
 import {hexToU8a, u8aToHex} from "@polkadot/util";
-import {linkIdentity, setUserShieldingKey, verifyIdentity} from "./indirect_calls";
+import {linkIdentity, setUserShieldingKey, unlinkIdentity, verifyIdentity} from "./indirect_calls";
 import {step} from "mocha-steps";
 import {assert} from "chai";
 import {LitentryIdentity, LitentryValidationData} from "./type-definitions";
@@ -46,7 +46,7 @@ describeLitentry('Test Identity', (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12'
 
     step('set user shielding key', async function () {
-        const who = await setUserShieldingKey(context, context.defaultSigner, aesKey, false)
+        const who = await setUserShieldingKey(context, context.defaultSigner, aesKey, true)
         assert.equal(who, u8aToHex(context.defaultSigner.addressRaw), "check caller error")
     })
 
@@ -67,8 +67,7 @@ describeLitentry('Test Identity', (context) => {
     })
 
     // step('unlink identity', async function () {
-    //     const who = await unlinkIdentity(context, context.defaultSigner, aesKey, identity)
-    //     // const msg = generateVerificationMessage(context, hexToU8a(challengeCode), alice.addressRaw, identity)
+    //     const who = await unlinkIdentity(context, context.defaultSigner, aesKey, true, twitterIdentity)
     //     assert.equal(who, u8aToHex(context.defaultSigner.addressRaw), "check caller error")
     // })
 });

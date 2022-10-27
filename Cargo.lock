@@ -5685,6 +5685,7 @@ dependencies = [
  "itp-utils",
  "lazy_static",
  "lc-stf-task-sender",
+ "litentry-data-providers",
  "litentry-primitives",
  "log 0.4.17",
  "parity-scale-codec",
@@ -6441,6 +6442,28 @@ name = "linux-raw-sys"
 version = "0.0.46"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d4d2456c373231a208ad294c33dc5bff30051eafd954cd4caae83a712b12854d"
+
+[[package]]
+name = "litentry-data-providers"
+version = "0.1.0"
+dependencies = [
+ "hex 0.4.0",
+ "hex 0.4.3",
+ "http 0.2.1",
+ "http 0.2.8",
+ "http_req 0.8.1 (git+https://github.com/integritee-network/http_req?branch=master)",
+ "http_req 0.8.1 (git+https://github.com/integritee-network/http_req)",
+ "itc-rest-client",
+ "litentry-primitives",
+ "log 0.4.17",
+ "serde 1.0.145",
+ "serde_json 1.0.86",
+ "sgx_tstd",
+ "thiserror 1.0.37",
+ "thiserror 1.0.9",
+ "url 2.1.1",
+ "url 2.3.1",
+]
 
 [[package]]
 name = "litentry-primitives"

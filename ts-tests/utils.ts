@@ -61,7 +61,7 @@ export async function getTEEShieldingKey(wsClient: WebSocketAsPromised, api: Api
 
 export async function initIntegrationTestContext(workerEndpoint: string, substrateEndpoint: string): Promise<IntegrationTestContext> {
     //TODO how to get the shard
-    const shard = '0x190f0e3f1d364c0f52b5011a9c03f05353f92b6bb348bd6643748b90ce750a6e'
+    const shard = '0xefc43e880608fd8ce4e28d3bcd941f8274a0567c86c69ab3497d851a8b00683b'
     // const endpoint = "wss://localhost:2000"
     const wsp = new WebSocketAsPromised(workerEndpoint, <Options>{
         createWebSocket: (url: any) => new WebSocket(url),
