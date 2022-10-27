@@ -26,13 +26,7 @@ use itc_rest_client::{
 	RestGet, RestPath,
 };
 use serde::{Deserialize, Serialize};
-use std::{
-	default::Default,
-	format,
-	string::{String, ToString},
-	vec,
-	vec::Vec,
-};
+use std::{default::Default, format, string::String, vec, vec::Vec};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DiscordMessage {
