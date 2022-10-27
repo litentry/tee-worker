@@ -65,24 +65,9 @@ pub fn build(guild_id: ParameterString, handler: ParameterString) -> Result<()> 
 	// TODO:
 	// generate_vc(who, identity, ...)
 
-	// Assign ID-Hubber role:
-	let post_path = format!(
-		"/discord/assgin/idhubber?guildid={:?}&handler={:?}",
-		guild_id.into_inner(),
-		handler.into_inner()
-	);
-
-	let dummy_data = IDHubberResponse {
-		data: true,
-		message: String::from("IDHubber"),
-		has_errors: false,
-		msg_code: 0,
-		success: true,
-	};
-
-	let _response = client
-		.post::<String, IDHubberResponse>(post_path, &dummy_data)
-		.map_err(|e| Error::Assertion2Error(format!("{:?}", e)))?;
+	// After receiving VC, F/E is expected to assign 'IDHubber' role and align with bot
+	// https://github.com/litentry/tee-worker/issues/35
+	// https://github.com/litentry/tee-worker/issues/36
 
 	Ok(())
 }
