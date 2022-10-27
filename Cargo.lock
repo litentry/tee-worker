@@ -5646,6 +5646,7 @@ dependencies = [
  "itp-utils",
  "lazy_static",
  "lc-stf-task-sender",
+ "litentry-data-providers",
  "litentry-primitives",
  "log 0.4.17",
  "parity-scale-codec",

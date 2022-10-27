@@ -32,9 +32,7 @@ pub mod sgx_reexport_prelude {
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use itc_rest_client::{error::Error as HttpError, RestPath};
-use serde::{Deserialize, Serialize};
-use std::{fmt::Debug, str, string::String};
+use std::{fmt::Debug, string::String};
 
 pub mod a1;
 pub mod a2;
@@ -50,21 +48,9 @@ pub enum Error {
 	#[error("Assertion error: {0}")]
 	Assertion2Error(String),
 
+	#[error("Assertion error: {0}")]
+	Assertion3Error(String),
+
 	#[error("Other error: {0}")]
 	AssertionOtherError(String),
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct IDHubberResponse {
-	data: bool,
-	message: String,
-	has_errors: bool,
-	msg_code: u32,
-	success: bool,
-}
-
-impl RestPath<String> for IDHubberResponse {
-	fn get_path(path: String) -> core::result::Result<String, HttpError> {
-		Ok(path)
-	}
 }

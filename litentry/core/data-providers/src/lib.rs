@@ -48,6 +48,7 @@ use url::Url;
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
+pub mod discord_litentry;
 pub mod discord_official;
 pub mod twitter_litentry;
 pub mod twitter_official;
@@ -60,6 +61,7 @@ pub mod base_url {
 	pub(crate) const TWITTER_LITENTRY: &str = "http://47.57.13.126:8080";
 
 	pub(crate) const DISCORD_OFFICIAL: &str = "https://discordapp.com";
+	pub(crate) const DISCORD_LITENTRY: &str = "http://47.57.13.126:8080";
 }
 
 // #[cfg(test)]

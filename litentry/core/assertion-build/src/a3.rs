@@ -20,51 +20,27 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use crate::sgx_reexport_prelude::*;
+use crate::{Error, Result};
+use std::format;
 
-use crate::{Error, IDHubberResponse, Result};
-
-use itc_rest_client::{
-	http_client::{DefaultSend, HttpClient},
-	rest_client::RestClient,
-	RestPost,
-};
-use std::{format, str, string::String, time::Duration};
-use url::Url;
-
+use litentry_data_providers::discord_litentry::DiscordLitentryClient;
 use litentry_primitives::ParameterString;
 
-const DISCORD_BASE_URL: &str = "https://47.57.13.126:8080/";
-const TIMEOUT: Duration = Duration::from_secs(3u64);
 
 pub fn build(guild_id: ParameterString, handler: ParameterString) -> Result<()> {
-	let base_url = Url::parse(DISCORD_BASE_URL).unwrap();
-	let http_client = HttpClient::new(DefaultSend {}, true, Some(TIMEOUT), None, None);
-	let mut client = RestClient::new(http_client, base_url);
+	let mut client = DiscordLitentryClient::new();
+	match client.check_id_hubber(guild_id.into_inner(), handler.into_inner()) {
+		Err(e) => {
+			log::error!("error build assertion2: {:?}", e);
+			Err(Error::Assertion3Error(format!("{:?}", e)))
+		},
+		Ok(_response) => {
+			// TODO:
+			// generate_vc(who, identity, ...)
 
-	let post_path = format!(
-		" /discord/commented/idhubber?handler={:?}&guildid={:?}",
-		handler.into_inner(),
-		guild_id.into_inner()
-	);
-
-	let dummy_data = IDHubberResponse {
-		data: true,
-		message: String::from("IDHubber"),
-		has_errors: false,
-		msg_code: 0,
-		success: true,
-	};
-
-	let _response = client
-		.post::<String, IDHubberResponse>(post_path, &dummy_data)
-		.map_err(|e| Error::Assertion2Error(format!("{:?}", e)))?;
-
-	// TODO:
-	// generate_vc(who, identity, ...)
-
-	Ok(())
+			Ok(())
+		},
+	}
 }
 
 #[cfg(test)]
@@ -76,13 +52,10 @@ mod tests {
 	#[test]
 	fn assertion3_verification_works() {
 		let guildid: u64 = 919848390156767232;
-		// let userid: u64 = 746308249695027224;
 		let guild_id_vec: Vec<u8> = format!("{}", guildid).as_bytes().to_vec();
-		// let user_id_vec: Vec<u8> = format!("{}", userid).as_bytes().to_vec();
 		let handler_vec: Vec<u8> = "ericzhang.eth#0114".to_string().as_bytes().to_vec();
 
 		let guild_id = BoundedVec::try_from(guild_id_vec).unwrap();
-		// let user_id = BoundedVec::try_from(user_id_vec).unwrap();
 		let handler = BoundedVec::try_from(handler_vec).unwrap();
 
 		let _ = build(guild_id, handler);
