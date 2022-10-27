@@ -32,8 +32,7 @@ where
 	let receiver = stf_task_sender::init_stf_task_sender_storage()
 		.map_err(|e| Error::OtherError(format!("read storage error:{:?}", e)))?;
 
-	// TODO: better error handling for this loop
-	//       we shouldn't panic when processing tasks
+	// TODO: When an error occurs, send the extrinsic (error message) to the parachain
 	loop {
 		let request_type = receiver
 			.recv()
@@ -53,7 +52,7 @@ where
 				) {
 					Ok(c) =>
 						if let Err(e) = context.submit_trusted_call(&c) {
-							log::error!("submit call(verify_identity) error: {:?}", e)
+							log::error!("submit call(web2 verify_identity) error: {:?}", e)
 						},
 					Err(e) => {
 						log::error!("create call error: {:?}", e)
@@ -61,43 +60,44 @@ where
 				}
 			},
 			RequestType::Web3IdentityVerification(request) => {
-				let _ = lc_identity_verification::web3::verify(
+				if let Err(e) = lc_identity_verification::web3::verify(
 					request.who.clone(),
 					request.identity.clone(),
 					request.challenge_code,
 					request.validation_data.clone(),
-				)
-				.map_err(|e| Error::OtherError(format!("error verify web3: {:?}", e)))?;
+				) {
+					log::error!("error verify web3: {:?}", e)
+				}
 
-				let c = context.create_verify_identity_trusted_call(
+				match context.create_verify_identity_trusted_call(
 					request.who,
 					request.identity,
 					request.bn,
-				)?;
-				let _ = context.submit_trusted_call(&c)?;
+				) {
+					Ok(c) =>
+						if let Err(e) = context.submit_trusted_call(&c) {
+							log::error!("submit call(web3 verify_identity) error: {:?}", e)
+						},
+					Err(e) => {
+						log::error!("create call error: {:?}", e)
+					},
+				}
 			},
 			RequestType::AssertionVerification(request) => {
 				match request.assertion {
 					Assertion::A1 => {
-						lc_assertion_build::a1::build(request.vec_identity).map_err(|e| {
-							Error::AssertionError(format!("error verify assertion: {:?}", e))
-						})?;
+						if let Err(e) = lc_assertion_build::a1::build(request.vec_identity) {
+							log::error!("error verify assertion1: {:?}", e)
+						}
 					},
 					Assertion::A2(guild_id, user_id) => {
 						for identity in request.vec_identity {
 							if identity.web_type == IdentityWebType::Web2(Web2Network::Discord) {
-								let result = lc_assertion_build::a2::build(
-									guild_id.clone(),
-									user_id.clone(),
-								)
-								.map_err(|e| {
-									Error::AssertionError(format!(
-										"error verify assertion: {:?}",
-										e
-									))
-								});
-
-								if result.is_ok() {
+								if let Err(e) =
+									lc_assertion_build::a2::build(guild_id.clone(), user_id.clone())
+								{
+									log::error!("error verify assertion2: {:?}", e)
+								} else {
 									// When result is Ok,
 									break
 								}
