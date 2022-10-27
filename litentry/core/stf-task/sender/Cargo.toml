@@ -27,6 +27,7 @@ serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 
 # substrate dependencies
 sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28", default-features = false }
 
 # internal dependencies
 itc-rest-client = { path = "../../../../core/rest-client", default-features = false }
@@ -48,6 +49,7 @@ std = [
     "serde/std",
     "serde_json/std",
     "sp-runtime/std",
+    "sp-std/std",
     "thiserror",
     "url",
     "itp-types/std",

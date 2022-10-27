@@ -36,12 +36,11 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 
 use codec::Encode;
 use futures::executor;
-use ita_stf::{AccountId, Hash, ShardIdentifier, TrustedCall, TrustedOperation};
+use ita_stf::{Hash, ShardIdentifier, TrustedCall, TrustedOperation};
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::{StfEnclaveSigning, StfExecuteGenericUpdate};
 use itp_top_pool_author::traits::AuthorApi;
-use litentry_primitives::{Identity, ParentchainBlockNumber};
 use std::{fmt::Debug, format, string::String, sync::Arc};
 
 use std::boxed::Box;
@@ -111,20 +110,6 @@ impl<
 		})?;
 
 		Ok(())
-	}
-
-	pub fn create_verify_identity_trusted_call(
-		&self,
-		who: AccountId,
-		identity: Identity,
-		bn: ParentchainBlockNumber,
-	) -> Result<TrustedCall, Error> {
-		let enclave_account_id = self
-			.enclave_signer
-			.get_enclave_account()
-			.map_err(|e| Error::OtherError(format!("Error get enclave signer: {:?}", e)))?;
-
-		Ok(TrustedCall::verify_identity_step2(enclave_account_id, who, identity, bn))
 	}
 
 	// directly read or write the state associated with stf_executor

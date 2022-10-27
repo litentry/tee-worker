@@ -16,8 +16,9 @@
 
 use crate::{
 	format, AuthorApi, Error, Hash, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt,
-	StfEnclaveSigning, StfExecuteGenericUpdate, StfTaskContext,
+	StfEnclaveSigning, StfExecuteGenericUpdate, StfTaskContext, TrustedCall,
 };
+use codec::Decode;
 use frame_support::traits::UnfilteredDispatchable;
 use ita_sgx_runtime::Runtime;
 use lc_identity_verification::web2::{discord, twitter, HttpVerifier, Web2IdentityVerification};
@@ -73,12 +74,11 @@ where
 					},
 				};
 
-				let c = context.create_verify_identity_trusted_call(
-					request.who,
-					request.identity,
-					request.bn,
-				)?;
-				let _ = context.submit_trusted_call(&c)?;
+				let callback = TrustedCall::decode(&mut request.encoded_callback.as_slice())
+					.map_err(|e| {
+						Error::OtherError(format!("error decoding TrustedCall {:?}", e))
+					})?;
+				let _ = context.submit_trusted_call(&callback)?;
 			},
 			RequestType::Web3IdentityVerification(request) => {
 				let _ = lc_identity_verification::web3::verify(
@@ -89,12 +89,11 @@ where
 				)
 				.map_err(|e| Error::OtherError(format!("error verify web3: {:?}", e)))?;
 
-				let c = context.create_verify_identity_trusted_call(
-					request.who,
-					request.identity,
-					request.bn,
-				)?;
-				let _ = context.submit_trusted_call(&c)?;
+				let callback = TrustedCall::decode(&mut request.encoded_callback.as_slice())
+					.map_err(|e| {
+						Error::OtherError(format!("error decoding TrustedCall {:?}", e))
+					})?;
+				let _ = context.submit_trusted_call(&callback)?;
 			},
 			RequestType::AssertionVerification(request) => {
 				match request.assertion {

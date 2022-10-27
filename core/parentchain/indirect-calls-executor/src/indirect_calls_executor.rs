@@ -257,8 +257,11 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 					if let Some((multiaddress_account, _, _)) = xt.signature {
 						let account = AccountIdLookup::lookup(multiaddress_account)?;
 						let enclave_account_id = self.stf_enclave_signer.get_enclave_account()?;
-						let trusted_call =
-							TrustedCall::set_user_shielding_key(enclave_account_id, account, key);
+						let trusted_call = TrustedCall::set_user_shielding_key_runtime(
+							enclave_account_id,
+							account,
+							key,
+						);
 						let signed_trusted_call =
 							self.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;
 						let trusted_operation =
@@ -293,7 +296,7 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 					if let Some((multiaddress_account, _, _)) = xt.signature {
 						let account = AccountIdLookup::lookup(multiaddress_account)?;
 						let enclave_account_id = self.stf_enclave_signer.get_enclave_account()?;
-						let trusted_call = TrustedCall::link_identity(
+						let trusted_call = TrustedCall::link_identity_runtime(
 							enclave_account_id,
 							account,
 							identity,
@@ -329,8 +332,11 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 					if let Some((multiaddress_account, _, _)) = xt.signature {
 						let account = AccountIdLookup::lookup(multiaddress_account)?;
 						let enclave_account_id = self.stf_enclave_signer.get_enclave_account()?;
-						let trusted_call =
-							TrustedCall::unlink_identity(enclave_account_id, account, identity);
+						let trusted_call = TrustedCall::unlink_identity_runtime(
+							enclave_account_id,
+							account,
+							identity,
+						);
 						let signed_trusted_call =
 							self.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;
 						let trusted_operation =
@@ -361,7 +367,7 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 					if let Some((multiaddress_account, _, _)) = xt.signature {
 						let account = AccountIdLookup::lookup(multiaddress_account)?;
 						let enclave_account_id = self.stf_enclave_signer.get_enclave_account()?;
-						let trusted_call = TrustedCall::verify_identity_step1(
+						let trusted_call = TrustedCall::verify_identity_preflight(
 							enclave_account_id,
 							account,
 							identity,
@@ -381,11 +387,6 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 					}
 				}
 			}
-
-			// Found VerifyAssertion extrinsic
-			// if let Ok(xt) = ParentchainUncheckedExtrinsic::<VerifyAssertionFn>::decode(
-			// 	&mut encoded_xt_opaque.as_slice(),
-			// ) {}
 		}
 
 		// Include a processed parentchain block confirmation for each block.

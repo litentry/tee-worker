@@ -100,20 +100,25 @@ pub enum TrustedCall {
 		Vec<(H160, Vec<H256>)>,
 	),
 	// litentry
-	set_user_shielding_key(AccountId, AccountId, UserShieldingKeyType), // (EnclaveSigner, AccountIncognito, Key)
-	link_identity(
+	set_user_shielding_key_preflight(AccountId, AccountId, UserShieldingKeyType), // (Root, AccountIncognito, Key) -- root as signer, only for testing
+	set_user_shielding_key_runtime(AccountId, AccountId, UserShieldingKeyType), // (EnclaveSigner, AccountIncognito, Key)
+	link_identity_runtime(
 		AccountId,
 		AccountId,
 		Identity,
 		Option<MetadataOf<Runtime>>,
 		ParentchainBlockNumber,
 	), // (EnclaveSigner, Account, identity, metadata, blocknumber)
-	unlink_identity(AccountId, AccountId, Identity), // (EnclaveSigner, Account, identity)
-	// TODO: rethink the origin
-	verify_identity_step1(AccountId, AccountId, Identity, ValidationData, ParentchainBlockNumber),
-	verify_identity_step2(AccountId, AccountId, Identity, ParentchainBlockNumber),
-	query_credit(AccountId),
-	set_challenge_code(AccountId, AccountId, Identity, ChallengeCode),
+	unlink_identity_runtime(AccountId, AccountId, Identity), // (EnclaveSigner, Account, identity)
+	verify_identity_preflight(
+		AccountId,
+		AccountId,
+		Identity,
+		ValidationData,
+		ParentchainBlockNumber,
+	), // (EnclaveSigner, Account, identity, validation, blocknumber)
+	verify_identity_runtime(AccountId, AccountId, Identity, ParentchainBlockNumber), // (EnclaveSigner, Account, identity, blocknumber)
+	set_challenge_code_runtime(AccountId, AccountId, Identity, ChallengeCode),       // only for testing
 }
 
 impl TrustedCall {
@@ -132,13 +137,13 @@ impl TrustedCall {
 			#[cfg(feature = "evm")]
 			TrustedCall::evm_create2(sender_account, ..) => sender_account,
 			// litentry
-			TrustedCall::set_user_shielding_key(account, _, _) => account,
-			TrustedCall::link_identity(account, _, _, _, _) => account,
-			TrustedCall::unlink_identity(account, _, _) => account,
-			TrustedCall::verify_identity_step1(account, _, _, _, _) => account,
-			TrustedCall::verify_identity_step2(account, _, _, _) => account,
-			TrustedCall::query_credit(account) => account,
-			TrustedCall::set_challenge_code(account, _, _, _) => account,
+			TrustedCall::set_user_shielding_key_preflight(account, _, _) => account,
+			TrustedCall::set_user_shielding_key_runtime(account, _, _) => account,
+			TrustedCall::link_identity_runtime(account, _, _, _, _) => account,
+			TrustedCall::unlink_identity_runtime(account, _, _) => account,
+			TrustedCall::verify_identity_preflight(account, _, _, _, _) => account,
+			TrustedCall::verify_identity_runtime(account, _, _, _) => account,
+			TrustedCall::set_challenge_code_runtime(account, _, _, _) => account,
 		}
 	}
 
@@ -394,11 +399,15 @@ where
 				Ok(())
 			},
 			// litentry
-			TrustedCall::set_user_shielding_key(enclave_account, who, key) => {
+			TrustedCall::set_user_shielding_key_preflight(root, who, key) => {
+				ensure!(is_root::<Runtime, AccountId>(&root), Self::Error::MissingPrivileges(root));
+				Self::set_user_shielding_key_preflight(who.clone(), key)
+			},
+			TrustedCall::set_user_shielding_key_runtime(enclave_account, who, key) => {
 				ensure_enclave_signer_account(&enclave_account)?;
 				// TODO: we only checked if the extrinsic dispatch is successful,
 				//       is that enough? (i.e. is the state changed already?)
-				match Self::set_user_shielding_key(who.clone(), key) {
+				match Self::set_user_shielding_key_runtime(who.clone(), key) {
 					Ok(()) => {
 						calls.push(OpaqueCall::from_tuple(&(
 							node_metadata_repo
@@ -418,7 +427,7 @@ where
 				}
 				Ok(())
 			},
-			TrustedCall::link_identity(enclave_account, who, identity, metadata, bn) => {
+			TrustedCall::link_identity_runtime(enclave_account, who, identity, metadata, bn) => {
 				ensure_enclave_signer_account(&enclave_account)?;
 				debug!(
 					"link_identity, who: {}, identity: {:?}, metadata: {:?}",
@@ -426,7 +435,7 @@ where
 					identity,
 					metadata
 				);
-				match Self::link_identity(who.clone(), identity.clone(), metadata, bn) {
+				match Self::link_identity_runtime(who.clone(), identity.clone(), metadata, bn) {
 					Ok(code) => {
 						debug!("link_identity {} OK", account_id_to_string(&who));
 						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
@@ -465,14 +474,14 @@ where
 				}
 				Ok(())
 			},
-			TrustedCall::unlink_identity(enclave_account, who, identity) => {
+			TrustedCall::unlink_identity_runtime(enclave_account, who, identity) => {
 				ensure_enclave_signer_account(&enclave_account)?;
 				debug!(
 					"unlink_identity, who: {}, identity: {:?}",
 					account_id_to_string(&who),
 					identity,
 				);
-				match Self::unlink_identity(who.clone(), identity.clone()) {
+				match Self::unlink_identity_runtime(who.clone(), identity.clone()) {
 					Ok(()) => {
 						debug!("unlink_identity {} OK", account_id_to_string(&who));
 						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
@@ -503,7 +512,7 @@ where
 				}
 				Ok(())
 			},
-			TrustedCall::verify_identity_step1(
+			TrustedCall::verify_identity_preflight(
 				enclave_account,
 				account,
 				identity,
@@ -511,9 +520,9 @@ where
 				bn,
 			) => {
 				ensure_enclave_signer_account(&enclave_account)?;
-				Self::verify_identity_step1(account, identity, validation_data, bn)
+				Self::verify_identity_preflight(account, identity, validation_data, bn)
 			},
-			TrustedCall::verify_identity_step2(enclave_account, who, identity, bn) => {
+			TrustedCall::verify_identity_runtime(enclave_account, who, identity, bn) => {
 				ensure_enclave_signer_account(&enclave_account)?;
 				debug!(
 					"verify_identity, who: {}, identity: {:?}, bn: {:?}",
@@ -521,7 +530,7 @@ where
 					identity,
 					bn
 				);
-				match Self::verify_identity(who.clone(), identity.clone(), bn) {
+				match Self::verify_identity_runtime(who.clone(), identity.clone(), bn) {
 					Ok(()) => {
 						debug!("verify_identity {} OK", account_id_to_string(&who));
 						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
@@ -552,13 +561,9 @@ where
 				}
 				Ok(())
 			},
-			TrustedCall::query_credit(account) => {
-				debug!("query_credit({:x?}", account.encode(),);
-				Self::query_credit(account)
-			},
-			TrustedCall::set_challenge_code(enclave_account, account, did, code) => {
+			TrustedCall::set_challenge_code_runtime(enclave_account, account, did, code) => {
 				ensure_enclave_signer_account(&enclave_account)?;
-				Self::set_challenge_code(account, did, code)
+				Self::set_challenge_code_runtime(account, did, code)
 			},
 		}?;
 		System::inc_account_nonce(&sender);
@@ -573,13 +578,15 @@ where
 			TrustedCall::balance_unshield(_, _, _, _) => debug!("No storage updates needed..."),
 			TrustedCall::balance_shield(_, _, _) => debug!("No storage updates needed..."),
 			// litentry
-			TrustedCall::set_user_shielding_key(..) => debug!("No storage updates needed..."),
-			TrustedCall::link_identity(..) => debug!("No storage updates needed..."),
-			TrustedCall::unlink_identity(..) => debug!("No storage updates needed..."),
-			TrustedCall::verify_identity_step2(..) => debug!("No storage updates needed..."),
-			TrustedCall::verify_identity_step1(..) => debug!("No storage updates needed..."),
-			TrustedCall::query_credit(..) => debug!("No storage updates needed..."),
-			TrustedCall::set_challenge_code(..) => debug!("No storage updates needed..."),
+			TrustedCall::set_user_shielding_key_preflight(..) =>
+				debug!("No storage updates needed..."),
+			TrustedCall::set_user_shielding_key_runtime(..) =>
+				debug!("No storage updates needed..."),
+			TrustedCall::link_identity_runtime(..) => debug!("No storage updates needed..."),
+			TrustedCall::unlink_identity_runtime(..) => debug!("No storage updates needed..."),
+			TrustedCall::verify_identity_preflight(..) => debug!("No storage updates needed..."),
+			TrustedCall::verify_identity_runtime(..) => debug!("No storage updates needed..."),
+			TrustedCall::set_challenge_code_runtime(..) => debug!("No storage updates needed..."),
 			#[cfg(feature = "evm")]
 			_ => debug!("No storage updates needed..."),
 		};
