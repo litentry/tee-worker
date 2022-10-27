@@ -28,7 +28,7 @@ use crate::{Error, IDHubberResponse, Result};
 use itc_rest_client::{
 	http_client::{DefaultSend, HttpClient},
 	rest_client::RestClient,
-	RestGet, RestPost,
+	RestGet,
 };
 use std::{format, str, string::String, time::Duration};
 use url::Url;
@@ -45,8 +45,8 @@ pub fn build(guild_id: ParameterString, handler: ParameterString) -> Result<()> 
 
 	let get_path = format!(
 		"/discord/joined?guildid={:?}&handler={:?}",
-		guild_id.clone().into_inner(),
-		handler.clone().into_inner()
+		guild_id.into_inner(),
+		handler.into_inner()
 	);
 
 	let get_response: IDHubberResponse = client
