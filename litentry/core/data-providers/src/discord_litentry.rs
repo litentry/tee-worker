@@ -113,4 +113,16 @@ mod tests {
 
 		assert!(response.is_ok(), "check join discord error: {:?}", response);
 	}
+
+	#[test]
+	fn check_id_hubber_work() {
+		let guildid: u64 = 919848390156767232;
+		let guild_id_vec: Vec<u8> = format!("{}", guildid).as_bytes().to_vec();
+		let handler_vec: Vec<u8> = "ericzhang.eth%230114".as_bytes().to_vec();
+
+		let mut client = DiscordLitentryClient::new();
+		let response = client.check_id_hubber(guild_id_vec, handler_vec);
+
+		assert!(response.is_ok(), "check discord id hubber error: {:?}", response);
+	}
 }
