@@ -110,23 +110,23 @@ where
 		let enclave_call_signing_key = self.get_enclave_call_signing_key()?;
 
 		let current_nonce = self.get_enclave_account_nonce(shard)?;
-		let pending_tx = self
-			.top_pool_author
-			.get_pending_trusted_calls(shard.clone())
-			.iter()
-			.filter(|v| match v {
-				TrustedOperation::indirect_call(ref call) =>
-					call.call.sender_account().eq(&enclave_account_id),
-				TrustedOperation::direct_call(ref call) =>
-					call.call.sender_account().eq(&enclave_account_id),
-				_ => false,
-			})
-			.count();
-		let pending_tx = Index::try_from(pending_tx).map_err(|e| Error::Other(e.into()))?;
-		let adjust_nonce: Index = current_nonce.into() + pending_tx;
+		// let pending_tx = self
+		// 	.top_pool_author
+		// 	.get_pending_trusted_calls(shard.clone())
+		// 	.iter()
+		// 	.filter(|v| match v {
+		// 		TrustedOperation::indirect_call(ref call) =>
+		// 			call.call.sender_account().eq(&enclave_account_id),
+		// 		TrustedOperation::direct_call(ref call) =>
+		// 			call.call.sender_account().eq(&enclave_account_id),
+		// 		_ => false,
+		// 	})
+		// 	.count();
+		// let pending_tx = Index::try_from(pending_tx).map_err(|e| Error::Other(e.into()))?;
+		// let adjust_nonce: Index = current_nonce.into() + pending_tx;
 		Ok(trusted_call.sign(
 			&KeyPair::Ed25519(enclave_call_signing_key),
-			adjust_nonce,
+			current_nonce.into(),
 			&mr_enclave.m,
 			shard,
 		))

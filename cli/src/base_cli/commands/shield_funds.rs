@@ -21,13 +21,19 @@ use crate::{
 };
 use base58::FromBase58;
 use codec::{Decode, Encode};
+use hex::FromHex;
 use ita_stf::ShardIdentifier;
 use itp_node_api::api_client::TEEREX;
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use log::*;
 use my_node_runtime::Balance;
-use sp_core::sr25519 as sr25519_core;
-use substrate_api_client::{compose_extrinsic, UncheckedExtrinsicV4, XtStatus};
+use serde_json::{json, to_value};
+use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, ByteArray, Pair};
+use std::vec;
+use substrate_api_client::{
+	compose_call, compose_extrinsic, compose_extrinsic_offline, ApiResult, UncheckedExtrinsicV4,
+	XtStatus,
+};
 
 #[derive(Parser)]
 pub struct ShieldFundsCommand {
@@ -60,7 +66,7 @@ impl ShieldFundsCommand {
 
 		// get the sender
 		let from = get_pair_from_str(&self.from);
-		let chain_api = chain_api.set_signer(sr25519_core::Pair::from(from));
+		let chain_api = chain_api.set_signer(sr25519_core::Pair::from(from.clone()));
 
 		// get the recipient
 		let to = get_accountid_from_str(&self.to);
@@ -69,16 +75,60 @@ impl ShieldFundsCommand {
 		let encrypted_recevier = encryption_key.encrypt(&to.encode()).unwrap();
 
 		// compose the extrinsic
-		let xt: UncheckedExtrinsicV4<_, _> = compose_extrinsic!(
-			chain_api,
-			TEEREX,
-			"shield_funds",
-			encrypted_recevier,
-			self.amount,
-			shard
-		);
+		// let xt: UncheckedExtrinsicV4<_, _> = compose_extrinsic!(
+		// 	chain_api,
+		// 	TEEREX,
+		// 	"shield_funds",
+		// 	encrypted_recevier,
+		// 	self.amount,
+		// 	shard
+		// );
+		//
+		// let tx_hash = chain_api.send_extrinsic(xt.hex_encode(), XtStatus::Finalized).unwrap();
+		// println!("[+] TrustedOperation got finalized. Hash: {:?}\n", tx_hash);
 
-		let tx_hash = chain_api.send_extrinsic(xt.hex_encode(), XtStatus::Finalized).unwrap();
-		println!("[+] TrustedOperation got finalized. Hash: {:?}\n", tx_hash);
+		let req = json!({
+			"method": "system_accountNextIndex",
+			"params": vec![from.public().to_ss58check()],
+			"jsonrpc": "2.0",
+			"id": "1",
+		});
+		match chain_api.get_request(req) {
+			Ok(Some(nonce)) => {
+				match nonce.clone().parse::<u32>() {
+					Ok(nonce) => {
+						println!("account: {:?}, nonce: {:?}", &self.from, nonce);
+						let call = compose_call!(
+							chain_api.metadata.clone(),
+							TEEREX,
+							"shield_funds",
+							encrypted_recevier,
+							self.amount,
+							shard
+						);
+						if let Some(signer) = chain_api.signer.clone() {
+							let xt = compose_extrinsic_offline!(
+								signer,
+								call.clone(),
+								chain_api.extrinsic_params(nonce)
+							);
+							let tx_hash = chain_api
+								.send_extrinsic(xt.hex_encode(), XtStatus::SubmitOnly)
+								.unwrap();
+							println!("[+] TrustedOperation got finalized. Hash: {:?}\n", tx_hash);
+						}
+					},
+					Err(e) => {
+						println!("decode hex error:{:?}, storage:{:?}", e, nonce)
+					},
+				};
+			},
+			Err(e) => {
+				println!("request error:{:?}", e);
+			},
+			Ok(None) => {
+				println!("none");
+			},
+		};
 	}
 }
