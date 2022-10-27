@@ -40,49 +40,53 @@ where
 
 		match request_type {
 			// TODO: further simplify this
-			RequestType::Web2IdentityVerification(request) => {
-				if let Err(e) = lc_identity_verification::web2::verify(request.clone()) {
-					log::error!("error verify web2: {:?}", e)
-				}
-
-				match context.create_verify_identity_trusted_call(
-					request.who,
-					request.identity,
-					request.bn,
-				) {
-					Ok(c) =>
-						if let Err(e) = context.submit_trusted_call(&c) {
-							log::error!("submit call(web2 verify_identity) error: {:?}", e)
-						},
+			RequestType::Web2IdentityVerification(request) =>
+				match lc_identity_verification::web2::verify(request.clone()) {
 					Err(e) => {
-						log::error!("create call error: {:?}", e)
+						log::error!("error verify web2: {:?}", e)
 					},
-				}
-			},
-			RequestType::Web3IdentityVerification(request) => {
-				if let Err(e) = lc_identity_verification::web3::verify(
+					Ok(_) => {
+						match context.create_verify_identity_trusted_call(
+							request.who,
+							request.identity,
+							request.bn,
+						) {
+							Ok(c) =>
+								if let Err(e) = context.submit_trusted_call(&c) {
+									log::error!("submit call(web2 verify_identity) error: {:?}", e)
+								},
+							Err(e) => {
+								log::error!("create call error: {:?}", e)
+							},
+						}
+					},
+				},
+			RequestType::Web3IdentityVerification(request) =>
+				match lc_identity_verification::web3::verify(
 					request.who.clone(),
 					request.identity.clone(),
 					request.challenge_code,
 					request.validation_data.clone(),
 				) {
-					log::error!("error verify web3: {:?}", e)
-				}
-
-				match context.create_verify_identity_trusted_call(
-					request.who,
-					request.identity,
-					request.bn,
-				) {
-					Ok(c) =>
-						if let Err(e) = context.submit_trusted_call(&c) {
-							log::error!("submit call(web3 verify_identity) error: {:?}", e)
-						},
 					Err(e) => {
-						log::error!("create call error: {:?}", e)
+						log::error!("error verify web3: {:?}", e)
 					},
-				}
-			},
+					Ok(_) => {
+						match context.create_verify_identity_trusted_call(
+							request.who,
+							request.identity,
+							request.bn,
+						) {
+							Ok(c) =>
+								if let Err(e) = context.submit_trusted_call(&c) {
+									log::error!("submit call(web3 verify_identity) error: {:?}", e)
+								},
+							Err(e) => {
+								log::error!("create call error: {:?}", e)
+							},
+						}
+					},
+				},
 			RequestType::AssertionVerification(request) => {
 				match request.assertion {
 					Assertion::A1 => {
