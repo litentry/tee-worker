@@ -27,6 +27,7 @@ use itc_rest_client::{
 };
 use serde::{Deserialize, Serialize};
 use std::{
+	default::Default,
 	format,
 	string::{String, ToString},
 	vec,
@@ -35,6 +36,12 @@ use std::{
 
 pub struct TwitterLitentryClient {
 	client: RestClient<HttpClient<DefaultSend>>,
+}
+
+impl Default for TwitterLitentryClient {
+	fn default() -> Self {
+		Self::new()
+	}
 }
 
 #[derive(Serialize, Deserialize, Debug)]

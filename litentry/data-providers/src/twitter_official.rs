@@ -22,6 +22,7 @@ use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
 use serde::{Deserialize, Serialize};
 use std::{
+	default::Default,
 	format,
 	string::{String, ToString},
 	vec,
@@ -86,14 +87,20 @@ pub struct TwitterOfficialClient {
 	client: RestClient<HttpClient<DefaultSend>>,
 }
 
+impl Default for TwitterOfficialClient {
+	fn default() -> Self {
+		Self::new()
+	}
+}
+
 /// rate limit: https://developer.twitter.com/en/docs/twitter-api/rate-limits
 impl TwitterOfficialClient {
 	pub fn new() -> Self {
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
 		let token = std::env::var("TWITTER_AUTHORIZATION_TOKEN");
-		if token.is_ok() {
-			headers.insert(AUTHORIZATION.as_str(), token.unwrap().as_str());
+		if let Ok(token) = token {
+			headers.insert(AUTHORIZATION.as_str(), token.as_str());
 		}
 		let client = build_client(TWITTER_OFFICIAL, headers);
 		TwitterOfficialClient { client }

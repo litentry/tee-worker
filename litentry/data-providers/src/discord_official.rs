@@ -27,6 +27,7 @@ use itc_rest_client::{
 };
 use serde::{Deserialize, Serialize};
 use std::{
+	default::Default,
 	format,
 	string::{String, ToString},
 	vec,
@@ -45,6 +46,12 @@ pub struct DiscordMessage {
 pub struct DiscordMessageAuthor {
 	pub id: String, //user_id
 	pub username: String,
+}
+
+impl Default for DiscordOfficialClient {
+	fn default() -> Self {
+		Self::new()
+	}
 }
 
 impl RestPath<String> for DiscordMessage {
@@ -68,8 +75,8 @@ impl DiscordOfficialClient {
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
 		let token = std::env::var("DISCORD_AUTHORIZATION_TOKEN");
-		if token.is_ok() {
-			headers.insert(AUTHORIZATION.as_str(), token.unwrap().as_str());
+		if let Ok(token) = token {
+			headers.insert(AUTHORIZATION.as_str(), token.as_str());
 		}
 		let client = build_client(DISCORD_OFFICIAL, headers);
 		DiscordOfficialClient { client }
@@ -85,7 +92,7 @@ impl DiscordOfficialClient {
 		let path = format!("/api/channels/{}/messages/{}", channel_id, message_id);
 		let query = vec![];
 		self.client
-			.get_with::<String, DiscordMessage>(path.to_string(), query.as_slice())
+			.get_with::<String, DiscordMessage>(path, query.as_slice())
 			.map_err(|e| Error::RequestError(format!("{:?}", e)))
 	}
 }
