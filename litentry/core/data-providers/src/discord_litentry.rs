@@ -104,19 +104,9 @@ mod tests {
 
 	#[test]
 	fn check_join_work() {
-		// TODO launch a mockserver?
-		// std::env::set_var("DISCORD_AUTHORIZATION_TOKEN", "");
-		// let mut client = DiscordLitentryClient::new();
-		// let channel_id = "919848392035794945".as_bytes().to_vec();
-		// let message_id = "".as_bytes().to_vec();
-		// let result = client.query_message(channel_id, message_id);
-		// assert!(result.is_ok(), "query discord error: {:?}", result);
-
 		let guildid: u64 = 919848390156767232;
 		let guild_id_vec: Vec<u8> = format!("{}", guildid).as_bytes().to_vec();
 		let handler_vec: Vec<u8> = "againstwar%234779".as_bytes().to_vec();
-		// let guild_id = BoundedVec::try_from(guild_id_vec).unwrap();
-		// let handler = BoundedVec::try_from(handler_vec).unwrap();
 
 		let mut client = DiscordLitentryClient::new();
 		let response = client.check_join(guild_id_vec, handler_vec);

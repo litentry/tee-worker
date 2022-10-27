@@ -26,7 +26,6 @@ use std::format;
 use litentry_data_providers::discord_litentry::DiscordLitentryClient;
 use litentry_primitives::ParameterString;
 
-
 pub fn build(guild_id: ParameterString, handler: ParameterString) -> Result<()> {
 	let mut client = DiscordLitentryClient::new();
 	match client.check_join(guild_id.into_inner(), handler.into_inner()) {
