@@ -10,8 +10,8 @@ edition = "2021"
 hex = { version = "0.4.3", optional = true }
 http = { version = "0.2", optional = true }
 http_req = { optional = true, features = ["rust-tls"], branch = "master", git = "https://github.com/integritee-network/http_req" }
-url = { version = "2.0.0", optional = true }
 thiserror = { version = "1.0.26", optional = true }
+url = { version = "2.0.0", optional = true }
 
 # no_std dependencies
 log = { version = "0.4", default-features = false }
@@ -37,25 +37,25 @@ litentry-primitives = { path = "../primitives", default-features = false }
 [features]
 default = ["std"]
 std = [
-	"hex",
-	"http",
-	"http_req",
-	"thiserror",
-	"url",
-	"itc-rest-client/std",
-	"log/std",
-	"serde/std",
-	"serde_json/std",
-	"litentry-primitives/std",
+    "hex",
+    "http",
+    "http_req",
+    "thiserror",
+    "url",
+    "itc-rest-client/std",
+    "log/std",
+    "serde/std",
+    "serde_json/std",
+    "litentry-primitives/std",
 ]
 
 sgx = [
-	"hex-sgx",
-	"http-sgx",
-	"http_req-sgx",
-	"thiserror_sgx",
-	"url_sgx",
-	"sgx_tstd",
-	"itc-rest-client/sgx",
-	"litentry-primitives/sgx",
+    "hex-sgx",
+    "http-sgx",
+    "http_req-sgx",
+    "thiserror_sgx",
+    "url_sgx",
+    "sgx_tstd",
+    "itc-rest-client/sgx",
+    "litentry-primitives/sgx",
 ]
