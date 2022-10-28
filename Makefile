@@ -228,6 +228,7 @@ clean:
 fmt:
 	@echo "Cargo format all ..."
 	@cargo fmt --all
+	@taplo fmt
 	@cd enclave-runtime && cargo fmt --all
 
 .PHONY: pin-sgx
