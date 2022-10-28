@@ -15,5 +15,6 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 pub mod set_challenge_code;
+pub mod set_user_shielding_preflight;
 pub mod user_shielding_key;
 pub mod verify_identity_preflight;
