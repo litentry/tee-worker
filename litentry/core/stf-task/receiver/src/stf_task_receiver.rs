@@ -21,10 +21,9 @@ use crate::{
 use codec::Decode;
 use frame_support::traits::UnfilteredDispatchable;
 use ita_sgx_runtime::Runtime;
-use lc_identity_verification::web2::{discord, twitter, HttpVerifier, Web2IdentityVerification};
 use lc_stf_task_sender::{stf_task_sender, RequestType};
 use litentry_primitives::{Assertion, IdentityWebType, Web2Network, Web2ValidationData};
-use log::*;
+use log;
 
 // lifetime elision: StfTaskContext is guaranteed to outlive the fn
 pub fn run_stf_task_receiver<K, A, S, H>(context: &StfTaskContext<K, A, S, H>) -> Result<(), Error>
@@ -37,8 +36,8 @@ where
 	let receiver = stf_task_sender::init_stf_task_sender_storage()
 		.map_err(|e| Error::OtherError(format!("read storage error:{:?}", e)))?;
 
-	// TODO: better error handling for this loop
-	//       we shouldn't panic when processing tasks
+	// TODO: When an error occurs, send the extrinsic (error message) to the parachain
+	// TODO: error handling still incomplete, we only print logs but no error handling
 	loop {
 		let request_type = receiver
 			.recv()
@@ -46,96 +45,88 @@ where
 
 		match request_type {
 			// TODO: further simplify this
-			RequestType::Web2IdentityVerification(request) => {
-				match request.validation_data {
-					Web2ValidationData::Twitter(_) => {
-						let verifier = Web2IdentityVerification::<twitter::TwitterResponse> {
-							verification_request: request.clone(),
-							_marker: Default::default(),
-						};
-
-						let _ = verifier
-							.make_http_request_and_verify(context.shielding_key.clone())
-							.map_err(|e| {
-								Error::OtherError(format!("error send request {:?}", e))
-							})?;
+			RequestType::Web2IdentityVerification(request) =>
+				match lc_identity_verification::web2::verify(request.clone()) {
+					Err(e) => {
+						log::error!("error verify web2: {:?}", e)
 					},
-					Web2ValidationData::Discord(_) => {
-						let verifier = Web2IdentityVerification::<discord::DiscordResponse> {
-							verification_request: request.clone(),
-							_marker: Default::default(),
-						};
-
-						let _ = verifier
-							.make_http_request_and_verify(context.shielding_key.clone())
+					Ok(_) => {
+						let callback = TrustedCall::decode(
+							&mut request.encoded_callback.as_slice(),
+						)
+						.map_err(|e| {
+							Error::OtherError(format!("error decoding TrustedCall {:?}", e))
+						})?;
+						let shard = ShardIdentifier::decode(&mut request.encoded_shard.as_slice())
 							.map_err(|e| {
-								Error::OtherError(format!("error send request {:?}", e))
+								Error::OtherError(format!("error decoding ShardIdentifier {:?}", e))
 							})?;
+						let _ = context.submit_trusted_call(&shard, &callback)?;
 					},
-				};
-
-				let callback = TrustedCall::decode(&mut request.encoded_callback.as_slice())
-					.map_err(|e| {
-						Error::OtherError(format!("error decoding TrustedCall {:?}", e))
-					})?;
-				let shard = ShardIdentifier::decode(&mut request.encoded_shard.as_slice())
-					.map_err(|e| {
-						Error::OtherError(format!("error decoding ShardIdentifier {:?}", e))
-					})?;
-				let _ = context.submit_trusted_call(shard, &callback)?;
-			},
-			RequestType::Web3IdentityVerification(request) => {
-				let _ = lc_identity_verification::web3::verify(
+				},
+			RequestType::Web3IdentityVerification(request) =>
+				match lc_identity_verification::web3::verify(
 					request.who.clone(),
 					request.identity.clone(),
 					request.challenge_code,
 					request.validation_data.clone(),
-				)
-				.map_err(|e| Error::OtherError(format!("error verify web3: {:?}", e)))?;
-
-				let callback = TrustedCall::decode(&mut request.encoded_callback.as_slice())
-					.map_err(|e| {
-						Error::OtherError(format!("error decoding TrustedCall {:?}", e))
-					})?;
-				let shard = ShardIdentifier::decode(&mut request.encoded_shard.as_slice())
-					.map_err(|e| {
-						Error::OtherError(format!("error decoding ShardIdentifier {:?}", e))
-					})?;
-				let _ = context.submit_trusted_call(shard, &callback)?;
-			},
-			RequestType::AssertionVerification(request) => {
-				match request.assertion {
-					Assertion::A1 => {
-						lc_assertion_build::a1::build(request.vec_identity).map_err(|e| {
-							Error::AssertionError(format!("error verify assertion: {:?}", e))
-						})?;
+				) {
+					Err(e) => {
+						log::error!("error verify web3: {:?}", e)
 					},
-					Assertion::A2(guild_id, user_id) => {
-						for identity in request.vec_identity {
-							if identity.web_type == IdentityWebType::Web2(Web2Network::Discord) {
-								let result = lc_assertion_build::a2::build(
-									guild_id.clone(),
-									user_id.clone(),
-								)
-								.map_err(|e| {
-									Error::AssertionError(format!(
-										"error verify assertion: {:?}",
-										e
-									))
-								});
-
-								if result.is_ok() {
-									// When result is Ok,
-									break
-								}
+					Ok(_) => {
+						let callback = TrustedCall::decode(
+							&mut request.encoded_callback.as_slice(),
+						)
+						.map_err(|e| {
+							Error::OtherError(format!("error decoding TrustedCall {:?}", e))
+						})?;
+						let shard = ShardIdentifier::decode(&mut request.encoded_shard.as_slice())
+							.map_err(|e| {
+								Error::OtherError(format!("error decoding ShardIdentifier {:?}", e))
+							})?;
+						let _ = context.submit_trusted_call(&shard, &callback)?;
+					},
+				},
+			RequestType::AssertionVerification(request) => match request.assertion {
+				Assertion::A1 => {
+					if let Err(e) = lc_assertion_build::a1::build(request.vec_identity) {
+						log::error!("error verify assertion1: {:?}", e)
+					}
+				},
+				Assertion::A2(guild_id, handler) => {
+					for identity in request.vec_identity {
+						if identity.web_type == IdentityWebType::Web2(Web2Network::Discord) {
+							if let Err(e) =
+								lc_assertion_build::a2::build(guild_id.clone(), handler.clone())
+							{
+								log::error!("error verify assertion2: {:?}", e)
+							} else {
+								// When result is Ok,
+								break
 							}
 						}
-					},
-					_ => {
-						unimplemented!()
-					},
-				}
+					}
+				},
+				Assertion::A3(guild_id, handler) => {
+					for identity in request.vec_identity {
+						if identity.web_type == IdentityWebType::Web2(Web2Network::Discord) {
+							if let Err(e) =
+								lc_assertion_build::a3::build(guild_id.clone(), handler.clone())
+							{
+								log::error!("error verify assertion3: {:?}", e)
+							} else {
+								// When result is Ok,
+								break
+							}
+						}
+					}
+				},
+				_ => {
+					unimplemented!()
+				},
 			},
+
 			RequestType::SetUserShieldingKey(request) => {
 				// demonstrate how to read storage, an alternative is to use `ext.get()` in the upper level
 			},

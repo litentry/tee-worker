@@ -5645,6 +5645,7 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "lazy_static",
+ "lc-data-providers",
  "lc-stf-task-sender",
  "litentry-primitives",
  "log 0.4.17",
@@ -5656,6 +5657,28 @@ dependencies = [
  "sp-io 6.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.28)",
  "sp-runtime",
  "sp-std 4.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.28)",
+ "thiserror 1.0.37",
+ "thiserror 1.0.9",
+ "url 2.1.1",
+ "url 2.3.1",
+]
+
+[[package]]
+name = "lc-data-providers"
+version = "0.1.0"
+dependencies = [
+ "hex 0.4.0",
+ "hex 0.4.3",
+ "http 0.2.1",
+ "http 0.2.8",
+ "http_req 0.8.1 (git+https://github.com/integritee-network/http_req?branch=master)",
+ "http_req 0.8.1 (git+https://github.com/integritee-network/http_req)",
+ "itc-rest-client",
+ "litentry-primitives",
+ "log 0.4.17",
+ "serde 1.0.145",
+ "serde_json 1.0.86",
+ "sgx_tstd",
  "thiserror 1.0.37",
  "thiserror 1.0.9",
  "url 2.1.1",
@@ -5684,6 +5707,7 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "lazy_static",
+ "lc-data-providers",
  "lc-stf-task-sender",
  "litentry-primitives",
  "log 0.4.17",

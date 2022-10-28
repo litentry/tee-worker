@@ -65,6 +65,7 @@ members = [
     "sidechain/sidechain-crate",
     "sidechain/state",
     "sidechain/validateer-fetch",
+    "litentry/core/data-providers",
     "litentry/primitives",
     "litentry/pallets/identity-management",
     "litentry/core/stf-task/sender",
