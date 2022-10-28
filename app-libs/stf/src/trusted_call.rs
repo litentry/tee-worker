@@ -210,6 +210,7 @@ where
 
 	fn execute(
 		self,
+		shard: &ShardIdentifier,
 		calls: &mut Vec<OpaqueCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
 	) -> Result<(), Self::Error> {
@@ -401,7 +402,7 @@ where
 			// litentry
 			TrustedCall::set_user_shielding_key_preflight(root, who, key) => {
 				ensure!(is_root::<Runtime, AccountId>(&root), Self::Error::MissingPrivileges(root));
-				Self::set_user_shielding_key_preflight(who.clone(), key)
+				Self::set_user_shielding_key_preflight(shard, who.clone(), key)
 			},
 			TrustedCall::set_user_shielding_key_runtime(enclave_account, who, key) => {
 				ensure_enclave_signer_account(&enclave_account)?;
@@ -520,7 +521,7 @@ where
 				bn,
 			) => {
 				ensure_enclave_signer_account(&enclave_account)?;
-				Self::verify_identity_preflight(account, identity, validation_data, bn)
+				Self::verify_identity_preflight(shard, account, identity, validation_data, bn)
 			},
 			TrustedCall::verify_identity_runtime(enclave_account, who, identity, bn) => {
 				ensure_enclave_signer_account(&enclave_account)?;

@@ -70,6 +70,7 @@ use litentry_primitives::{
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct Web2IdentityVerificationRequest {
+	pub encoded_shard: Vec<u8>,
 	pub who: AccountId,
 	pub identity: Identity,
 	pub challenge_code: ChallengeCode,
@@ -81,6 +82,7 @@ pub struct Web2IdentityVerificationRequest {
 /// TODO: adapt Web3 struct fields later
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct Web3IdentityVerificationRequest {
+	pub encoded_shard: Vec<u8>,
 	pub who: AccountId,
 	pub identity: Identity,
 	pub challenge_code: ChallengeCode,
@@ -93,6 +95,7 @@ pub type MaxIdentityLength = ConstU32<64>;
 /// TODO: adapt struct fields later
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct AssertionBuildRequest {
+	pub encoded_shard: Vec<u8>,
 	pub who: AccountId,
 	pub assertion: Assertion,
 	pub vec_identity: BoundedVec<Identity, MaxIdentityLength>,
@@ -100,6 +103,7 @@ pub struct AssertionBuildRequest {
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct SetChallengeCodeRequest {
+	pub encoded_shard: Vec<u8>,
 	pub who: AccountId,
 	pub identity: Identity,
 	pub challenge_code: u32,
@@ -107,6 +111,7 @@ pub struct SetChallengeCodeRequest {
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct SetUserShieldingKeyRequest {
+	pub encoded_shard: Vec<u8>,
 	pub who: AccountId,
 	pub key: UserShieldingKeyType,
 	pub encoded_callback: Vec<u8>,

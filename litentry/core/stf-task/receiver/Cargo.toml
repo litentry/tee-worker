@@ -43,6 +43,8 @@ itp-stf-executor = { path = "../../../../core-primitives/stf-executor", default-
 itp-storage = { path = "../../../../core-primitives/storage", default-features = false }
 itp-top-pool-author = { path = "../../../../core-primitives/top-pool-author", default-features = false }
 itp-utils = { path = "../../../../core-primitives/utils", default-features = false }
+itp-stf-state-handler = { path = "../../../../core-primitives/stf-state-handler", default-features = false }
+itp-stf-state-observer = { path = "../../../../core-primitives/stf-state-observer", default-features = false }
 
 # litentry
 ita-sgx-runtime = { path = "../../../../app-libs/sgx-runtime", default-features = false }
@@ -67,9 +69,11 @@ std = [
     "url",
     "itp-types/std",
     "itp-utils/std",
-    "itp-stf-executor/std",
     "itp-top-pool-author/std",
     "itp-storage/std",
+    "itp-stf-executor/std",
+    "itp-stf-state-handler/std",
+    "itp-stf-state-observer/std",
     "sp-core/std",
     "litentry-primitives/std",
     "lc-stf-task-sender/std",
@@ -90,7 +94,9 @@ sgx = [
     "ita-stf/sgx",
     "itp-sgx-externalities/sgx",
     "itp-stf-executor/sgx",
+    "itp-stf-state-handler/sgx",
     "itp-top-pool-author/sgx",
+    "itp-stf-state-observer/sgx",
     "itp-utils/sgx",
     "sp-core/full_crypto",
     "litentry-primitives/sgx",

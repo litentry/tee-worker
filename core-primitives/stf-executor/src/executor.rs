@@ -135,6 +135,7 @@ where
 		let mut extrinsic_call_backs: Vec<OpaqueCall> = Vec::new();
 		if let Err(e) = Stf::execute_call(
 			state,
+			shard,
 			trusted_call.clone(),
 			&mut extrinsic_call_backs,
 			self.node_metadata_repo.clone(),

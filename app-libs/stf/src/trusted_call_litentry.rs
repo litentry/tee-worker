@@ -19,8 +19,8 @@ extern crate sgx_tstd as std;
 
 use crate::{
 	helpers::{enclave_signer_account, generate_challenge_code},
-	AccountId, Encode, IdentityManagement, MetadataOf, Runtime, StfError, StfResult, TrustedCall,
-	TrustedCallSigned,
+	AccountId, Encode, IdentityManagement, MetadataOf, Runtime, ShardIdentifier, StfError,
+	StfResult, TrustedCall, TrustedCallSigned,
 };
 use frame_support::dispatch::UnfilteredDispatchable;
 use itp_utils::stringify::account_id_to_string;
@@ -39,6 +39,7 @@ use std::{format, string::ToString, vec};
 
 impl TrustedCallSigned {
 	pub fn set_user_shielding_key_preflight(
+		shard: &ShardIdentifier,
 		who: AccountId,
 		key: UserShieldingKeyType,
 	) -> StfResult<()> {
@@ -49,7 +50,9 @@ impl TrustedCallSigned {
 			key.clone(),
 		)
 		.encode();
-		let request = SetUserShieldingKeyRequest { who, key, encoded_callback }.into();
+		let encoded_shard = shard.encode();
+		let request =
+			SetUserShieldingKeyRequest { encoded_shard, who, key, encoded_callback }.into();
 		let sender = StfRequestSender::new();
 		sender.send_stf_request(request).map_err(|_| StfError::VerifyIdentityFailed)
 	}
@@ -110,6 +113,7 @@ impl TrustedCallSigned {
 	}
 
 	pub fn verify_identity_preflight(
+		shard: &ShardIdentifier,
 		who: AccountId,
 		identity: Identity,
 		validation_data: ValidationData,
@@ -127,8 +131,10 @@ impl TrustedCallSigned {
 			bn,
 		)
 		.encode();
+		let encoded_shard = shard.encode();
 		let request: RequestType = match validation_data {
 			ValidationData::Web2(web2) => Web2IdentityVerificationRequest {
+				encoded_shard,
 				who,
 				identity,
 				challenge_code: code,
@@ -138,6 +144,7 @@ impl TrustedCallSigned {
 			}
 			.into(),
 			ValidationData::Web3(web3) => Web3IdentityVerificationRequest {
+				encoded_shard,
 				who,
 				identity,
 				challenge_code: code,
@@ -179,7 +186,11 @@ impl TrustedCallSigned {
 		Ok(())
 	}
 
-	pub fn build_assertion(who: AccountId, assertion: Assertion) -> StfResult<()> {
+	pub fn build_assertion(
+		shard: &ShardIdentifier,
+		who: AccountId,
+		assertion: Assertion,
+	) -> StfResult<()> {
 		let v_identity_context =
 		ita_sgx_runtime::pallet_identity_management::Pallet::<Runtime>::get_identity_and_identity_context(&who);
 
@@ -193,7 +204,9 @@ impl TrustedCallSigned {
 			}
 		}
 
-		let request: RequestType = AssertionBuildRequest { who, assertion, vec_identity }.into();
+		let encoded_shard = shard.encode();
+		let request: RequestType =
+			AssertionBuildRequest { encoded_shard, who, assertion, vec_identity }.into();
 
 		let sender = StfRequestSender::new();
 		sender.send_stf_request(request).map_err(|_| StfError::AssertionBuildFail)

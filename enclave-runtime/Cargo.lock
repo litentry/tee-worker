@@ -2566,6 +2566,8 @@ dependencies = [
  "itp-sgx-crypto",
  "itp-sgx-externalities",
  "itp-stf-executor",
+ "itp-stf-state-handler",
+ "itp-stf-state-observer",
  "itp-storage",
  "itp-top-pool-author",
  "itp-types",
