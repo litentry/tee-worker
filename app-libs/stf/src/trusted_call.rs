@@ -402,7 +402,7 @@ where
 			// litentry
 			TrustedCall::set_user_shielding_key_preflight(root, who, key) => {
 				ensure!(is_root::<Runtime, AccountId>(&root), Self::Error::MissingPrivileges(root));
-				Self::set_user_shielding_key_preflight(shard, who.clone(), key)
+				Self::set_user_shielding_key_preflight(shard, who, key)
 			},
 			TrustedCall::set_user_shielding_key_runtime(enclave_account, who, key) => {
 				ensure_enclave_signer_account(&enclave_account)?;

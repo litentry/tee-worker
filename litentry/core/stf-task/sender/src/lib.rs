@@ -40,8 +40,7 @@ use sp_std::vec::Vec;
 
 use codec::{Decode, Encode};
 use litentry_primitives::{
-	Assertion, ChallengeCode, Identity, UserShieldingKeyType, Web2ValidationData,
-	Web3ValidationData,
+	Assertion, ChallengeCode, Identity, Web2ValidationData, Web3ValidationData,
 };
 
 /// Here a few Request structs are defined for asynchronously stf-tasks handling.
@@ -102,18 +101,9 @@ pub struct AssertionBuildRequest {
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub struct SetChallengeCodeRequest {
-	pub encoded_shard: Vec<u8>,
-	pub who: AccountId,
-	pub identity: Identity,
-	pub challenge_code: u32,
-}
-
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct SetUserShieldingKeyRequest {
 	pub encoded_shard: Vec<u8>,
 	pub who: AccountId,
-	pub key: UserShieldingKeyType,
 	pub encoded_callback: Vec<u8>,
 }
 
@@ -121,7 +111,6 @@ pub enum RequestType {
 	Web2IdentityVerification(Web2IdentityVerificationRequest),
 	Web3IdentityVerification(Web3IdentityVerificationRequest),
 	AssertionVerification(AssertionBuildRequest),
-	SetChallengeCode(SetChallengeCodeRequest),
 	// set the user shielding key async - just to showcase how to
 	// async process the request in stf-task-receiver
 	// In real scenario it should be done synchronously
@@ -143,12 +132,6 @@ impl From<Web3IdentityVerificationRequest> for RequestType {
 impl From<AssertionBuildRequest> for RequestType {
 	fn from(r: AssertionBuildRequest) -> Self {
 		RequestType::AssertionVerification(r)
-	}
-}
-
-impl From<SetChallengeCodeRequest> for RequestType {
-	fn from(r: SetChallengeCodeRequest) -> Self {
-		RequestType::SetChallengeCode(r)
 	}
 }
 

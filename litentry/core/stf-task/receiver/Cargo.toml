@@ -53,6 +53,7 @@ lc-identity-verification = { path = "../../identity-verification", default-featu
 lc-stf-task-sender = { path = "../sender", default-features = false }
 litentry-primitives = { path = "../../../primitives", default-features = false }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
+sp-std = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28", default-features = false }
 
 [features]
 default = ["std"]
@@ -81,6 +82,7 @@ std = [
     "lc-assertion-build/std",
     "ita-sgx-runtime/std",
     "frame-support/std",
+    "sp-std/std",
 ]
 sgx = [
     "futures_sgx",

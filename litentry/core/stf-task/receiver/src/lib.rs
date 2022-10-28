@@ -34,15 +34,16 @@ use crate::sgx_reexport_prelude::*;
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
-use codec::Encode;
+use codec::{Decode, Encode};
 use futures::executor;
-use ita_stf::{Hash, ShardIdentifier, State as StfState, TrustedCall, TrustedOperation};
+use ita_stf::{Hash, ShardIdentifier, TrustedCall, TrustedOperation};
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
+use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
-use itp_stf_state_observer::traits::UpdateState;
 use itp_top_pool_author::traits::AuthorApi;
-use std::{boxed::Box, fmt::Debug, format, string::String, sync::Arc};
+use sp_std::vec::Vec;
+use std::{format, string::String, sync::Arc};
 
 #[derive(Debug, thiserror::Error, Clone)]
 pub enum Error {
@@ -77,6 +78,8 @@ impl<
 		S: StfEnclaveSigning,
 		H: HandleState,
 	> StfTaskContext<K, A, S, H>
+where
+	H::StateT: SgxExternalitiesTrait,
 {
 	pub fn new(
 		shielding_key: K,
@@ -87,7 +90,19 @@ impl<
 		Self { shielding_key, author_api, enclave_signer, state_handler }
 	}
 
-	pub fn submit_trusted_call(
+	pub fn decode_and_submit_trusted_call(
+		&self,
+		encoded_shard: Vec<u8>,
+		encoded_callback: Vec<u8>,
+	) -> Result<(), Error> {
+		let shard = ShardIdentifier::decode(&mut encoded_shard.as_slice())
+			.map_err(|e| Error::OtherError(format!("error decoding ShardIdentifier {:?}", e)))?;
+		let callback = TrustedCall::decode(&mut encoded_callback.as_slice())
+			.map_err(|e| Error::OtherError(format!("error decoding TrustedCall {:?}", e)))?;
+		self.submit_trusted_call(&shard, &callback)
+	}
+
+	fn submit_trusted_call(
 		&self,
 		shard: &ShardIdentifier,
 		trusted_call: &TrustedCall,
@@ -113,22 +128,5 @@ impl<
 		Ok(())
 	}
 
-	// directly read or write the state associated with stf_executor
-	// you simply provide `read_or_update_function` that encapsulates the
-	// actual business logic.
-	//
-	// TODO: is it the best form that we can do?
-	// pub fn read_or_update_state<F, R>(&self, read_or_update_function: F) -> Result<R, Error>
-	// where
-	// 	F: FnOnce() -> Result<R, Error>,
-	// {
-	// 	let inner_fn: Box<dyn FnOnce(E::Externalities) -> Result<(E::Externalities, R), Error>> =
-	// 		Box::new(|mut ext| {
-	// 			let r = ext.execute_with(read_or_update_function)?;
-	// 			Ok((ext, r))
-	// 		});
-	// 	let (r, _) = E::execute_update::<_, _, Error>(&self.stf_executor, &self.shard, inner_fn)
-	// 		.map_err(|e| Error::OtherError(format!("Error read_or_update_state: {:?}", e)))?;
-	// 	Ok(r)
-	// }
+	// TODO: maybe add a wrapper to read the state and eliminate the public access to `state_handler`
 }

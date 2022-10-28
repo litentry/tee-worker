@@ -62,10 +62,9 @@ fi
 [[ -z $MRENCLAVE ]] && { echo "MRENCLAVE is empty. cannot continue" ; exit 1; }
 
 # indirect call that will be sent to the parachain, it will be synchronously handled
-KEY="8378193a4ce64180814bd60591d1054a04dbc4da02afde453799cd6888ee0c6c"
 sleep 10
 echo "* Set $ACC 's shielding key to $KEY"
-${CLIENT} set-user-shielding-key-preflight "$ACC" "$KEY" ${MRENCLAVE}
+${CLIENT} set-user-shielding-key "$ACC" "$KEY" ${MRENCLAVE}
 echo ""
 
 sleep 20
@@ -75,19 +74,21 @@ echo ""
 
 if [ "$ACTUAL_KEY" = "$KEY" ]; then
     echo "KEY identical: $KEY"
-    echo "test direct call passed"
+    echo "test indirect call passed"
 else
     echo "KEY non-identical: expected: $KEY actual: $ACTUAL_KEY"
     exit 1
 fi
 
+echo "------------------------------"
 # direct call that will be asynchronously handled
+KEY="8378193a4ce64180814bd60591d1054a04dbc4da02afde453799cd6888ee0c6c"
 sleep 10
 echo "* Set $ACC 's shielding key to $KEY"
-${CLIENT} set-user-shielding-key "$ACC" "$KEY" ${MRENCLAVE}
+${CLIENT} trusted --mrenclave $MRENCLAVE --direct set-user-shielding-key-preflight "$ACC" "$KEY"
 echo ""
 
-sleep 20
+sleep 35
 echo "* Get $ACC 's shielding key"
 ACTUAL_KEY=$($CLIENT trusted --mrenclave $MRENCLAVE --direct user-shielding-key $ACC)
 echo ""

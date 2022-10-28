@@ -44,15 +44,11 @@ impl TrustedCallSigned {
 		key: UserShieldingKeyType,
 	) -> StfResult<()> {
 		debug!("who.str = {:?}, key = {:?}", account_id_to_string(&who), key.clone());
-		let encoded_callback = TrustedCall::set_user_shielding_key_runtime(
-			enclave_signer_account(),
-			who.clone(),
-			key.clone(),
-		)
-		.encode();
+		let encoded_callback =
+			TrustedCall::set_user_shielding_key_runtime(enclave_signer_account(), who.clone(), key)
+				.encode();
 		let encoded_shard = shard.encode();
-		let request =
-			SetUserShieldingKeyRequest { encoded_shard, who, key, encoded_callback }.into();
+		let request = SetUserShieldingKeyRequest { encoded_shard, who, encoded_callback }.into();
 		let sender = StfRequestSender::new();
 		sender.send_stf_request(request).map_err(|_| StfError::VerifyIdentityFailed)
 	}
@@ -61,7 +57,6 @@ impl TrustedCallSigned {
 		who: AccountId,
 		key: UserShieldingKeyType,
 	) -> StfResult<()> {
-		debug!("who.str = {:?}, key = {:?}", account_id_to_string(&who), key.clone());
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_user_shielding_key { who, key }
 			.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
 			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
