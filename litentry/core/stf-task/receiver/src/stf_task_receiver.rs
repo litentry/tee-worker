@@ -94,13 +94,27 @@ where
 							log::error!("error verify assertion1: {:?}", e)
 						}
 					},
-					Assertion::A2(guild_id, user_id) => {
+					Assertion::A2(guild_id, handler) => {
 						for identity in request.vec_identity {
 							if identity.web_type == IdentityWebType::Web2(Web2Network::Discord) {
 								if let Err(e) =
-									lc_assertion_build::a2::build(guild_id.clone(), user_id.clone())
+									lc_assertion_build::a2::build(guild_id.clone(), handler.clone())
 								{
 									log::error!("error verify assertion2: {:?}", e)
+								} else {
+									// When result is Ok,
+									break
+								}
+							}
+						}
+					},
+					Assertion::A3(guild_id, handler) => {
+						for identity in request.vec_identity {
+							if identity.web_type == IdentityWebType::Web2(Web2Network::Discord) {
+								if let Err(e) =
+									lc_assertion_build::a3::build(guild_id.clone(), handler.clone())
+								{
+									log::error!("error verify assertion3: {:?}", e)
 								} else {
 									// When result is Ok,
 									break

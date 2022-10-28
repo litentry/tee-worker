@@ -28,18 +28,14 @@ use litentry_primitives::ParameterString;
 
 pub fn build(guild_id: ParameterString, handler: ParameterString) -> Result<()> {
 	let mut client = DiscordLitentryClient::new();
-	match client.check_join(guild_id.into_inner(), handler.into_inner()) {
+	match client.check_id_hubber(guild_id.into_inner(), handler.into_inner()) {
 		Err(e) => {
 			log::error!("error build assertion2: {:?}", e);
-			Err(Error::Assertion2Error(format!("{:?}", e)))
+			Err(Error::Assertion3Error(format!("{:?}", e)))
 		},
 		Ok(_response) => {
 			// TODO:
 			// generate_vc(who, identity, ...)
-
-			// After receiving VC, F/E is expected to assign 'IDHubber' role and align with bot
-			// https://github.com/litentry/tee-worker/issues/35
-			// https://github.com/litentry/tee-worker/issues/36
 
 			Ok(())
 		},
@@ -48,20 +44,20 @@ pub fn build(guild_id: ParameterString, handler: ParameterString) -> Result<()> 
 
 #[cfg(test)]
 mod tests {
-	use crate::a2::build;
+	use crate::a3::build;
 	use frame_support::BoundedVec;
 	use log;
 
 	#[test]
-	fn assertion2_verification_works() {
+	fn assertion3_verification_works() {
 		let guildid: u64 = 919848390156767232;
 		let guild_id_vec: Vec<u8> = format!("{}", guildid).as_bytes().to_vec();
-		let handler_vec: Vec<u8> = "againstwar%234779".to_string().as_bytes().to_vec();
+		let handler_vec: Vec<u8> = "ericzhang.eth#0114".to_string().as_bytes().to_vec();
 
 		let guild_id = BoundedVec::try_from(guild_id_vec).unwrap();
 		let handler = BoundedVec::try_from(handler_vec).unwrap();
 
 		let _ = build(guild_id, handler);
-		log::info!("assertion2 test");
+		log::info!("assertion3 test");
 	}
 }
