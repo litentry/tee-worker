@@ -53,14 +53,10 @@ pub fn build(identity: Identity, original_tweet_id: ParameterString) -> Result<(
 	match is_followed {
 		true => {
 			let mut twitter_official = TwitterOfficialClient::new();
-			let tweets = twitter_official
+			let _ = twitter_official
 				.query_retweet(twitter_id, original_tweet_id.to_vec())
 				.map_err(|e| Error::AssertionOtherError(format!("{:?}", e)))?;
-			if tweets.data.len() > 0 {
-				// TODO generate vc;
-			} else {
-				log::error!("cant not find retweet");
-			}
+			// TODO generate vc;
 		},
 		false => {
 			log::error!("account:{:?} don't follow litentry", twitter_id);

@@ -36,28 +36,36 @@ use itc_rest_client::{
 };
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Tweets {
-	pub data: Vec<Tweet>,
+pub struct TwitterAPIV2Response<T> {
+	pub data: Option<T>,
+	pub meta: Option<ResponseMeta>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ResponseMeta {
+	pub result_count: u32,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Tweet {
 	pub author_id: String,
 	pub id: String,
 	pub text: String,
 }
 
-// #[derive(Serialize, Deserialize, Debug)]
-// pub struct TweetExpansions {
-// 	pub users: Vec<TweetAuthor>,
-// }
-//
-// #[derive(Serialize, Deserialize, Debug)]
-// pub struct TweetAuthor {
-// 	pub id: String,
-// 	pub name: String,
-// 	pub username: String,
-// }
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct TwitterUser {
+	pub id: String,
+	pub name: String,
+	pub username: String,
+	pub public_metrics: TwitterUserPublicMetrics,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct TwitterUserPublicMetrics {
+	pub followers_count: u32,
+	pub following_count: u32,
+}
 
 impl RestPath<String> for Tweet {
 	fn get_path(path: String) -> core::result::Result<String, HttpError> {
@@ -65,7 +73,7 @@ impl RestPath<String> for Tweet {
 	}
 }
 
-impl RestPath<String> for Tweets {
+impl<T> RestPath<String> for TwitterAPIV2Response<T> {
 	fn get_path(path: String) -> core::result::Result<String, HttpError> {
 		Ok(path)
 	}
@@ -74,12 +82,6 @@ impl RestPath<String> for Tweets {
 impl UserInfo for Tweet {
 	fn get_user_id(&self) -> Option<String> {
 		Some(self.author_id.clone())
-	}
-}
-
-impl UserInfo for Tweets {
-	fn get_user_id(&self) -> Option<String> {
-		self.data.get(0).map_or_else(|| None, |v| Some(v.author_id.clone()))
 	}
 }
 
@@ -124,14 +126,65 @@ impl TwitterOfficialClient {
 		&mut self,
 		user: Vec<u8>,
 		original_tweet_id: Vec<u8>,
-	) -> Result<Tweets, Error> {
+	) -> Result<Tweet, Error> {
 		let original_tweet_id = vec_to_string(original_tweet_id)?;
 		let user = vec_to_string(user)?;
 		let query_value = format!("from: {} retweets_of_tweet_id: {}", user, original_tweet_id);
 		let query: Vec<(&str, &str)> =
 			vec![("query", query_value.as_str()), ("expansions", "author_id")];
-		self.client
-			.get_with::<String, Tweets>("/2/tweets/search/recent".to_string(), query.as_slice())
-			.map_err(|e| Error::RequestError(format!("{:?}", e)))
+		let resp = self
+			.client
+			.get_with::<String, TwitterAPIV2Response<Vec<Tweet>>>(
+				"/2/tweets/search/recent".to_string(),
+				query.as_slice(),
+			)
+			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
+		let tweets = resp.data.ok_or(Error::RequestError(format!("tweet not found")))?;
+		if tweets.len() > 0 {
+			Ok(tweets.get(0).unwrap().clone())
+		} else {
+			Err(Error::RequestError(format!("tweet not found")))
+		}
+	}
+
+	/// rate limit: 300/15min(per App) 900/15min(per User)
+	pub fn query_user(&mut self, user: Vec<u8>) -> Result<TwitterUser, Error> {
+		let user = vec_to_string(user)?;
+		let query = vec![("user.fields", "public_metrics")];
+		let resp = self
+			.client
+			.get_with::<String, TwitterAPIV2Response<TwitterUser>>(
+				format!("/2/users/{}", user),
+				query.as_slice(),
+			)
+			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
+		let user = resp.data.ok_or(Error::RequestError(format!("user not found")))?;
+		Ok(user)
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use crate::twitter_official::TwitterOfficialClient;
+
+	#[test]
+	fn query_retweet_work() {
+		std::env::set_var("TWITTER_AUTHORIZATION_TOKEN", "Bearer ");
+		let mut client = TwitterOfficialClient::new();
+		let result = client.query_retweet(
+			"2934243054".as_bytes().to_vec(),
+			"1584490517391626240".as_bytes().to_vec(),
+		);
+		// println!("query_retweet_work {:?}", r);
+		assert!(result.is_ok(), "error: {:?}", result);
+	}
+
+	#[test]
+	fn query_user_work() {
+		std::env::set_var("TWITTER_AUTHORIZATION_TOKEN", "Bearer ");
+		let mut client = TwitterOfficialClient::new();
+		let result = client.query_user("1256908613857226756".as_bytes().to_vec());
+		// println!("query_user_work {:?}", r);
+		assert!(result.is_ok(), "error: {:?}", result);
 	}
 }
