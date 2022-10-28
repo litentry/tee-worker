@@ -122,6 +122,13 @@ where
 							}
 						}
 					},
+					Assertion::A5(identity, original_tweet_id) =>
+						match lc_assertion_build::a5::build(identity, original_tweet_id) {
+							Ok(_) => {},
+							Err(e) => {
+								log::error!("error verify assertion5: {:?}", e)
+							},
+						},
 					_ => {
 						unimplemented!()
 					},
