@@ -15,50 +15,46 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	format, AuthorApi, Error, Hash, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt,
-	StfEnclaveSigning, StfTaskContext,
+	format, AuthorApi, Error, HandleState, Hash, SgxExternalitiesTrait, ShardIdentifier,
+	ShieldingCryptoDecrypt, ShieldingCryptoEncrypt, StfEnclaveSigning, StfTaskContext,
 };
+use codec::Decode;
+use ita_sgx_runtime::IdentityManagement;
 use lc_stf_task_sender::{stf_task_sender, RequestType};
 use litentry_primitives::{Assertion, IdentityWebType, Web2Network};
-use log;
+use log::*;
 
 // lifetime elision: StfTaskContext is guaranteed to outlive the fn
-pub fn run_stf_task_receiver<K, A, S>(context: &StfTaskContext<K, A, S>) -> Result<(), Error>
+pub fn run_stf_task_receiver<K, A, S, H>(context: &StfTaskContext<K, A, S, H>) -> Result<(), Error>
 where
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
 	A: AuthorApi<Hash, Hash>,
 	S: StfEnclaveSigning,
+	H: HandleState,
+	H::StateT: SgxExternalitiesTrait,
 {
 	let receiver = stf_task_sender::init_stf_task_sender_storage()
 		.map_err(|e| Error::OtherError(format!("read storage error:{:?}", e)))?;
 
 	// TODO: When an error occurs, send the extrinsic (error message) to the parachain
+	// TODO: error handling still incomplete, we only print logs but no error handling
+	// TODO: we can further simplify the handling logic
 	loop {
 		let request_type = receiver
 			.recv()
 			.map_err(|e| Error::OtherError(format!("receiver error:{:?}", e)))?;
 
 		match request_type {
-			// TODO: further simplify this
 			RequestType::Web2IdentityVerification(request) =>
 				match lc_identity_verification::web2::verify(request.clone()) {
 					Err(e) => {
-						log::error!("error verify web2: {:?}", e)
+						error!("error verify web2: {:?}", e)
 					},
 					Ok(_) => {
-						match context.create_verify_identity_trusted_call(
-							request.who,
-							request.identity,
-							request.bn,
-						) {
-							Ok(c) =>
-								if let Err(e) = context.submit_trusted_call(&c) {
-									log::error!("submit call(web2 verify_identity) error: {:?}", e)
-								},
-							Err(e) => {
-								log::error!("create call error: {:?}", e)
-							},
-						}
+						let _ = context.decode_and_submit_trusted_call(
+							request.encoded_shard,
+							request.encoded_callback,
+						)?;
 					},
 				},
 			RequestType::Web3IdentityVerification(request) =>
@@ -69,66 +65,76 @@ where
 					request.validation_data.clone(),
 				) {
 					Err(e) => {
-						log::error!("error verify web3: {:?}", e)
+						error!("error verify web3: {:?}", e)
 					},
 					Ok(_) => {
-						match context.create_verify_identity_trusted_call(
-							request.who,
-							request.identity,
-							request.bn,
-						) {
-							Ok(c) =>
-								if let Err(e) = context.submit_trusted_call(&c) {
-									log::error!("submit call(web3 verify_identity) error: {:?}", e)
-								},
-							Err(e) => {
-								log::error!("create call error: {:?}", e)
-							},
-						}
+						let _ = context.decode_and_submit_trusted_call(
+							request.encoded_shard,
+							request.encoded_callback,
+						)?;
 					},
 				},
-			RequestType::AssertionVerification(request) => {
-				match request.assertion {
-					Assertion::A1 => {
-						if let Err(e) = lc_assertion_build::a1::build(request.vec_identity) {
-							log::error!("error verify assertion1: {:?}", e)
-						}
-					},
-					Assertion::A2(guild_id, handler) => {
-						for identity in request.vec_identity {
-							if identity.web_type == IdentityWebType::Web2(Web2Network::Discord) {
-								if let Err(e) =
-									lc_assertion_build::a2::build(guild_id.clone(), handler.clone())
-								{
-									log::error!("error verify assertion2: {:?}", e)
-								} else {
-									// When result is Ok,
-									break
-								}
+			RequestType::AssertionVerification(request) => match request.assertion {
+				Assertion::A1 => {
+					if let Err(e) = lc_assertion_build::a1::build(request.vec_identity) {
+						error!("error verify assertion1: {:?}", e)
+					}
+				},
+				Assertion::A2(guild_id, handler) => {
+					for identity in request.vec_identity {
+						if identity.web_type == IdentityWebType::Web2(Web2Network::Discord) {
+							if let Err(e) =
+								lc_assertion_build::a2::build(guild_id.clone(), handler.clone())
+							{
+								error!("error verify assertion2: {:?}", e)
+							} else {
+								// When result is Ok,
+								break
 							}
 						}
-					},
-					Assertion::A3(guild_id, handler) => {
-						for identity in request.vec_identity {
-							if identity.web_type == IdentityWebType::Web2(Web2Network::Discord) {
-								if let Err(e) =
-									lc_assertion_build::a3::build(guild_id.clone(), handler.clone())
-								{
-									log::error!("error verify assertion3: {:?}", e)
-								} else {
-									// When result is Ok,
-									break
-								}
+					}
+				},
+				Assertion::A3(guild_id, handler) => {
+					for identity in request.vec_identity {
+						if identity.web_type == IdentityWebType::Web2(Web2Network::Discord) {
+							if let Err(e) =
+								lc_assertion_build::a3::build(guild_id.clone(), handler.clone())
+							{
+								error!("error verify assertion3: {:?}", e)
+							} else {
+								// When result is Ok,
+								break
 							}
 						}
-					},
-					_ => {
-						unimplemented!()
-					},
-				}
+					}
+				},
+				_ => {
+					unimplemented!()
+				},
 			},
-			_ => {
-				unimplemented!()
+			// only used for testing
+			// demonstrate how to read the storage in the stf-task handling with the loaded state
+			// in real cases we prefer to read the state ahead and sent the related storage as parameters in `Request`
+			RequestType::SetUserShieldingKey(request) => {
+				let shard = ShardIdentifier::decode(&mut request.encoded_shard.as_slice())
+					.map_err(|e| {
+						Error::OtherError(format!("error decoding ShardIdentifier {:?}", e))
+					})?;
+
+				let mut state = context
+					.state_handler
+					.load(&shard)
+					.map_err(|e| Error::OtherError(format!("load state failed: {:?}", e)))?;
+
+				let key =
+					state.execute_with(|| IdentityManagement::user_shielding_keys(&request.who));
+
+				debug!("in RequestType::SetUserShieldingKey read key is: {:?}", key);
+
+				let _ = context.decode_and_submit_trusted_call(
+					request.encoded_shard,
+					request.encoded_callback,
+				)?;
 			},
 		}
 	}

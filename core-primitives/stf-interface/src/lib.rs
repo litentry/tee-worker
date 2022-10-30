@@ -25,7 +25,7 @@ extern crate alloc;
 use alloc::{sync::Arc, vec::Vec};
 use itp_node_api_metadata::{pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes};
 use itp_node_api_metadata_provider::AccessNodeMetadata;
-use itp_types::OpaqueCall;
+use itp_types::{OpaqueCall, ShardIdentifier};
 
 #[cfg(feature = "mocks")]
 pub mod mocks;
@@ -58,6 +58,7 @@ where
 	/// Execute a call on a specific state. Callbacks are added as an `OpaqueCall`.
 	fn execute_call(
 		state: &mut State,
+		shard: &ShardIdentifier,
 		call: Call,
 		calls: &mut Vec<OpaqueCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
@@ -81,6 +82,7 @@ where
 	/// Execute a call. Callbacks are added as an `OpaqueCall`.
 	fn execute(
 		self,
+		shard: &ShardIdentifier,
 		calls: &mut Vec<OpaqueCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
 	) -> Result<(), Self::Error>;

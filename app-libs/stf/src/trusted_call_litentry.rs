@@ -18,15 +18,16 @@
 extern crate sgx_tstd as std;
 
 use crate::{
-	helpers::generate_challenge_code, AccountId, IdentityManagement, MetadataOf, Runtime, StfError,
-	StfResult, TrustedCallSigned,
+	helpers::{enclave_signer_account, generate_challenge_code},
+	AccountId, Encode, IdentityManagement, MetadataOf, Runtime, ShardIdentifier, StfError,
+	StfResult, TrustedCall, TrustedCallSigned,
 };
 use frame_support::dispatch::UnfilteredDispatchable;
 use itp_utils::stringify::account_id_to_string;
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
-	AssertionBuildRequest, MaxIdentityLength, RequestType, Web2IdentityVerificationRequest,
-	Web3IdentityVerificationRequest,
+	AssertionBuildRequest, MaxIdentityLength, RequestType, SetUserShieldingKeyRequest,
+	Web2IdentityVerificationRequest, Web3IdentityVerificationRequest,
 };
 use litentry_primitives::{
 	Assertion, ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType,
@@ -37,15 +38,32 @@ use sp_runtime::BoundedVec;
 use std::{format, string::ToString, vec};
 
 impl TrustedCallSigned {
-	pub fn set_user_shielding_key(who: AccountId, key: UserShieldingKeyType) -> StfResult<()> {
+	pub fn set_user_shielding_key_preflight(
+		shard: &ShardIdentifier,
+		who: AccountId,
+		key: UserShieldingKeyType,
+	) -> StfResult<()> {
 		debug!("who.str = {:?}, key = {:?}", account_id_to_string(&who), key.clone());
+		let encoded_callback =
+			TrustedCall::set_user_shielding_key_runtime(enclave_signer_account(), who.clone(), key)
+				.encode();
+		let encoded_shard = shard.encode();
+		let request = SetUserShieldingKeyRequest { encoded_shard, who, encoded_callback }.into();
+		let sender = StfRequestSender::new();
+		sender.send_stf_request(request).map_err(|_| StfError::VerifyIdentityFailed)
+	}
+
+	pub fn set_user_shielding_key_runtime(
+		who: AccountId,
+		key: UserShieldingKeyType,
+	) -> StfResult<()> {
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_user_shielding_key { who, key }
 			.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
 			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
 		Ok(())
 	}
 
-	pub fn link_identity(
+	pub fn link_identity_runtime(
 		who: AccountId,
 		identity: Identity,
 		metadata: Option<MetadataOf<Runtime>>,
@@ -81,7 +99,7 @@ impl TrustedCallSigned {
 		Ok(code)
 	}
 
-	pub fn unlink_identity(who: AccountId, identity: Identity) -> StfResult<()> {
+	pub fn unlink_identity_runtime(who: AccountId, identity: Identity) -> StfResult<()> {
 		debug!("who.str = {:?}, identity = {:?}", account_id_to_string(&who), identity,);
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::unlink_identity { who, identity }
 			.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
@@ -89,7 +107,54 @@ impl TrustedCallSigned {
 		Ok(())
 	}
 
-	pub fn verify_identity(
+	pub fn verify_identity_preflight(
+		shard: &ShardIdentifier,
+		who: AccountId,
+		identity: Identity,
+		validation_data: ValidationData,
+		bn: ParentchainBlockNumber,
+	) -> StfResult<()> {
+		let code = IdentityManagement::challenge_codes(&who, &identity)
+			.ok_or_else(|| StfError::Dispatch("code not found".to_string()))?;
+
+		debug!("who:{:?}, identity:{:?}, code:{:?}", who, identity, code);
+
+		let encoded_callback = TrustedCall::verify_identity_runtime(
+			enclave_signer_account(),
+			who.clone(),
+			identity.clone(),
+			bn,
+		)
+		.encode();
+		let encoded_shard = shard.encode();
+		let request: RequestType = match validation_data {
+			ValidationData::Web2(web2) => Web2IdentityVerificationRequest {
+				encoded_shard,
+				who,
+				identity,
+				challenge_code: code,
+				validation_data: web2,
+				bn,
+				encoded_callback,
+			}
+			.into(),
+			ValidationData::Web3(web3) => Web3IdentityVerificationRequest {
+				encoded_shard,
+				who,
+				identity,
+				challenge_code: code,
+				validation_data: web3,
+				bn,
+				encoded_callback,
+			}
+			.into(),
+		};
+
+		let sender = StfRequestSender::new();
+		sender.send_stf_request(request).map_err(|_| StfError::VerifyIdentityFailed)
+	}
+
+	pub fn verify_identity_runtime(
 		who: AccountId,
 		identity: Identity,
 		bn: ParentchainBlockNumber,
@@ -116,7 +181,11 @@ impl TrustedCallSigned {
 		Ok(())
 	}
 
-	pub fn build_assertion(who: AccountId, assertion: Assertion) -> StfResult<()> {
+	pub fn build_assertion(
+		shard: &ShardIdentifier,
+		who: AccountId,
+		assertion: Assertion,
+	) -> StfResult<()> {
 		let v_identity_context =
 		ita_sgx_runtime::pallet_identity_management::Pallet::<Runtime>::get_identity_and_identity_context(&who);
 
@@ -130,70 +199,26 @@ impl TrustedCallSigned {
 			}
 		}
 
-		let request: RequestType = AssertionBuildRequest { who, assertion, vec_identity }.into();
+		let encoded_shard = shard.encode();
+		let request: RequestType =
+			AssertionBuildRequest { encoded_shard, who, assertion, vec_identity }.into();
 
 		let sender = StfRequestSender::new();
 		sender.send_stf_request(request).map_err(|_| StfError::AssertionBuildFail)
 	}
 
-	pub fn query_credit(_account_id: AccountId) -> StfResult<()> {
-		// info!("query_credit({:x?})", account_id.encode(),);
-		// let tweet_id: Vec<u8> = "1569510747084050432".as_bytes().to_vec();
-		// // let request_str = format!("{}", "https://httpbin.org/anything");
-		// let request = lc_stf_task_handler::Request { tweet_id };
-		// let sender = lc_stf_task_handler::stf_task_sender::StfRequestSender::new();
-		// let result = sender.send_stf_request(request);
-		// info!("send https request, get result as {:?}", result);
-
-		Ok(())
-	}
-
-	pub fn set_challenge_code(
-		account: AccountId,
+	pub fn set_challenge_code_runtime(
+		who: AccountId,
 		identity: Identity,
 		code: ChallengeCode,
 	) -> StfResult<()> {
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_challenge_code {
-			who: account,
+			who,
 			identity,
 			code,
 		}
 		.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
 		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
 		Ok(())
-	}
-
-	pub fn verify_identity_step1(
-		who: AccountId,
-		identity: Identity,
-		validation_data: ValidationData,
-		bn: ParentchainBlockNumber,
-	) -> StfResult<()> {
-		let code = IdentityManagement::challenge_codes(&who, &identity)
-			.ok_or_else(|| StfError::Dispatch("code not found".to_string()))?;
-
-		debug!("who:{:?}, identity:{:?}, code:{:?}", who, identity, code);
-
-		let request: RequestType = match validation_data {
-			ValidationData::Web2(web2) => Web2IdentityVerificationRequest {
-				who,
-				identity,
-				challenge_code: code,
-				validation_data: web2,
-				bn,
-			}
-			.into(),
-			ValidationData::Web3(web3) => Web3IdentityVerificationRequest {
-				who,
-				identity,
-				challenge_code: code,
-				validation_data: web3,
-				bn,
-			}
-			.into(),
-		};
-
-		let sender = StfRequestSender::new();
-		sender.send_stf_request(request).map_err(|_| StfError::VerifyIdentityFailed)
 	}
 }

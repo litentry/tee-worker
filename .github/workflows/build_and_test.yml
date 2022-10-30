@@ -206,9 +206,6 @@ jobs:
           - test: user-shielding-key
             flavor_id: sidechain
             demo_name: user-shielding-key
-          - test: HTTPSTest
-            flavor_id: sidechain
-            demo_name: https-test
 
     steps:
       - uses: actions/checkout@v3

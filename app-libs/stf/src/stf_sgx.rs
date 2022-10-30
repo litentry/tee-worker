@@ -135,11 +135,12 @@ where
 
 	fn execute_call(
 		state: &mut State,
+		shard: &ShardIdentifier,
 		call: Call,
 		calls: &mut Vec<OpaqueCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
 	) -> Result<(), Self::Error> {
-		state.execute_with(|| call.execute(calls, node_metadata_repo))
+		state.execute_with(|| call.execute(shard, calls, node_metadata_repo))
 	}
 }
 
