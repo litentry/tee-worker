@@ -26,7 +26,7 @@ use alloc::{string::String, sync::Arc, vec::Vec};
 use core::marker::PhantomData;
 use itp_node_api_metadata::metadata_mocks::NodeMetadataMock;
 use itp_node_api_metadata_provider::NodeMetadataRepository;
-use itp_types::{AccountId, OpaqueCall, ShardIdentifier};
+use itp_types::{AccountId, Index, OpaqueCall, ShardIdentifier};
 
 #[derive(Default)]
 pub struct StateInterfaceMock<State, StateDiff> {

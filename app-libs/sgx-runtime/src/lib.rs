@@ -79,10 +79,6 @@ pub use sp_runtime::{Perbill, Permill};
 // litentry
 pub use pallet_identity_management::{self, Call as IdentityManagementCall};
 
-/// The address format for describing accounts.
-pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
-/// Block header type as expected by this sgx-runtime.
-pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 /// Block type as expected by this sgx-runtime.
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 /// A Block signed with a Justification

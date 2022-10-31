@@ -1539,6 +1539,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "frame-system-rpc-runtime-api",
+ "itp-sgx-runtime-primitives",
  "litentry-primitives",
  "pallet-aura",
  "pallet-balances",
@@ -2013,6 +2014,7 @@ version = "0.9.0"
 dependencies = [
  "derive_more",
  "environmental 1.1.3",
+ "itp-hashing",
  "log",
  "parity-scale-codec",
  "postcard",
@@ -2027,6 +2029,16 @@ name = "itp-sgx-io"
 version = "0.8.0"
 dependencies = [
  "sgx_tstd",
+]
+
+[[package]]
+name = "itp-sgx-runtime-primitives"
+version = "0.9.0"
+dependencies = [
+ "frame-system",
+ "pallet-balances",
+ "sp-core",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -2216,6 +2228,7 @@ version = "0.9.0"
 dependencies = [
  "chrono 0.4.22",
  "frame-system",
+ "itp-sgx-runtime-primitives",
  "pallet-balances",
  "parity-scale-codec",
  "primitive-types",
@@ -2245,6 +2258,7 @@ version = "0.9.0"
 dependencies = [
  "ita-stf",
  "itp-node-api",
+ "itp-settings",
  "itp-sgx-crypto",
  "itp-sgx-externalities",
  "itp-stf-executor",
@@ -2322,6 +2336,7 @@ dependencies = [
  "itp-node-api-metadata",
  "itp-node-api-metadata-provider",
  "itp-ocall-api",
+ "itp-settings",
  "itp-sgx-crypto",
  "itp-types",
  "its-block-verification",
@@ -3084,7 +3099,7 @@ dependencies = [
 [[package]]
 name = "pallet-parentchain"
 version = "0.9.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=master#5b0706e8b9f726d81d8aff74efbae8e023e783b7"
+source = "git+https://github.com/integritee-network/pallets.git?branch=develop#ee5a5b8b4fabb520d75f18ad808251341eee4169"
 dependencies = [
  "frame-support",
  "frame-system",
