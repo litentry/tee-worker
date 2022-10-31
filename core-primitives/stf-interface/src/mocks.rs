@@ -72,7 +72,7 @@ impl<Getter, State, StateDiff> StateGetterInterface<Getter, State>
 	for StateInterfaceMock<State, StateDiff>
 {
 	fn execute_getter(_state: &mut State, _getter: Getter) -> Option<Vec<u8>> {
-		unimplemented!()
+		None
 	}
 }
 
@@ -80,7 +80,7 @@ impl<State, StateDiff> SystemPalletAccountInterface<State, AccountId>
 	for StateInterfaceMock<State, StateDiff>
 {
 	type AccountData = String;
-	type Index = u32;
+	type Index = Index;
 
 	fn get_account_nonce(_state: &mut State, _account_id: &AccountId) -> Self::Index {
 		unimplemented!()
