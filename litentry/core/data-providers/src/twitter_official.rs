@@ -139,7 +139,7 @@ impl TwitterOfficialClient {
 				query.as_slice(),
 			)
 			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
-		let tweets = resp.data.ok_or_else(||Error::RequestError("tweet not found".to_string()))?;
+		let tweets = resp.data.ok_or_else(|| Error::RequestError("tweet not found".to_string()))?;
 		if !tweets.is_empty() {
 			Ok(tweets.get(0).unwrap().clone())
 		} else {
@@ -158,7 +158,7 @@ impl TwitterOfficialClient {
 				query.as_slice(),
 			)
 			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
-		let user = resp.data.ok_or_else(||Error::RequestError("user not found".to_string()))?;
+		let user = resp.data.ok_or_else(|| Error::RequestError("user not found".to_string()))?;
 		Ok(user)
 	}
 }
