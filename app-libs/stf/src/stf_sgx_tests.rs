@@ -15,7 +15,9 @@
 
 */
 
-use crate::{AccountId, Getter, Signature, State, Stf, TrustedCall, TrustedCallSigned};
+use crate::{
+	AccountId, Getter, ShardIdentifier, Signature, State, Stf, TrustedCall, TrustedCallSigned,
+};
 use ita_sgx_runtime::Runtime;
 use itp_node_api::metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository};
 use itp_stf_interface::{
@@ -58,7 +60,8 @@ pub fn shield_funds_increments_signer_account_nonce() {
 	);
 
 	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
-	StfState::execute_call(&mut state, shield_funds_call, &mut Vec::new(), repo).unwrap();
+	let shard = ShardIdentifier::default();
+	StfState::execute_call(&mut state, &shard, shield_funds_call, &mut Vec::new(), repo).unwrap();
 	assert_eq!(1, StfState::get_account_nonce(&mut state, &enclave_signer_account_id));
 }
 

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-pub mod query_credit;
 pub mod set_challenge_code;
+pub mod set_user_shielding_preflight;
 pub mod user_shielding_key;
-pub mod verify_identity_step1;
+pub mod verify_identity_preflight;

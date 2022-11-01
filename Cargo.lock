@@ -5728,6 +5728,7 @@ dependencies = [
 name = "lc-stf-task-receiver"
 version = "0.1.0"
 dependencies = [
+ "frame-support",
  "futures 0.3.24",
  "futures 0.3.8",
  "hex 0.4.0",
@@ -5736,6 +5737,7 @@ dependencies = [
  "http 0.2.8",
  "http_req 0.8.1 (git+https://github.com/integritee-network/http_req?branch=master)",
  "http_req 0.8.1 (git+https://github.com/integritee-network/http_req)",
+ "ita-sgx-runtime",
  "ita-stf",
  "itc-rest-client",
  "itp-extrinsics-factory",
@@ -5743,6 +5745,8 @@ dependencies = [
  "itp-sgx-crypto",
  "itp-sgx-externalities",
  "itp-stf-executor",
+ "itp-stf-state-handler",
+ "itp-stf-state-observer",
  "itp-storage",
  "itp-top-pool-author",
  "itp-types",
@@ -5758,6 +5762,7 @@ dependencies = [
  "serde_json 1.0.86",
  "sgx_tstd",
  "sp-core",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.28)",
  "thiserror 1.0.37",
  "thiserror 1.0.9",
  "url 2.1.1",
@@ -5785,6 +5790,7 @@ dependencies = [
  "serde_json 1.0.86",
  "sgx_tstd",
  "sp-runtime",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.28)",
  "thiserror 1.0.37",
  "thiserror 1.0.9",
  "url 2.1.1",
@@ -6485,7 +6491,7 @@ dependencies = [
 [[package]]
 name = "litmus-parachain-runtime"
 version = "0.9.10"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#f77fc8bbecbdc2cc7202e63e9a929cf1c3894416"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#32766daa494446d25814d5b8cf849b8a3ed81f1b"
 dependencies = [
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
@@ -6902,7 +6908,7 @@ dependencies = [
 [[package]]
 name = "mock-tee-primitives"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#f77fc8bbecbdc2cc7202e63e9a929cf1c3894416"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#32766daa494446d25814d5b8cf849b8a3ed81f1b"
 dependencies = [
  "parity-scale-codec",
  "primitives",
@@ -7735,7 +7741,7 @@ dependencies = [
 [[package]]
 name = "pallet-asset-manager"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#f77fc8bbecbdc2cc7202e63e9a929cf1c3894416"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#32766daa494446d25814d5b8cf849b8a3ed81f1b"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7913,7 +7919,7 @@ dependencies = [
 [[package]]
 name = "pallet-bridge"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#f77fc8bbecbdc2cc7202e63e9a929cf1c3894416"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#32766daa494446d25814d5b8cf849b8a3ed81f1b"
 dependencies = [
  "blake2-rfc",
  "frame-benchmarking",
@@ -7931,7 +7937,7 @@ dependencies = [
 [[package]]
 name = "pallet-bridge-transfer"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#f77fc8bbecbdc2cc7202e63e9a929cf1c3894416"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#32766daa494446d25814d5b8cf849b8a3ed81f1b"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8022,7 +8028,7 @@ dependencies = [
 [[package]]
 name = "pallet-drop3"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#f77fc8bbecbdc2cc7202e63e9a929cf1c3894416"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#32766daa494446d25814d5b8cf849b8a3ed81f1b"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8101,7 +8107,7 @@ dependencies = [
 [[package]]
 name = "pallet-extrinsic-filter"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#f77fc8bbecbdc2cc7202e63e9a929cf1c3894416"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#32766daa494446d25814d5b8cf849b8a3ed81f1b"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8176,7 +8182,7 @@ dependencies = [
 [[package]]
 name = "pallet-identity-management"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#f77fc8bbecbdc2cc7202e63e9a929cf1c3894416"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#32766daa494446d25814d5b8cf849b8a3ed81f1b"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8195,7 +8201,7 @@ dependencies = [
 [[package]]
 name = "pallet-identity-management-mock"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#f77fc8bbecbdc2cc7202e63e9a929cf1c3894416"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#32766daa494446d25814d5b8cf849b8a3ed81f1b"
 dependencies = [
  "aes-gcm 0.10.1",
  "frame-benchmarking",
@@ -8354,7 +8360,7 @@ dependencies = [
 [[package]]
 name = "pallet-parachain-staking"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#f77fc8bbecbdc2cc7202e63e9a929cf1c3894416"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#32766daa494446d25814d5b8cf849b8a3ed81f1b"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -8687,7 +8693,7 @@ dependencies = [
 [[package]]
 name = "pallet-vc-management"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#f77fc8bbecbdc2cc7202e63e9a929cf1c3894416"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#32766daa494446d25814d5b8cf849b8a3ed81f1b"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -10303,7 +10309,7 @@ dependencies = [
 [[package]]
 name = "primitives"
 version = "0.9.10"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#f77fc8bbecbdc2cc7202e63e9a929cf1c3894416"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#32766daa494446d25814d5b8cf849b8a3ed81f1b"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -11013,7 +11019,7 @@ dependencies = [
 [[package]]
 name = "runtime-common"
 version = "0.9.10"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#f77fc8bbecbdc2cc7202e63e9a929cf1c3894416"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#32766daa494446d25814d5b8cf849b8a3ed81f1b"
 dependencies = [
  "cumulus-pallet-parachain-system",
  "cumulus-primitives-core",

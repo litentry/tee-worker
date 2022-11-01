@@ -40,15 +40,20 @@ itp-ocall-api = { path = "../../../../core-primitives/ocall-api", default-featur
 itp-sgx-crypto = { path = "../../../../core-primitives/sgx/crypto", default-features = false }
 itp-sgx-externalities = { path = "../../../../core-primitives/substrate-sgx/externalities", default-features = false }
 itp-stf-executor = { path = "../../../../core-primitives/stf-executor", default-features = false }
+itp-stf-state-handler = { path = "../../../../core-primitives/stf-state-handler", default-features = false }
+itp-stf-state-observer = { path = "../../../../core-primitives/stf-state-observer", default-features = false }
 itp-storage = { path = "../../../../core-primitives/storage", default-features = false }
 itp-top-pool-author = { path = "../../../../core-primitives/top-pool-author", default-features = false }
 itp-utils = { path = "../../../../core-primitives/utils", default-features = false }
 
 # litentry
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
+ita-sgx-runtime = { path = "../../../../app-libs/sgx-runtime", default-features = false }
 lc-assertion-build = { path = "../../assertion-build", default-features = false }
 lc-identity-verification = { path = "../../identity-verification", default-features = false }
 lc-stf-task-sender = { path = "../sender", default-features = false }
 litentry-primitives = { path = "../../../primitives", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28", default-features = false }
 
 [features]
 default = ["std"]
@@ -65,14 +70,19 @@ std = [
     "url",
     "itp-types/std",
     "itp-utils/std",
-    "itp-stf-executor/std",
     "itp-top-pool-author/std",
     "itp-storage/std",
+    "itp-stf-executor/std",
+    "itp-stf-state-handler/std",
+    "itp-stf-state-observer/std",
     "sp-core/std",
     "litentry-primitives/std",
     "lc-stf-task-sender/std",
     "lc-identity-verification/std",
     "lc-assertion-build/std",
+    "ita-sgx-runtime/std",
+    "frame-support/std",
+    "sp-std/std",
 ]
 sgx = [
     "futures_sgx",
@@ -86,7 +96,9 @@ sgx = [
     "ita-stf/sgx",
     "itp-sgx-externalities/sgx",
     "itp-stf-executor/sgx",
+    "itp-stf-state-handler/sgx",
     "itp-top-pool-author/sgx",
+    "itp-stf-state-observer/sgx",
     "itp-utils/sgx",
     "sp-core/full_crypto",
     "litentry-primitives/sgx",

@@ -19,9 +19,10 @@ use crate::{
 	trusted_base_cli::commands::{
 		balance::BalanceCommand,
 		litentry::{
-			query_credit::QueryCreditCommand, set_challenge_code::SetChallengeCodeCommand,
+			set_challenge_code::SetChallengeCodeCommand,
+			set_user_shielding_preflight::SetUserShieldingKeyPreflightCommand,
 			user_shielding_key::UserShiledingKeyCommand,
-			verify_identity_step1::VerifyIdentityStep1Command,
+			verify_identity_preflight::VerifyIdentityPreflightCommand,
 		},
 		set_balance::SetBalanceCommand,
 		transfer::TransferCommand,
@@ -60,15 +61,14 @@ pub enum TrustedBaseCli {
 
 	// Litentry's commands below
 	// for commands that should trigger parentchain extrins, check non-trusted commands
-	/// query a user's credit score -- TODO: to be removed/refactored
-	QueryCredit(QueryCreditCommand),
-
-	/// query a user's shielding key
+	/// query a user's shielding key, the setter is non-trusted command
 	UserShieldingKey(UserShiledingKeyCommand),
 
 	SetChallengeCode(SetChallengeCodeCommand),
 
-	VerifyIdentityStep1(VerifyIdentityStep1Command),
+	VerifyIdentityPreflight(VerifyIdentityPreflightCommand),
+
+	SetUserShieldingKeyPreflight(SetUserShieldingKeyPreflightCommand),
 }
 
 impl TrustedBaseCli {
@@ -81,10 +81,10 @@ impl TrustedBaseCli {
 			TrustedBaseCli::Balance(cmd) => cmd.run(cli, trusted_args),
 			TrustedBaseCli::UnshieldFunds(cmd) => cmd.run(cli, trusted_args),
 			// Litentry's commands below
-			TrustedBaseCli::QueryCredit(cmd) => cmd.run(cli, trusted_args),
 			TrustedBaseCli::UserShieldingKey(cmd) => cmd.run(cli, trusted_args),
 			TrustedBaseCli::SetChallengeCode(cmd) => cmd.run(cli, trusted_args),
-			TrustedBaseCli::VerifyIdentityStep1(cmd) => cmd.run(cli, trusted_args),
+			TrustedBaseCli::VerifyIdentityPreflight(cmd) => cmd.run(cli, trusted_args),
+			TrustedBaseCli::SetUserShieldingKeyPreflight(cmd) => cmd.run(cli, trusted_args),
 		}
 	}
 }

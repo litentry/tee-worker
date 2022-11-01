@@ -26,7 +26,7 @@ use alloc::{string::String, sync::Arc, vec::Vec};
 use core::marker::PhantomData;
 use itp_node_api_metadata::metadata_mocks::NodeMetadataMock;
 use itp_node_api_metadata_provider::NodeMetadataRepository;
-use itp_types::{AccountId, OpaqueCall};
+use itp_types::{AccountId, OpaqueCall, ShardIdentifier};
 
 #[derive(Default)]
 pub struct StateInterfaceMock<State, StateDiff> {
@@ -59,6 +59,7 @@ impl<Call, State, StateDiff>
 
 	fn execute_call(
 		_state: &mut State,
+		_shard: &ShardIdentifier,
 		_call: Call,
 		_calls: &mut Vec<OpaqueCall>,
 		_node_metadata_repo: Arc<NodeMetadataRepository<NodeMetadataMock>>,
@@ -96,6 +97,7 @@ impl ExecuteCall<NodeMetadataRepository<NodeMetadataMock>> for CallExecutorMock 
 
 	fn execute(
 		self,
+		_shard: &ShardIdentifier,
 		_calls: &mut Vec<OpaqueCall>,
 		_node_metadata_repo: Arc<NodeMetadataRepository<NodeMetadataMock>>,
 	) -> Result<(), Self::Error> {

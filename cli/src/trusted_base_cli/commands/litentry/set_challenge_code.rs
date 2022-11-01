@@ -49,7 +49,7 @@ impl SetChallengeCodeCommand {
 		let _ = hex::decode_to_slice(&self.code_hex, &mut code).expect("decoding code failed");
 
 		let top: TrustedOperation =
-			TrustedCall::set_challenge_code(root.public().into(), who, identity, code)
+			TrustedCall::set_challenge_code_runtime(root.public().into(), who, identity, code)
 				.sign(&KeyPair::Sr25519(root), nonce, &mrenclave, &shard)
 				.into_trusted_operation(trusted_args.direct);
 		let _ = perform_trusted_operation(cli, trusted_args, &top);

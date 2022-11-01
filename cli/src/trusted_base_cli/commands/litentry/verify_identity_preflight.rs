@@ -27,23 +27,43 @@ use log::*;
 use sp_core::Pair;
 
 #[derive(Parser)]
-pub struct QueryCreditCommand {
+pub struct VerifyIdentityPreflightCommand {
 	/// AccountId in ss58check format
 	account: String,
+	did: String,
+	validation_data: String,
+	parent_block_number: u32,
 }
 
-impl QueryCreditCommand {
+// TODO: we'd need an "integration-test" with parentchain "verify_identity"
+//       the origin of it needs to be re-considered if we want individual steps
+impl VerifyIdentityPreflightCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_args: &TrustedArgs) {
-		println!("account = {:?}", self.account);
-		let who = get_pair_from_str(trusted_args, &self.account);
-		let account_id = get_accountid_from_str(&self.account);
+		let who = get_accountid_from_str(&self.account);
+		let root = get_pair_from_str(trusted_args, "//Alice");
 
 		let (mrenclave, shard) = get_identifiers(trusted_args);
-		let nonce = get_layer_two_nonce!(who, cli, trusted_args);
+		let nonce = get_layer_two_nonce!(root, cli, trusted_args);
 		// compose the extrinsic
-		let top: TrustedOperation = TrustedCall::query_credit(account_id)
-			.sign(&KeyPair::Sr25519(who), nonce, &mrenclave, &shard)
-			.into_trusted_operation(trusted_args.direct);
+		let validation_data = serde_json::from_str(self.validation_data.as_str());
+		if let Err(e) = validation_data {
+			warn!("Deserialize ValidationData error: {:?}", e.to_string());
+			return
+		}
+		let identity = serde_json::from_str(self.did.as_str());
+		if let Err(e) = identity {
+			warn!("Deserialize Identity error: {:?}", e.to_string());
+			return
+		}
+		let top: TrustedOperation = TrustedCall::verify_identity_preflight(
+			root.public().into(),
+			who,
+			identity.unwrap(),
+			validation_data.unwrap(),
+			self.parent_block_number,
+		)
+		.sign(&KeyPair::Sr25519(root), nonce, &mrenclave, &shard)
+		.into_trusted_operation(trusted_args.direct);
 		let _ = perform_trusted_operation(cli, trusted_args, &top);
 	}
 }

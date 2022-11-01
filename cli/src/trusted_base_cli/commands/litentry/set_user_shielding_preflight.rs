@@ -23,47 +23,34 @@ use crate::{
 };
 use codec::Decode;
 use ita_stf::{Index, KeyPair, TrustedCall, TrustedGetter, TrustedOperation};
+use litentry_primitives::UserShieldingKeyType;
 use log::*;
 use sp_core::Pair;
 
 #[derive(Parser)]
-pub struct VerifyIdentityStep1Command {
+pub struct SetUserShieldingKeyPreflightCommand {
 	/// AccountId in ss58check format
 	account: String,
-	did: String,
-	validation_data: String,
-	parent_block_number: u32,
+	/// Shielding key in hex string
+	key_hex: String,
 }
 
-// TODO: we'd need an "integration-test" with parentchain "verify_identity"
-//       the origin of it needs to be re-considered if we want individual steps
-impl VerifyIdentityStep1Command {
+impl SetUserShieldingKeyPreflightCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_args: &TrustedArgs) {
 		let who = get_accountid_from_str(&self.account);
 		let root = get_pair_from_str(trusted_args, "//Alice");
 
 		let (mrenclave, shard) = get_identifiers(trusted_args);
 		let nonce = get_layer_two_nonce!(root, cli, trusted_args);
-		// compose the extrinsic
-		let validation_data = serde_json::from_str(self.validation_data.as_str());
-		if let Err(e) = validation_data {
-			warn!("Deserialize ValidationData error: {:?}", e.to_string());
-			return
-		}
-		let identity = serde_json::from_str(self.did.as_str());
-		if let Err(e) = identity {
-			warn!("Deserialize Identity error: {:?}", e.to_string());
-			return
-		}
-		let top: TrustedOperation = TrustedCall::verify_identity_step1(
-			root.public().into(),
-			who,
-			identity.unwrap(),
-			validation_data.unwrap(),
-			self.parent_block_number,
-		)
-		.sign(&KeyPair::Sr25519(root), nonce, &mrenclave, &shard)
-		.into_trusted_operation(trusted_args.direct);
+
+		let mut key = UserShieldingKeyType::default();
+		let _ =
+			hex::decode_to_slice(&self.key_hex, &mut key).expect("decoding shielding_key failed");
+
+		let top: TrustedOperation =
+			TrustedCall::set_user_shielding_key_preflight(root.public().into(), who, key)
+				.sign(&KeyPair::Sr25519(root), nonce, &mrenclave, &shard)
+				.into_trusted_operation(trusted_args.direct);
 		let _ = perform_trusted_operation(cli, trusted_args, &top);
 	}
 }
