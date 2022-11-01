@@ -108,6 +108,19 @@ where
 						}
 					}
 				},
+				Assertion::A5(identity, original_tweet_id) =>
+					match lc_assertion_build::a5::build(identity, original_tweet_id) {
+						Ok(_) => {},
+						Err(e) => {
+							log::error!("error verify assertion5: {:?}", e)
+						},
+					},
+				Assertion::A6(identity) => match lc_assertion_build::a6::build(identity) {
+					Ok(_) => {},
+					Err(e) => {
+						log::error!("error verify assertion6: {:?}", e)
+					},
+				},
 				_ => {
 					unimplemented!()
 				},
