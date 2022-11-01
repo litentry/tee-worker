@@ -284,6 +284,12 @@ jobs:
           name: logs-${{ matrix.test }}-${{ matrix.flavor_id }}
           path: ./${{ env.LOG_DIR }}
 
+  mock-server-tests:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Mock Server Test
+        run: cargo test --test mock_server
+
   # Only push docker image when tests are passed on dev branch
   push-docker-image:
     runs-on: ubuntu-latest

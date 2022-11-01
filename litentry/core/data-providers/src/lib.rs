@@ -55,7 +55,7 @@ pub mod twitter_official;
 
 const TIMEOUT: Duration = Duration::from_secs(3u64);
 
-// #[cfg(not(test))]
+#[cfg(not(test))]
 pub mod base_url {
 	pub(crate) const TWITTER_OFFICIAL: &str = "https://api.twitter.com";
 	pub(crate) const TWITTER_LITENTRY: &str = "http://47.57.13.126:8080";
@@ -64,13 +64,13 @@ pub mod base_url {
 	pub(crate) const DISCORD_LITENTRY: &str = "http://47.57.13.126:8080";
 }
 
-// #[cfg(test)]
-// pub mod base_url {
-// 	pub(crate) const TWITTER_OFFICIAL: &str = "http://localhost";
-// 	pub(crate) const TWITTER_LITENTRY: &str = "http://localhost";
-//
-// 	pub(crate) const DISCORD_OFFICIAL: &str = "http://localhost";
-// }
+#[cfg(test)]
+pub mod base_url {
+	pub(crate) const TWITTER_OFFICIAL: &str = "http://localhost";
+	pub(crate) const TWITTER_LITENTRY: &str = "http://localhost";
+	pub(crate) const DISCORD_OFFICIAL: &str = "http://localhost";
+	pub(crate) const DISCORD_LITENTRY: &str = "http://localhost:1234";
+}
 
 #[derive(Debug, thiserror::Error, Clone)]
 pub enum Error {
@@ -95,7 +95,7 @@ pub fn vec_to_string(vec: Vec<u8>) -> Result<String, Error> {
 }
 
 pub fn build_client(base_url: &str, headers: Headers) -> RestClient<HttpClient<DefaultSend>> {
-	let base_url = Url::parse(base_url).unwrap();
+	let base_url = Url::parse("http://localhost:1234").unwrap();
 	let http_client = HttpClient::new(DefaultSend {}, true, Some(TIMEOUT), Some(headers), None);
 	RestClient::new(http_client, base_url)
 }
