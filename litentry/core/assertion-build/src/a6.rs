@@ -26,11 +26,12 @@ use litentry_primitives::{Identity, IdentityHandle, IdentityWebType, Web2Network
 use std::{format, string::ToString};
 
 /// Following ranges:
-/// 	* 1+ follower
-/// 	* 100+ followers
-/// 	* 1,000+ followers
-/// 	* 10,000+ followers
-/// 	* 100,000+ followers
+///
+///    * 1+ follower
+///    * 100+ followers
+///    * 1,000+ followers
+///    * 10,000+ followers
+///    * 100,000+ followers
 pub fn build(identity: Identity) -> Result<(), Error> {
 	let _ = match identity.web_type {
 		IdentityWebType::Web2(Web2Network::Twitter) => Ok(()),
