@@ -38,6 +38,7 @@ pub mod a1;
 pub mod a2;
 pub mod a3;
 pub mod a5;
+pub mod a6;
 
 pub type Result<T> = core::result::Result<T, Error>;
 
