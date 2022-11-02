@@ -22,12 +22,12 @@ use crate::{
 	sync::tests::{enclave_rw_lock_works, sidechain_rw_lock_works},
 	test::{
 		cert_tests::*,
-		direct_rpc_tests,
+		direct_rpc_tests, enclave_signer_tests,
 		fixtures::test_setup::{
 			enclave_call_signer, test_setup, TestStf, TestStfExecutor, TestTopPoolAuthor,
 		},
 		mocks::types::TestStateKeyRepo,
-		sidechain_aura_tests, sidechain_event_tests, top_pool_tests,
+		sidechain_aura_tests, sidechain_event_tests, state_getter_tests, top_pool_tests,
 	},
 	tls_ra,
 };
@@ -44,8 +44,7 @@ use itp_node_api::metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMet
 use itp_sgx_crypto::{Aes, StateCrypto};
 use itp_sgx_externalities::{SgxExternalities, SgxExternalitiesDiffType, SgxExternalitiesTrait};
 use itp_stf_executor::{
-	enclave_signer_tests as stf_enclave_signer_tests, executor_tests as stf_executor_tests,
-	traits::StateUpdateProposer, BatchExecutionResult,
+	executor_tests as stf_executor_tests, traits::StateUpdateProposer, BatchExecutionResult,
 };
 use itp_stf_interface::{
 	parentchain_pallet::ParentchainPalletInterface,
@@ -90,6 +89,7 @@ pub extern "C" fn test_main_entrance() -> size_t {
 		itp_stf_state_handler::test::sgx_tests::test_state_files_from_handler_can_be_loaded_again,
 		itp_stf_state_handler::test::sgx_tests::test_file_io_get_state_hash_works,
 		itp_stf_state_handler::test::sgx_tests::test_list_state_ids_ignores_files_not_matching_the_pattern,
+		itp_stf_state_handler::test::sgx_tests::test_in_memory_state_initializes_from_shard_directory,
 		test_compose_block,
 		test_submit_trusted_call_to_top_pool,
 		test_submit_trusted_getter_to_top_pool,
@@ -123,18 +123,14 @@ pub extern "C" fn test_main_entrance() -> size_t {
 		sidechain_rw_lock_works,
 		enclave_rw_lock_works,
 		// unit tests of stf_executor
-		stf_executor_tests::get_stf_state_works,
-		stf_executor_tests::upon_false_signature_get_stf_state_errs,
 		stf_executor_tests::execute_update_works,
-		stf_executor_tests::execute_timed_getters_batch_executes_if_enough_time,
-		stf_executor_tests::execute_timed_getters_does_not_execute_more_than_once_if_not_enough_time,
-		stf_executor_tests::execute_timed_getters_batch_returns_early_when_no_getter,
 		stf_executor_tests::propose_state_update_always_executes_preprocessing_step,
         stf_executor_tests::propose_state_update_executes_no_trusted_calls_given_no_time,
 		stf_executor_tests::propose_state_update_executes_only_one_trusted_call_given_not_enough_time,
 		stf_executor_tests::propose_state_update_executes_all_calls_given_enough_time,
-		stf_enclave_signer_tests::enclave_signer_signatures_are_valid,
-		stf_enclave_signer_tests::derive_key_is_deterministic,
+		enclave_signer_tests::enclave_signer_signatures_are_valid,
+		enclave_signer_tests::derive_key_is_deterministic,
+		state_getter_tests::state_getter_works,
 		// sidechain integration tests
 		sidechain_aura_tests::produce_sidechain_block_and_import_it,
 		sidechain_event_tests::ensure_events_get_reset_upon_block_proposal,
