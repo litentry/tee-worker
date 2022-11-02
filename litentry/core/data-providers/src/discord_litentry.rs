@@ -35,11 +35,11 @@ use std::{
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct DiscordResponse {
-	data: bool,
-	message: String,
-	has_errors: bool,
-	msg_code: u32,
-	success: bool,
+	pub data: bool,
+	pub message: String,
+	pub has_errors: bool,
+	pub msg_code: u32,
+	pub success: bool,
 }
 
 impl RestPath<String> for DiscordResponse {
