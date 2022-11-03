@@ -116,7 +116,11 @@ jobs:
 
       - run: docker images --all
 
+      - name: Remove container ${{ env.BUILD_CONTAINER_NAME }}
+        run: docker rm  ${{ env.BUILD_CONTAINER_NAME }}
+
       - name: Test Enclave # cargo test is not supported in the enclave, see: https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
+        if: success() || failure()
         run: docker run --name ${{ env.BUILD_CONTAINER_NAME }} integritee-worker-${{ matrix.flavor_id }}-${{ github.sha }} test --all
 
       - name: Export worker image(s)
