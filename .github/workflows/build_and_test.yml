@@ -2,10 +2,10 @@ name: Build, Test, Clippy
 
 on:
   workflow_dispatch:
-  inputs:
-    runner:
-      description: which runner jobs run on. Currently only support 'self-hosted'
-      required: false
+    inputs:
+      runner:
+        description: which runner jobs run on. Currently only support 'self-hosted'
+        required: false
   push:
     branches: [ dev ]
     tags:
