@@ -3,14 +3,14 @@ name: Build, Test, Clippy
 on:
   workflow_dispatch:
     inputs:
-      build-parachain-docker:
+      build_parachain_docker:
         type: choice
         description: 'build-parachain-docker' jobs run on.
         default: ubuntu-20.04
         options:
           - self-hosted
           - ubuntu-20.04
-      build-test:
+      build_test:
         type: choice
         description: 'build-test' jobs run on.
         default: ubuntu-20.04
@@ -24,7 +24,7 @@ on:
         options:
           - self-hosted
           - ubuntu-latest
-      integration-tests:
+      integration_tests:
         type: choice
         description: 'integration-tests' jobs run on.
         default: ubuntu-20.04
