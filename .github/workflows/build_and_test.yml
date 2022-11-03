@@ -34,7 +34,7 @@ jobs:
 
       - name: Build docker image
         run: |
-          ./scripts/litentry/build_parachain_docker.sh
+          ./scripts/litentry/build_parachain_docker.sh /tmp/github-actions
 
       - name: Save docker image
         run: |
