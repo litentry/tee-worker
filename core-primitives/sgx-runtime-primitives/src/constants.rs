@@ -1,6 +1,5 @@
 /*
 	Copyright 2021 Integritee AG and Supercomputing Systems AG
-	Copyright (C) 2017-2019 Baidu, Inc. All Rights Reserved.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -16,20 +15,15 @@
 
 */
 
-pub mod cert_tests;
-pub mod direct_rpc_tests;
-pub mod enclave_signer_tests;
-#[cfg(feature = "evm")]
-pub mod evm_pallet_tests;
-pub mod fixtures;
-pub mod ipfs_tests;
-pub mod mocks;
-pub mod on_chain_ocall_tests;
-pub mod sidechain_aura_tests;
-pub mod sidechain_event_tests;
-mod state_getter_tests;
-pub mod tests_main;
-pub mod top_pool_tests;
+use crate::types::{BlockNumber, Moment};
 
-#[cfg(feature = "teeracle")]
-pub mod teeracle_tests;
+pub const ONE_DAY: Moment = 86_400_000;
+
+pub const MILLISECS_PER_BLOCK: u64 = 6000;
+
+pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
+
+// Time is measured by number of blocks.
+pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
+pub const HOURS: BlockNumber = MINUTES * 60;
+pub const DAYS: BlockNumber = HOURS * 24;
