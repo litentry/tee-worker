@@ -61,7 +61,3 @@ sgx = [
 
 [dev-dependencies]
 mockito = "0.31.0"
-
-[[test]]
-name = "mock_server"
-path = "tests/integration_test.rs"

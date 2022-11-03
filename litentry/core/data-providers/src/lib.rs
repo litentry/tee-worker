@@ -66,10 +66,10 @@ pub mod base_url {
 
 #[cfg(test)]
 pub mod base_url {
-	pub(crate) const TWITTER_OFFICIAL: &str = "http://localhost";
-	pub(crate) const TWITTER_LITENTRY: &str = "http://localhost";
-	pub(crate) const DISCORD_OFFICIAL: &str = "http://localhost";
-	pub(crate) const DISCORD_LITENTRY: &str = "http://localhost:1234";
+	pub(crate) const TWITTER_OFFICIAL: &str = "http://localhost:9527";
+	pub(crate) const TWITTER_LITENTRY: &str = "http://localhost:9527";
+	pub(crate) const DISCORD_OFFICIAL: &str = "http://localhost:9527";
+	pub(crate) const DISCORD_LITENTRY: &str = "http://localhost:9527";
 }
 
 #[derive(Debug, thiserror::Error, Clone)]
