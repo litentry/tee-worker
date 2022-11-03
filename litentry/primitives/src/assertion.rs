@@ -19,7 +19,6 @@
 //
 // See: https://www.notion.so/litentry/Expected-parameters-in-predefined-rulesets-14f74928aa2b43509167da12a3e75507
 
-use crate::Identity;
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
@@ -34,8 +33,8 @@ pub enum Assertion {
 	A2(ParameterString, ParameterString), // (guild_id, user_id)
 	A3(ParameterString, ParameterString), // (guild_id, user_id)
 	A4,
-	A5(Identity, ParameterString), // (twitter_account, tweet_id)
-	A6(Identity),
+	A5(ParameterString, ParameterString), // (twitter_account, tweet_id)
+	A6,
 	A7(Balance, u32), // (DOT_amount, year)
 	A8(u64),          // (tx_amount)
 	A9,

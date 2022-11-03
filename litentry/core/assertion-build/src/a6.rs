@@ -23,7 +23,7 @@ extern crate sgx_tstd as std;
 use crate::Error;
 use lc_data_providers::twitter_official::TwitterOfficialClient;
 use litentry_primitives::{Identity, IdentityHandle, IdentityWebType, Web2Network};
-use std::{format, string::ToString};
+use std::vec::Vec;
 
 /// Following ranges:
 ///
@@ -32,25 +32,24 @@ use std::{format, string::ToString};
 ///    * 1,000+ followers
 ///    * 10,000+ followers
 ///    * 100,000+ followers
-pub fn build(identity: Identity) -> Result<(), Error> {
-	let _ = match identity.web_type {
-		IdentityWebType::Web2(Web2Network::Twitter) => Ok(()),
-		_ => Err(Error::AssertionOtherError("Assertion6 only support twitter".to_string())),
-	}?;
-
-	let user_id = match identity.handle {
-		IdentityHandle::String(id) => Ok(id),
-		_ => Err(Error::AssertionOtherError(
-			"Assertion6 only support IdentityHandle::String type".to_string(),
-		)),
-	}?;
-
+pub fn build(identities: Vec<Identity>) -> Result<(), Error> {
 	let mut client = TwitterOfficialClient::new();
-	let user = client
-		.query_user(user_id.to_vec())
-		.map_err(|e| Error::AssertionOtherError(format!("{:?}", e)))?;
-	let followers_count = user.public_metrics.followers_count;
-	match followers_count {
+	let mut sum: u32 = 0;
+	for identity in identities {
+		if identity.web_type == IdentityWebType::Web2(Web2Network::Twitter) {
+			if let IdentityHandle::String(twitter_id) = identity.handle {
+				match client.query_user(twitter_id.to_vec()) {
+					Ok(user) => {
+						sum += user.public_metrics.followers_count;
+					},
+					Err(e) => {
+						log::warn!("Assertion6 request error:{:?}", e)
+					},
+				}
+			}
+		}
+	}
+	match sum {
 		0 | 1 => {
 			log::warn!("level 0");
 		},

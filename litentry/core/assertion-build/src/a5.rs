@@ -27,40 +27,48 @@ use lc_data_providers::{
 use litentry_primitives::{
 	Identity, IdentityHandle, IdentityWebType, ParameterString, Web2Network,
 };
-use std::{format, string::ToString};
+use std::{
+	string::{String, ToString},
+	vec::Vec,
+};
 
-pub fn build(identity: Identity, original_tweet_id: ParameterString) -> Result<(), Error> {
-	let litentry_twitter = "litentry".as_bytes().to_vec();
-
-	let _ = match identity.web_type {
-		IdentityWebType::Web2(Web2Network::Twitter) => Ok(()),
-		_ => Err(Error::AssertionOtherError("Assertion5 only support twitter".to_string())),
-	}?;
-
-	let twitter_id = match identity.handle {
-		IdentityHandle::String(id) => Ok(id),
-		_ => Err(Error::AssertionOtherError(
-			"Assertion5 only support IdentityHandle::String type".to_string(),
-		)),
-	}?;
-	let twitter_id = twitter_id.to_vec();
-
+pub fn build(
+	identities: Vec<Identity>,
+	twitter_account: ParameterString,
+	original_tweet_id: ParameterString,
+) -> Result<(), Error> {
 	let mut twitter_litentry = TwitterLitentryClient::new();
-	let is_followed = twitter_litentry
-		.check_follow(twitter_id.clone(), litentry_twitter)
-		.map_err(|e| Error::AssertionOtherError(format!("{:?}", e)))?;
-
-	match is_followed {
-		true => {
-			let mut twitter_official = TwitterOfficialClient::new();
-			let _ = twitter_official
-				.query_retweet(twitter_id, original_tweet_id.to_vec())
-				.map_err(|e| Error::AssertionOtherError(format!("{:?}", e)))?;
-			// TODO generate vc;
-		},
-		false => {
-			log::error!("account:{:?} don't follow litentry", twitter_id);
-		},
+	let mut twitter_official = TwitterOfficialClient::new();
+	for identity in identities {
+		if identity.web_type == IdentityWebType::Web2(Web2Network::Twitter) {
+			if let IdentityHandle::String(twitter_id) = identity.handle {
+				let twitter_id = twitter_id.to_vec();
+				match twitter_litentry.check_follow(twitter_id.clone(), twitter_account.to_vec()) {
+					Ok(true) => {
+						match twitter_official.query_retweet(twitter_id, original_tweet_id.to_vec())
+						{
+							Ok(_) => {
+								// TODO generate vc;
+								return Ok(())
+							},
+							Err(e) => {
+								log::warn!("Assertion5 query_retweet error:{:?}", e)
+							},
+						}
+					},
+					Ok(false) => {
+						log::debug!(
+							"account:{:?} don't follow {:?}",
+							twitter_id,
+							String::from_utf8(twitter_account.to_vec())
+						);
+					},
+					Err(e) => {
+						log::warn!("Assertion5 request error:{:?}", e)
+					},
+				}
+			}
+		}
 	}
-	Ok(())
+	Err(Error::Assertion5Error("not match any identities".to_string()))
 }
