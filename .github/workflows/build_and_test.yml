@@ -53,7 +53,7 @@ jobs:
           access_token: ${{ secrets.GITHUB_TOKEN }}
 
   build-parachain-docker:
-    runs-on: ${{ github.event.inputs.build-parachain-docker }}
+    runs-on: ${{ github.event.inputs.build_parachain_docker }}
     steps:
       - uses: actions/checkout@v3
 
@@ -72,7 +72,7 @@ jobs:
           path: litentry-parachain.tar
 
   build-test:
-    runs-on: ${{ github.event.inputs.build-test }}
+    runs-on: ${{ github.event.inputs.build_test }}
     strategy:
       fail-fast: false
       matrix:
@@ -196,7 +196,7 @@ jobs:
         uses: andymckay/cancel-action@0.2
 
   integration-tests:
-    runs-on: ${{ github.event.inputs.integration-tests }}
+    runs-on: ${{ github.event.inputs.integration_tests }}
     needs:
       - build-parachain-docker
       - build-test
