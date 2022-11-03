@@ -5,28 +5,28 @@ on:
     inputs:
       build_parachain_docker:
         type: choice
-        description: 'build-parachain-docker' jobs run on.
+        description: "'build-parachain-docker' jobs run on."
         default: ubuntu-20.04
         options:
           - self-hosted
           - ubuntu-20.04
       build_test:
         type: choice
-        description: 'build-test' jobs run on.
+        description: "'build-test' jobs run on."
         default: ubuntu-20.04
         options:
           - self-hosted
           - ubuntu-20.04
       clippy:
         type: choice
-        description: 'clippy' jobs run on.
+        description: "'clippy' jobs run on."
         default: ubuntu-latest
         options:
           - self-hosted
           - ubuntu-latest
       integration_tests:
         type: choice
-        description: 'integration-tests' jobs run on.
+        description: "'integration-tests' jobs run on."
         default: ubuntu-20.04
         options:
           - self-hosted
@@ -341,7 +341,7 @@ jobs:
     name: Draft Release
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
-    needs: [build-test, integration-tests]
+    needs: [ build-test, integration-tests ]
     outputs:
       release_url: ${{ steps.create-release.outputs.html_url }}
       asset_upload_url: ${{ steps.create-release.outputs.upload_url }}
