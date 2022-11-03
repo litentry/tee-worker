@@ -2,6 +2,10 @@ name: Build, Test, Clippy
 
 on:
   workflow_dispatch:
+  inputs:
+    runner:
+      description: which runner jobs run on. Currently only support 'self-hosted'
+      required: false
   push:
     branches: [ dev ]
     tags:
@@ -24,7 +28,7 @@ jobs:
           access_token: ${{ secrets.GITHUB_TOKEN }}
 
   build-parachain-docker:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.event.inputs.runner || 'ubuntu-latest'}}
     steps:
       - uses: actions/checkout@v3
 
@@ -43,7 +47,7 @@ jobs:
           path: litentry-parachain.tar
 
   build-test:
-    runs-on: ubuntu-20.04
+    runs-on: ${{ github.event.inputs.runner || 'ubuntu-20.04'}}
     strategy:
       fail-fast: false
       matrix:
@@ -108,7 +112,7 @@ jobs:
           path: integritee-cli-client-${{ matrix.flavor_id }}-${{ github.sha }}.tar.gz
 
   clippy:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.event.inputs.runner || 'ubuntu-latest'}}
     container: "integritee/integritee-dev:0.1.9"
     steps:
       - uses: actions/checkout@v3
@@ -146,7 +150,7 @@ jobs:
         uses: andymckay/cancel-action@0.2
 
   fmt:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.event.inputs.runner || 'ubuntu-latest'}}
     steps:
       - uses: actions/checkout@v3
       - name: init rust
@@ -167,7 +171,7 @@ jobs:
         uses: andymckay/cancel-action@0.2
 
   integration-tests:
-    runs-on: ubuntu-20.04
+    runs-on: ${{ github.event.inputs.runner || 'ubuntu-20.04'}}
     needs:
       - build-parachain-docker
       - build-test
