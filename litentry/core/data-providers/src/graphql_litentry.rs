@@ -68,10 +68,48 @@ impl RestPath<String> for GraphQLQuery {
 pub struct GraphQLResponse<T> {
 	data: T,
 }
+impl<T> RestPath<String> for GraphQLResponse<T> {
+	fn get_path(path: String) -> core::result::Result<String, HttpError> {
+		Ok(path)
+	}
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct VerifiedCredentialsIsHodler {
 	is_hodler: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct QLResponse {
+	data: VIsHolder,
+}
+impl RestPath<String> for QLResponse {
+	fn get_path(path: String) -> core::result::Result<String, HttpError> {
+		Ok(path)
+	}
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct VIsHolder {
+	verified_credentials_is_hodler: Vec<Holder>,
+}
+impl RestPath<String> for VIsHolder {
+	fn get_path(path: String) -> core::result::Result<String, HttpError> {
+		Ok(path)
+	}
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Holder {
+	is_hodler: bool,
+}
+impl RestPath<String> for Holder {
+	fn get_path(path: String) -> core::result::Result<String, HttpError> {
+		Ok(path)
+	}
 }
 
 impl GraphQLLitentryClient {
@@ -83,29 +121,28 @@ impl GraphQLLitentryClient {
 
 	pub fn check_lit_holder(&mut self, address: Vec<u8>) -> Result<(), Error> {
 		let path = "/latest/graphql".to_string();
-		let query = GraphQLQuery {
-			query: format!(
-				"query{{VerifiedCredentialsIsHodler( \
-				addresses: [\"0x61f2270153bb68dc0ddb3bc4e4c1bd7522e918ad\"], \
-				fromDate:\"2022-10-16T00:00:00Z\", \
-				network: ethereum, \
-				tokenAddress:\"0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723\" \
-				minimumBalance: 0.00000057 \
-			  ){{isHodler}} }}"
-			),
-		};
+		// let query = GraphQLQuery {
+		// 	query: format!(
+		// 		"query{{VerifiedCredentialsIsHodler( \
+		// 		addresses: [\"0x61f2270153bb68dc0ddb3bc4e4c1bd7522e918ad\"], \
+		// 		fromDate:\"2022-10-16T00:00:00Z\", \
+		// 		network: ethereum, \
+		// 		tokenAddress:\"0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723\" \
+		// 		minimumBalance: 0.00000057 \
+		// 	  ){{isHodler}} }}"
+		// 	),
+		// };
 
 		let response = self.client
-			.post_capture::<String, GraphQLQuery, GraphQLResponse<VerifiedCredentialsIsHodler>>(
-				path, &query,
+			.get_with::<String, QLResponse>(
+				path, &[("query", r#"query%7BVerifiedCredentialsIsHodler(%0A%20%20addresses%3A%20%5B"0x61f2270153bb68dc0ddb3bc4e4c1bd7522e918ad"%5D%2C%20%0A%20%20fromDate%3A"2022-10-16T00%3A00%3A00Z"%2C%0A%20%20network%3A%20ethereum%2C%0A%20%20tokenAddress%3A"0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723"%0A%20%20minimumBalance%3A%200.00000057%0A)%7BisHodler%2C%20address%7D%7D%0A"#)],
 			)
 			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
 
-		println!("response: {:?}", response.data);
+		// println!("function response: {:?}", response.data);
 
 		Ok(())
 	}
-
 }
 
 #[cfg(test)]
@@ -115,12 +152,11 @@ mod tests {
 
 	#[test]
 	fn check_lit_holder_work() {
-
 		let mut client = GraphQLLitentryClient::new();
-		let response = client.check_lit_holder("0x61f2270153bb68dc0ddb3bc4e4c1bd7522e918ad".as_bytes().to_vec());
+		let response = client
+			.check_lit_holder("0x61f2270153bb68dc0ddb3bc4e4c1bd7522e918ad".as_bytes().to_vec());
 
-		println!("response: {:?}", response);
-		assert!(response.is_ok(), "check join discord error: {:?}", response);
+		println!("test response: {:?}", response);
+		// assert!(response.is_ok(), "check lit holder error: {:?}", response);
 	}
-
 }
