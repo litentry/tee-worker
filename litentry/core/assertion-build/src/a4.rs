@@ -21,35 +21,52 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::{Error, Result};
-use std::format;
+use std::{format, string::ToString};
 
-use lc_data_providers::discord_litentry::DiscordLitentryClient;
-use litentry_primitives::ParameterString;
+use lc_stf_task_sender::MaxIdentityLength;
+use litentry_primitives::{Identity, IdentityWebType, Web3Network};
+use sp_runtime::BoundedVec;
 
-pub fn build(guild_id: ParameterString, handler: ParameterString) -> Result<()> {
-	let mut client = DiscordLitentryClient::new();
-	match client.check_id_hubber(guild_id.into_inner(), handler.into_inner()) {
-		Err(e) => {
-			log::error!("error build assertion3: {:?}", e);
-			Err(Error::Assertion3Error(format!("{:?}", e)))
-		},
-		Ok(_response) => {
-			// TODO:
-			// generate_vc(who, identity, ...)
+use lc_data_providers::graphql_litentry::GraphQLLitentryClient;
 
-			Ok(())
-		},
+pub fn build(identities: BoundedVec<Identity, MaxIdentityLength>) -> Result<()> {
+	let mut client = GraphQLLitentryClient::new();
+
+	for identity in identities {
+		match identity.web_type {
+			IdentityWebType::Web3(_) => client
+				.check_lit_holder("0x61f2270153bb68dc0ddb3bc4e4c1bd7522e918ad".as_bytes().to_vec()),
+			_ => Ok(()),
+		};
+
+		// match client.check_lit_holder() {
+
+		// }
 	}
+
+	Err(Error::Assertion4Error("None LIT holder".to_string()))
+	// match client.check_id_hubber(guild_id.into_inner(), handler.into_inner()) {
+	// 	Err(e) => {
+	// 		log::error!("error build assertion4: {:?}", e);
+	// 		Err(Error::Assertion3Error(format!("{:?}", e)))
+	// 	},
+	// 	Ok(_response) => {
+	// 		// TODO:
+	// 		// generate_vc(who, identity, ...)
+
+	// 		Ok(())
+	// 	},
+	// }
 }
 
 #[cfg(test)]
 mod tests {
-	use crate::a3::build;
+	use crate::a4::build;
 	use frame_support::BoundedVec;
 	use log;
 
 	#[test]
-	fn assertion3_verification_works() {
+	fn assertion4_verification_works() {
 		let guildid: u64 = 919848390156767232;
 		let guild_id_vec: Vec<u8> = format!("{}", guildid).as_bytes().to_vec();
 		let handler_vec: Vec<u8> = "ericzhang.eth#0114".to_string().as_bytes().to_vec();

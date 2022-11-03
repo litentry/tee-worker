@@ -108,6 +108,11 @@ where
 						}
 					}
 				},
+				Assertion::A4 => {
+					if let Err(e) = lc_assertion_build::a4::build(request.vec_identity) {
+						error!("error verify assertion4: {:?}", e)
+					}
+				},
 				_ => {
 					unimplemented!()
 				},

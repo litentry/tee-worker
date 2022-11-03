@@ -53,6 +53,8 @@ pub mod discord_official;
 pub mod twitter_litentry;
 pub mod twitter_official;
 
+pub mod graphql_litentry;
+
 const TIMEOUT: Duration = Duration::from_secs(3u64);
 
 // #[cfg(not(test))]
@@ -62,6 +64,8 @@ pub mod base_url {
 
 	pub(crate) const DISCORD_OFFICIAL: &str = "https://discordapp.com";
 	pub(crate) const DISCORD_LITENTRY: &str = "http://47.57.13.126:8080";
+
+	pub(crate) const GRAPHQL_LITENTRY: &str = "https://graph.tdf-labs.io/";
 }
 
 // #[cfg(test)]

@@ -37,6 +37,7 @@ use std::{fmt::Debug, string::String};
 pub mod a1;
 pub mod a2;
 pub mod a3;
+pub mod a4;
 
 pub type Result<T> = core::result::Result<T, Error>;
 
@@ -50,6 +51,9 @@ pub enum Error {
 
 	#[error("Assertion error: {0}")]
 	Assertion3Error(String),
+
+	#[error("Assertion error: {0}")]
+	Assertion4Error(String),
 
 	#[error("Other error: {0}")]
 	AssertionOtherError(String),
