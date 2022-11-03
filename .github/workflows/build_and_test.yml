@@ -5,28 +5,28 @@ on:
     inputs:
       build-parachain-docker:
         type: choice
-        description: which runner jobs run on.
+        description: 'build-parachain-docker' jobs run on.
         default: ubuntu-20.04
         options:
           - self-hosted
           - ubuntu-20.04
       build-test:
         type: choice
-        description: which runner jobs run on
+        description: 'build-test' jobs run on.
         default: ubuntu-20.04
         options:
           - self-hosted
           - ubuntu-20.04
       clippy:
         type: choice
-        description: which runner jobs run on
+        description: 'clippy' jobs run on.
         default: ubuntu-latest
         options:
           - self-hosted
           - ubuntu-latest
       integration-tests:
         type: choice
-        description: which runner jobs run on
+        description: 'integration-tests' jobs run on.
         default: ubuntu-20.04
         options:
           - self-hosted
