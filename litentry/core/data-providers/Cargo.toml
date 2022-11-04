@@ -58,6 +58,3 @@ sgx = [
     "itc-rest-client/sgx",
     "litentry-primitives/sgx",
 ]
-
-[dev-dependencies]
-mockito = "0.31.0"

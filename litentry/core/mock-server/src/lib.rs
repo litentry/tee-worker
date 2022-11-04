@@ -25,21 +25,26 @@ pub trait Mock {
 }
 
 pub fn standalone_server() {
-	let _ = STANDALONE_SERVER.lock().unwrap_or_else(|e| e.into_inner());
+	let _server = STANDALONE_SERVER.lock().unwrap_or_else(|e| e.into_inner());
 }
 
 lazy_static! {
 	static ref STANDALONE_SERVER: Mutex<JoinHandle<Result<(), String>>> = Mutex::new(spawn(|| {
 		let srv = start_standalone_server(9527, false, None, false, usize::MAX);
-		let mut runtime =
-			tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
-		LocalSet::new().block_on(&mut runtime, srv)
+		let runtime = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
+		LocalSet::new().block_on(&runtime, srv)
 	}));
 }
 
 pub struct LitMockServerManager {
 	mock_server: MockServer,
 	servers: Vec<Box<dyn Mock>>,
+}
+
+impl Default for LitMockServerManager {
+	fn default() -> Self {
+		Self::new()
+	}
 }
 
 impl LitMockServerManager {

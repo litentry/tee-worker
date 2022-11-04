@@ -90,5 +90,3 @@ itc-parentchain-test = { path = "../core/parentchain/test" }
 itp-test = { path = "../core-primitives/test" }
 its-peer-fetch = { path = "../sidechain/peer-fetch", features = ["mocks"] }
 its-test = { path = "../sidechain/test" }
-
-

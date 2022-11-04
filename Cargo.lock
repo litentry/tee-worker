@@ -1263,17 +1263,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "colored"
-version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b3616f750b84d8f0de8a58bda93e08e2a81ad3f523089b05f1dffecab48c6cbd"
-dependencies = [
- "atty",
- "lazy_static",
- "winapi 0.3.9",
-]
-
-[[package]]
 name = "comfy-table"
 version = "6.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5909,7 +5898,6 @@ dependencies = [
  "itc-rest-client",
  "litentry-primitives",
  "log 0.4.17",
- "mockito",
  "serde 1.0.145",
  "serde_json 1.0.86",
  "sgx_tstd",
@@ -7208,24 +7196,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "mockito"
-version = "0.31.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "401edc088069634afaa5f4a29617b36dba683c0c16fe4435a86debad23fa2f1a"
-dependencies = [
- "assert-json-diff",
- "colored",
- "httparse 1.8.0",
- "lazy_static",
- "log 0.4.17",
- "rand 0.8.5",
- "regex 1.6.0",
- "serde_json 1.0.86",
- "serde_urlencoded",
- "similar",
 ]
 
 [[package]]

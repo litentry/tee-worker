@@ -5,11 +5,11 @@ edition = "2021"
 
 [dependencies]
 httpmock = "0.6"
-lazy_static = "1.4"
-tokio = { version = "1.5", features = ["sync", "macros", "rt-multi-thread", "signal"] }
 isahc = "1.7"
+lazy_static = "1.4"
+lc-data-providers = { path = "../data-providers" }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
-lc-data-providers = { path = "../data-providers" } 
+tokio = { version = "1.5", features = ["sync", "macros", "rt-multi-thread", "signal"] }
 
 # [dev-dependencies]
 
