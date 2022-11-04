@@ -37,15 +37,15 @@ pub fn build(
 	twitter_account: ParameterString,
 	original_tweet_id: ParameterString,
 ) -> Result<(), Error> {
-	let mut twitter_litentry = TwitterLitentryClient::new();
-	let mut twitter_official = TwitterOfficialClient::new();
+	let mut twitter_litentry_client = TwitterLitentryClient::new();
+	let mut twitter_official_client = TwitterOfficialClient::new();
 	for identity in identities {
 		if identity.web_type == IdentityWebType::Web2(Web2Network::Twitter) {
 			if let IdentityHandle::String(twitter_id) = identity.handle {
 				let twitter_id = twitter_id.to_vec();
-				match twitter_litentry.check_follow(twitter_id.clone(), twitter_account.to_vec()) {
+				match twitter_litentry_client.check_follow(twitter_id.clone(), twitter_account.to_vec()) {
 					Ok(true) => {
-						match twitter_official.query_retweet(twitter_id, original_tweet_id.to_vec())
+						match twitter_official_client.query_retweet(twitter_id, original_tweet_id.to_vec())
 						{
 							Ok(_) => {
 								// TODO generate vc;
