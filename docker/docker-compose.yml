@@ -6,9 +6,9 @@ services:
     networks:
       - integritee-test-network
     ports:
-      - 9946:9944
-      - 9936:9933
-      - 30336:30333
+      - 9966:9944
+      - 9956:9933
+      - 30356:30333
     volumes:
       - relaychain-alice:/data
     build:
@@ -37,9 +37,9 @@ services:
     networks:
       - integritee-test-network
     ports:
-      - 9947:9944
-      - 9937:9933
-      - 30337:30333
+      - 9967:9944
+      - 9957:9933
+      - 30357:30333
     volumes:
       - relaychain-bob:/data
     build:
@@ -68,9 +68,9 @@ services:
       - integritee-test-network
     ports:
       # integritee uses 9912 as ws port (why?)
-      - 9944:9912
-      - 9933:9933
-      - 30333:30333
+      - 9964:9912
+      - 9953:9933
+      - 30353:30333
     volumes:
       - parachain-2106-0:/data
     build:
