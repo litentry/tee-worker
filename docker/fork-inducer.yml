@@ -1,3 +1,5 @@
+version: "3.7"
+
 services:
   worker-ping:
     image: worker-ping:dev

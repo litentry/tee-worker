@@ -1,4 +1,5 @@
 version: "3.7"
+
 services:
   relaychain-alice:
     image: docker_relaychain-alice:latest
