@@ -175,6 +175,7 @@ jobs:
           cd enclave-runtime && cargo clippy --features offchain-worker -- -D warnings
 
       - name: "Remove 'target' dir"
+        if: success() || failure()
         run: rm -rf ./target && cd enclave-runtime && rm -rf ./target
 
       - name: Fail-fast; cancel other jobs
