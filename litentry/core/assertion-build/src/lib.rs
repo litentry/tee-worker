@@ -37,19 +37,24 @@ use std::{fmt::Debug, string::String};
 pub mod a1;
 pub mod a2;
 pub mod a3;
+pub mod a5;
+pub mod a6;
 
 pub type Result<T> = core::result::Result<T, Error>;
 
 #[derive(Debug, thiserror::Error, Clone)]
 pub enum Error {
-	#[error("Assertion error: {0}")]
+	#[error("Assertion1 error: {0}")]
 	Assertion1Error(String),
 
-	#[error("Assertion error: {0}")]
+	#[error("Assertion2 error: {0}")]
 	Assertion2Error(String),
 
-	#[error("Assertion error: {0}")]
+	#[error("Assertion3 error: {0}")]
 	Assertion3Error(String),
+
+	#[error("Assertion5 error: {0}")]
+	Assertion5Error(String),
 
 	#[error("Other error: {0}")]
 	AssertionOtherError(String),
