@@ -6,18 +6,12 @@ use std::{
 	thread::{spawn, JoinHandle},
 };
 
+use codec::Encode;
 use httpmock::{standalone::start_standalone_server, MockServer};
+use itp_types::AccountId;
+use litentry_primitives::{ChallengeCode, Identity};
+use sp_core::blake2_256;
 use tokio::task::LocalSet;
-
-mod discord_litentry;
-mod discord_official;
-mod twitter_litentry;
-mod twitter_official;
-
-use discord_litentry::DiscordLitServer;
-use discord_official::DiscordOfficialServer;
-use twitter_litentry::TwitterLitServer;
-use twitter_official::TwitterOfficialServer;
 
 // Mock trait
 pub trait Mock {
@@ -36,58 +30,10 @@ lazy_static! {
 	}));
 }
 
-pub struct LitMockServerManager {
-	mock_server: MockServer,
-	servers: Vec<Box<dyn Mock>>,
-}
+pub fn mock_tweet_payload(who: &AccountId, identity: &Identity, code: &ChallengeCode) -> Vec<u8> {
+	let mut payload = code.encode();
+	payload.append(&mut who.encode());
+	payload.append(&mut identity.encode());
 
-impl Default for LitMockServerManager {
-	fn default() -> Self {
-		Self::new()
-	}
-}
-
-impl LitMockServerManager {
-	pub fn new() -> Self {
-		let servers = vec![];
-		let mock_server = httpmock::MockServer::connect("localhost:9527");
-
-		LitMockServerManager { mock_server, servers }
-	}
-
-	pub fn resigter_server(&mut self, server: Box<dyn Mock>) {
-		// unimplemented!();
-		self.servers.push(server);
-	}
-
-	fn mock(&self) {
-		for server in self.servers.iter() {
-			server.mock(&self.mock_server);
-		}
-	}
-}
-
-pub fn run() {
-	standalone_server();
-
-	// println!("*** Litentry Mock server is starting ...");
-	let mut mock_server = LitMockServerManager::new();
-
-	// discord litentry
-	let discord_litentry = Box::new(DiscordLitServer::new());
-	mock_server.resigter_server(discord_litentry);
-
-	// discord official
-	let discord_official = Box::new(DiscordOfficialServer::new());
-	mock_server.resigter_server(discord_official);
-
-	// twitter litentry
-	let twitter_litentry = Box::new(TwitterLitServer::new());
-	mock_server.resigter_server(twitter_litentry);
-
-	// twitter official
-	let twitter_official = Box::new(TwitterOfficialServer::new());
-	mock_server.resigter_server(twitter_official);
-
-	mock_server.mock();
+	blake2_256(payload.as_slice()).to_vec()
 }

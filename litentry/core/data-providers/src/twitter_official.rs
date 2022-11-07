@@ -163,28 +163,161 @@ impl TwitterOfficialClient {
 	}
 }
 
+// #[cfg(test)]
+// mod tests {
+// 	use crate::twitter_official::TwitterOfficialClient;
+
+// 	#[test]
+// 	fn query_retweet_work() {
+// 		std::env::set_var("TWITTER_AUTHORIZATION_TOKEN", "Bearer ");
+// 		let mut client = TwitterOfficialClient::new();
+// 		let result = client.query_retweet(
+// 			"2934243054".as_bytes().to_vec(),
+// 			"1584490517391626240".as_bytes().to_vec(),
+// 		);
+// 		println!("query_retweet_work {:?}", result);
+// 		// assert!(result.is_ok(), "error: {:?}", result);
+// 	}
+
+// 	#[test]
+// 	fn query_user_work() {
+// 		std::env::set_var("TWITTER_AUTHORIZATION_TOKEN", "Bearer ");
+// 		let mut client = TwitterOfficialClient::new();
+// 		let result = client.query_user("1256908613857226756".as_bytes().to_vec());
+// 		println!("query_user_work {:?}", result);
+// 		// assert!(result.is_ok(), "error: {:?}", result);
+// 	}
+// }
+
 #[cfg(test)]
 mod tests {
-	use crate::twitter_official::TwitterOfficialClient;
+	use super::*;
+	use httpmock::prelude::*;
+	use itp_types::AccountId;
+	use lc_mock_server::{mock_tweet_payload, standalone_server};
+	use litentry_primitives::{
+		ChallengeCode, Identity, IdentityHandle, IdentityString, IdentityWebType, Web2Network,
+	};
+
+	#[test]
+	fn query_tweet_work() {
+		standalone_server();
+		let server = httpmock::MockServer::connect("localhost:9527");
+
+		let tweet_id = "100";
+
+		let account_id = AccountId::new([0u8; 32]);
+		let twitter_identity = Identity {
+			web_type: IdentityWebType::Web2(Web2Network::Twitter),
+			handle: IdentityHandle::String(
+				IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
+			),
+		};
+		let chanllenge_code: ChallengeCode =
+			[8, 104, 90, 56, 35, 213, 18, 250, 213, 210, 119, 241, 2, 174, 24, 8];
+		let payload = mock_tweet_payload(&account_id, &twitter_identity, &chanllenge_code);
+
+		let tweet = Tweet {
+			author_id: "ericzhangeth".into(),
+			id: tweet_id.into(),
+			text: serde_json::to_string(&payload).unwrap(),
+		};
+
+		let path = format! {"/2/tweets/{}", tweet_id};
+		server.mock(|when, then| {
+			when.method(GET)
+				.path(path)
+				.query_param("ids", tweet_id)
+				.query_param("expansions", "author_id");
+			then.status(200).body(serde_json::to_string(&tweet).unwrap());
+		});
+
+		// test
+		let mut client = TwitterOfficialClient::new();
+		let result = client.query_tweet(tweet_id.as_bytes().to_vec());
+		assert!(result.is_ok(), "error: {:?}", result);
+	}
 
 	#[test]
 	fn query_retweet_work() {
-		std::env::set_var("TWITTER_AUTHORIZATION_TOKEN", "Bearer ");
+		standalone_server();
+		let server = httpmock::MockServer::connect("localhost:9527");
+
+		let author_id = "ericzhangeth";
+		let id = "100";
+
+		let account_id = AccountId::new([0u8; 32]);
+		let twitter_identity = Identity {
+			web_type: IdentityWebType::Web2(Web2Network::Twitter),
+			handle: IdentityHandle::String(
+				IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
+			),
+		};
+		let chanllenge_code: ChallengeCode =
+			[8, 104, 90, 56, 35, 213, 18, 250, 213, 210, 119, 241, 2, 174, 24, 8];
+		let payload = mock_tweet_payload(&account_id, &twitter_identity, &chanllenge_code);
+
+		let tweets = vec![Tweet {
+			author_id: author_id.into(),
+			id: id.into(),
+			text: serde_json::to_string(&payload).unwrap(),
+		}];
+		let body = TwitterAPIV2Response { data: Some(tweets), meta: None };
+
+		let path = "/2/tweets/search/recent";
+
+		let user = "ericzhangeth";
+		let original_tweet_id = "100";
+		let query_value = format!("from: {} retweets_of_tweet_id: {}", user, original_tweet_id);
+
+		server.mock(|when, then| {
+			when.method(GET)
+				.path(path)
+				.query_param("query", query_value)
+				.query_param("expansions", "author_id");
+			then.status(200).body(serde_json::to_string(&body).unwrap());
+		});
+
+		// test
 		let mut client = TwitterOfficialClient::new();
-		let result = client.query_retweet(
-			"2934243054".as_bytes().to_vec(),
-			"1584490517391626240".as_bytes().to_vec(),
-		);
-		println!("query_retweet_work {:?}", result);
-		// assert!(result.is_ok(), "error: {:?}", result);
+
+		let user = author_id.clone().as_bytes().to_vec();
+		let original_tweet_id = id.as_bytes().to_vec();
+		let response = client.query_retweet(user, original_tweet_id);
+
+		assert!(response.is_ok(), "error: {:?}", response);
 	}
 
 	#[test]
 	fn query_user_work() {
 		std::env::set_var("TWITTER_AUTHORIZATION_TOKEN", "Bearer ");
+
+		standalone_server();
+		let server = httpmock::MockServer::connect("localhost:9527");
+
+		let user = "1256908613857226756";
+
+		let twitter_user_data = TwitterUser {
+			id: user.into(),
+			name: "ericzhang".into(),
+			username: "elon".into(),
+			public_metrics: TwitterUserPublicMetrics {
+				followers_count: 100_u32,
+				following_count: 99_u32,
+			},
+		};
+
+		let body = TwitterAPIV2Response { data: Some(twitter_user_data), meta: None };
+
+		let path = format! {"/2/users/{}", user};
+
+		server.mock(|when, then| {
+			when.method(GET).path(path).query_param("user.fields", "public_metrics");
+			then.status(200).body(serde_json::to_string(&body).unwrap());
+		});
+
 		let mut client = TwitterOfficialClient::new();
-		let result = client.query_user("1256908613857226756".as_bytes().to_vec());
-		println!("query_user_work {:?}", result);
-		// assert!(result.is_ok(), "error: {:?}", result);
+		let result = client.query_user(user.as_bytes().to_vec());
+		assert!(result.is_ok(), "error: {:?}", result);
 	}
 }

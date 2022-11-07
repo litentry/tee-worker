@@ -7,11 +7,13 @@ edition = "2021"
 httpmock = "0.6"
 isahc = "1.7"
 lazy_static = "1.4"
-lc-data-providers = { path = "../data-providers" }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 tokio = { version = "1.5", features = ["sync", "macros", "rt-multi-thread", "signal"] }
 
-# [dev-dependencies]
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
+itp-types = { path = "../../../core-primitives/types", default-features = false }
+litentry-primitives = { path = "../../primitives", default-features = false }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28", default-features = false }
 
 [features]
 mockserver = []

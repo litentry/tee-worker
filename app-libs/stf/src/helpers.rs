@@ -135,6 +135,15 @@ pub fn aes_encrypt(
 	AesOutput { ciphertext, aad: aad.to_vec(), nonce }
 }
 
+#[cfg(feature = "mockserver")]
+pub fn generate_challenge_code() -> ChallengeCode {
+	// Hard Code ChallengeCode for mockserver test
+	// rand::thread_rng().gen::<ChallengeCode>()
+	let code: ChallengeCode = [8, 104, 90, 56, 35, 213, 18, 250, 213, 210, 119, 241, 2, 174, 24, 8];
+	code
+}
+
+#[cfg(not(feature = "mockserver"))]
 pub fn generate_challenge_code() -> ChallengeCode {
 	rand::thread_rng().gen::<ChallengeCode>()
 }

@@ -18,19 +18,16 @@
 use crate::sgx_reexport_prelude::*;
 
 use crate::{base_url::DISCORD_LITENTRY, build_client, vec_to_string, Error, HttpError};
+use http::header::CONNECTION;
 use http_req::response::Headers;
+
 use itc_rest_client::{
 	http_client::{DefaultSend, HttpClient},
 	rest_client::RestClient,
 	RestGet, RestPath,
 };
 use serde::{Deserialize, Serialize};
-use std::{
-	default::Default,
-	format,
-	string::{String, ToString},
-	vec::Vec,
-};
+use std::{default::Default, format, string::String, vec, vec::Vec};
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -60,7 +57,9 @@ impl Default for DiscordLitentryClient {
 
 impl DiscordLitentryClient {
 	pub fn new() -> Self {
-		let headers = Headers::new();
+		let mut headers = Headers::new();
+		headers.insert(CONNECTION.as_str(), "close");
+
 		let client = build_client(DISCORD_LITENTRY, headers);
 		DiscordLitentryClient { client }
 	}
@@ -72,12 +71,11 @@ impl DiscordLitentryClient {
 	) -> Result<DiscordResponse, Error> {
 		let guild_id_s = vec_to_string(guild_id)?;
 		let handler_s = vec_to_string(handler)?;
-		let path = "/discord/joined".to_string();
+
+		let path = "/discord/joined".into();
+		let query = vec![("guildid", guild_id_s.as_str()), ("handler", handler_s.as_str())];
 		self.client
-			.get_with::<String, DiscordResponse>(
-				path,
-				&[("guildid", &guild_id_s), ("handler", &handler_s)],
-			)
+			.get_with::<String, DiscordResponse>(path, query.as_slice())
 			.map_err(|e| Error::RequestError(format!("{:?}", e)))
 	}
 
@@ -88,26 +86,52 @@ impl DiscordLitentryClient {
 	) -> Result<DiscordResponse, Error> {
 		let guild_id_s = vec_to_string(guild_id)?;
 		let handler_s = vec_to_string(handler)?;
-		let path = "/discord/commented/idhubber".to_string();
-		self.client
-			.get_with::<String, DiscordResponse>(
-				path,
-				&[("guildid", &guild_id_s), ("handler", &handler_s)],
-			)
-			.map_err(|e| Error::RequestError(format!("{:?}", e)))
+		let path = "/discord/commented/idhubber".into();
+		let query = vec![("guildid", guild_id_s.as_str()), ("handler", handler_s.as_str())];
+
+		let res = self
+			.client
+			.get_with::<String, DiscordResponse>(path, query.as_slice())
+			.map_err(|e| Error::RequestError(format!("{:?}", e)));
+
+		res
 	}
 }
 
 #[cfg(test)]
 mod tests {
-	use crate::discord_litentry::DiscordLitentryClient;
+	use super::*;
+	use httpmock::prelude::*;
+	use lc_mock_server::standalone_server;
 	use std::vec::Vec;
 
 	#[test]
 	fn check_join_work() {
-		let guildid: u64 = 919848390156767232;
-		let guild_id_vec: Vec<u8> = format!("{}", guildid).as_bytes().to_vec();
-		let handler_vec: Vec<u8> = "againstwar%234779".as_bytes().to_vec();
+		standalone_server();
+		let server = httpmock::MockServer::connect("localhost:9527");
+
+		let body = DiscordResponse {
+			data: true,
+			message: "success".into(),
+			has_errors: false,
+			msg_code: 200,
+			success: true,
+		};
+
+		let path = "/discord/joined";
+		server.mock(|when, then| {
+			when.method(GET)
+				.path(path)
+				.query_param("guildid", "919848390156767232")
+				.query_param("handler", "againstwar#4779");
+			then.status(200).body(serde_json::to_string(&body).unwrap());
+		});
+
+		let guildid = "919848390156767232";
+		// let handler = "againstwar%234779";
+		let handler = "againstwar#4779";
+		let guild_id_vec = guildid.as_bytes().to_vec();
+		let handler_vec = handler.as_bytes().to_vec();
 
 		let mut client = DiscordLitentryClient::new();
 		let response = client.check_join(guild_id_vec, handler_vec);
@@ -117,9 +141,29 @@ mod tests {
 
 	#[test]
 	fn check_id_hubber_work() {
+		standalone_server();
+		let server = httpmock::MockServer::connect("localhost:9527");
+
+		let body = DiscordResponse {
+			data: true,
+			message: "success".into(),
+			has_errors: false,
+			msg_code: 200,
+			success: true,
+		};
+
+		server.mock(|when, then| {
+			when.method(GET)
+				.path("/discord/commented/idhubber")
+				.query_param("guildid", "919848390156767232")
+				.query_param("handler", "ericzhang.eth#0114");
+
+			then.status(200).body(serde_json::to_string(&body).unwrap());
+		});
+
 		let guildid: u64 = 919848390156767232;
 		let guild_id_vec: Vec<u8> = format!("{}", guildid).as_bytes().to_vec();
-		let handler_vec: Vec<u8> = "ericzhang.eth%230114".as_bytes().to_vec();
+		let handler_vec: Vec<u8> = "ericzhang.eth#0114".as_bytes().to_vec();
 
 		let mut client = DiscordLitentryClient::new();
 		let response = client.check_id_hubber(guild_id_vec, handler_vec);
