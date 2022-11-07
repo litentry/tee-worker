@@ -29,10 +29,13 @@ use serde::{Deserialize, Serialize};
 use std::{
 	collections::HashMap,
 	default::Default,
-	format,
+	format, str,
 	string::{String, ToString},
+	vec,
 	vec::Vec,
 };
+
+// use chrono::Local;
 
 // #[derive(Serialize, Deserialize, Debug)]
 // #[serde(rename_all = "camelCase")]
@@ -120,8 +123,16 @@ impl GraphQLLitentryClient {
 	}
 
 	pub fn check_lit_holder(&mut self, address: Vec<u8>) -> Result<(), Error> {
-		// let path = "/latest/graphql".to_string();
-		let path = r#"latest/graphql?query=query%7BVerifiedCredentialsIsHodler(%0A%20%20addresses%3A%20%5B%220x61f2270153bb68dc0ddb3bc4e4c1bd7522e918ad%22%5D%2C%20%0A%20%20fromDate%3A%222022-10-16T00%3A00%3A00Z%22%2C%0A%20%20network%3A%20ethereum%2C%0A%20%20tokenAddress%3A%220xb59490aB09A0f526Cc7305822aC65f2Ab12f9723%22%0A%20%20minimumBalance%3A%200.00000056%0A)%7BisHodler%7D%7D%0A"#;
+		// let path = r#"latest/graphql?query=query%7BVerifiedCredentialsIsHodler(%0A%20%20addresses%3A%20%5B%220x61f2270153bb68dc0ddb3bc4e4c1bd7522e918ad%22%5D%2C%20%0A%20%20fromDate%3A%222022-10-16T00%3A00%3A00Z%22%2C%0A%20%20network%3A%20ethereum%2C%0A%20%20tokenAddress%3A%220xb59490aB09A0f526Cc7305822aC65f2Ab12f9723%22%0A%20%20minimumBalance%3A%200.00000056%0A)%7BisHodler%7D%7D%0A"#;
+
+		// let date = Local::now();
+		// let date_time = date.format("%Y-%m-%dT%H:%M:%SZ");
+		let date_time = "time";
+		let network = "ethereum";
+		let token_address = "0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723";
+		let minimum_balance = 0.00000056.to_string();
+		let path = format!("latest/graphql?query=query%7BVerifiedCredentialsIsHodler(%0A%20%20addresses%3A%20%5B%22{}%22%5D%2C%20%0A%20%20fromDate%3A%22{}%22%2C%0A%20%20network%3A%20{}%2C%0A%20%20tokenAddress%3A%22{}%22%0A%20%20minimumBalance%3A%20{}%0A)%7BisHodler%7D%7D%0A", String::from_utf8(address).unwrap(), date_time, network, token_address, minimum_balance);
+
 		// let query = GraphQLQuery {
 		// 	query: format!(
 		// 		"query{{VerifiedCredentialsIsHodler( \
@@ -134,14 +145,14 @@ impl GraphQLLitentryClient {
 		// 	),
 		// };
 
-		let response = self.client
+		let response = self
+			.client
 			.get_with::<String, QLResponse>(
 				//path, &[("query", r#"query%7BVerifiedCredentialsIsHodler(%0A%20%20addresses%3A%20%5B"0x61f2270153bb68dc0ddb3bc4e4c1bd7522e918ad"%5D%2C%20%0A%20%20fromDate%3A"2022-10-16T00%3A00%3A00Z"%2C%0A%20%20network%3A%20ethereum%2C%0A%20%20tokenAddress%3A"0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723"%0A%20%20minimumBalance%3A%200.00000057%0A)%7BisHodler%2C%20address%7D%7D%0A"#)],
-				path.to_string(), vec![].as_slice(),
+				path.to_string(),
+				vec![].as_slice(),
 			)
 			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
-
-		println!("function response: {:?}", response);
 
 		Ok(())
 	}
@@ -159,6 +170,6 @@ mod tests {
 			.check_lit_holder("0x61f2270153bb68dc0ddb3bc4e4c1bd7522e918ad".as_bytes().to_vec());
 
 		println!("test response: {:?}", response);
-		// assert!(response.is_ok(), "check lit holder error: {:?}", response);
+		assert!(response.is_ok(), "check lit holder error: {:?}", response);
 	}
 }
