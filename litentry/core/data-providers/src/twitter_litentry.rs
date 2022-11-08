@@ -46,7 +46,7 @@ impl Default for TwitterLitentryClient {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CheckFollow {
-	// #[serde(rename(deserialize = "data"))]
+	#[serde(rename(deserialize = "data"))]
 	result: bool,
 }
 
@@ -88,19 +88,18 @@ mod tests {
 	use lc_mock_server::standalone_server;
 
 	#[test]
-	fn check_follow() {
+	fn check_follow_work() {
 		standalone_server();
 		let server = httpmock::MockServer::connect("localhost:9527");
 
-		let body = CheckFollow { result: false };
-
+		let body = r#"{ "data": false }"#;
 		let path = "/twitter/followers/verification";
 		server.mock(|when, then| {
 			when.method(GET)
 				.path(path)
 				.query_param("handler1", "litentry")
 				.query_param("handler2", "ericzhangeth");
-			then.status(200).body(serde_json::to_string(&body).unwrap());
+			then.status(200).body(body);
 		});
 
 		let mut client = TwitterLitentryClient::new();
