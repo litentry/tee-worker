@@ -48,7 +48,7 @@ substrate-client-keystore = { optional = true, git = "https://github.com/scs/sub
 aes-gcm = { git = "https://github.com/RustCrypto/AEADs" }
 lc-stf-task-sender = { path = "../../litentry/core/stf-task/sender", default-features = false }
 litentry-primitives = { path = "../../litentry/primitives", default-features = false }
-my-node-runtime = { package = "litmus-parachain-runtime", git = "https://github.com/litentry/litentry-parachain.git", branch = "tee-dev", optional = true }
+my-node-runtime = { package = "rococo-parachain-runtime", git = "https://github.com/litentry/litentry-parachain.git", branch = "tee-dev", optional = true }
 pallet-parentchain = { git = "https://github.com/integritee-network/pallets", branch = "develop", default-features = false }
 parentchain-primitives = { package = "primitives", git = "https://github.com/litentry/litentry-parachain.git", branch = "tee-dev", default-features = false, optional = true }
 rand = { version = "0.7", optional = true }
