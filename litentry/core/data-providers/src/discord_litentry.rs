@@ -128,7 +128,6 @@ mod tests {
 		});
 
 		let guildid = "919848390156767232";
-		// let handler = "againstwar%234779";
 		let handler = "againstwar#4779";
 		let guild_id_vec = guildid.as_bytes().to_vec();
 		let handler_vec = handler.as_bytes().to_vec();

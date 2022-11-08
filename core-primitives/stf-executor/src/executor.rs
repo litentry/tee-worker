@@ -24,8 +24,7 @@ use codec::{Decode, Encode};
 use ita_stf::{
 	hash::{Hash, TrustedOperationOrHash},
 	stf_sgx::{shards_key_hash, storage_hashes_to_update_per_shard},
-	Getter, ParentchainHeader, ShardIdentifier, Stf, StfError, TrustedCallSigned,
-	TrustedGetterSigned, TrustedOperation,
+	ParentchainHeader, ShardIdentifier, StfError, TrustedCallSigned, TrustedOperation,
 };
 use itp_node_api::metadata::{
 	pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata,

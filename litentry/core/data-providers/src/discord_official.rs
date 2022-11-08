@@ -99,14 +99,6 @@ mod tests {
 
 	#[test]
 	fn query_message_work() {
-		// TODO launch a mockserver?
-		// std::env::set_var("DISCORD_AUTHORIZATION_TOKEN", "");
-		// let mut client = DiscordOfficialClient::new();
-		// let channel_id = "919848392035794945".as_bytes().to_vec();
-		// let message_id = "".as_bytes().to_vec();
-		// let result = client.query_message(channel_id, message_id);
-		// assert!(result.is_ok(), "query discord error: {:?}", result);
-
 		standalone_server();
 		let server = httpmock::MockServer::connect("localhost:9527");
 
