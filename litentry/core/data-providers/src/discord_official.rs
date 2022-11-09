@@ -122,7 +122,6 @@ mod tests {
 			then.status(200).body(serde_json::to_string(&body).unwrap());
 		});
 
-		// client
 		let mut client = DiscordOfficialClient::new();
 		let channel_id = "919848392035794945".as_bytes().to_vec();
 		let message_id = "1".as_bytes().to_vec();

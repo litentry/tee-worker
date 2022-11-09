@@ -163,32 +163,6 @@ impl TwitterOfficialClient {
 	}
 }
 
-// #[cfg(test)]
-// mod tests {
-// 	use crate::twitter_official::TwitterOfficialClient;
-
-// 	#[test]
-// 	fn query_retweet_work() {
-// 		std::env::set_var("TWITTER_AUTHORIZATION_TOKEN", "Bearer ");
-// 		let mut client = TwitterOfficialClient::new();
-// 		let result = client.query_retweet(
-// 			"2934243054".as_bytes().to_vec(),
-// 			"1584490517391626240".as_bytes().to_vec(),
-// 		);
-// 		println!("query_retweet_work {:?}", result);
-// 		// assert!(result.is_ok(), "error: {:?}", result);
-// 	}
-
-// 	#[test]
-// 	fn query_user_work() {
-// 		std::env::set_var("TWITTER_AUTHORIZATION_TOKEN", "Bearer ");
-// 		let mut client = TwitterOfficialClient::new();
-// 		let result = client.query_user("1256908613857226756".as_bytes().to_vec());
-// 		println!("query_user_work {:?}", result);
-// 		// assert!(result.is_ok(), "error: {:?}", result);
-// 	}
-// }
-
 #[cfg(test)]
 mod tests {
 	use super::*;
@@ -232,7 +206,6 @@ mod tests {
 			then.status(200).body(serde_json::to_string(&tweet).unwrap());
 		});
 
-		// test
 		let mut client = TwitterOfficialClient::new();
 		let result = client.query_tweet(tweet_id.as_bytes().to_vec());
 		assert!(result.is_ok(), "error: {:?}", result);
@@ -278,7 +251,6 @@ mod tests {
 			then.status(200).body(serde_json::to_string(&body).unwrap());
 		});
 
-		// test
 		let mut client = TwitterOfficialClient::new();
 
 		let user = author_id.clone().as_bytes().to_vec();

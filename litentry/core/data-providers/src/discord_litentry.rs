@@ -27,7 +27,13 @@ use itc_rest_client::{
 	RestGet, RestPath,
 };
 use serde::{Deserialize, Serialize};
-use std::{default::Default, format, string::String, vec, vec::Vec};
+use std::{
+	default::Default,
+	format,
+	string::{String, ToString},
+	vec,
+	vec::Vec,
+};
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -72,7 +78,7 @@ impl DiscordLitentryClient {
 		let guild_id_s = vec_to_string(guild_id)?;
 		let handler_s = vec_to_string(handler)?;
 
-		let path = "/discord/joined".into();
+		let path = "/discord/joined".to_string();
 		let query = vec![("guildid", guild_id_s.as_str()), ("handler", handler_s.as_str())];
 		self.client
 			.get_with::<String, DiscordResponse>(path, query.as_slice())
@@ -86,7 +92,7 @@ impl DiscordLitentryClient {
 	) -> Result<DiscordResponse, Error> {
 		let guild_id_s = vec_to_string(guild_id)?;
 		let handler_s = vec_to_string(handler)?;
-		let path = "/discord/commented/idhubber".into();
+		let path = "/discord/commented/idhubber".to_string();
 		let query = vec![("guildid", guild_id_s.as_str()), ("handler", handler_s.as_str())];
 
 		let res = self
