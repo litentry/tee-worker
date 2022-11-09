@@ -87,6 +87,9 @@ use std::{
 use substrate_api_client::{utils::FromHexString, Header as HeaderTrait, XtStatus};
 use teerex_primitives::ShardIdentifier;
 
+#[cfg(feature = "mockserver")]
+use lc_mock_server;
+
 mod account_funding;
 mod config;
 mod enclave;
@@ -112,18 +115,9 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub type EnclaveWorker =
 	Worker<Config, NodeApiFactory, Enclave, InitializationHandler<WorkerModeProvider>>;
 
-// #[cfg(feature = "mockserver")]
-// use lc_mock_server;
-
 fn main() {
 	// Setup logging
 	env_logger::init();
-
-	// mock server
-	// #[cfg(feature = "mockserver")]
-	// thread::spawn(move || {
-	// 	lc_mock_server::run();
-	// });
 
 	let yml = load_yaml!("cli.yml");
 	let matches = App::from_yaml(yml).get_matches();
@@ -140,6 +134,12 @@ fn main() {
 	info!("*** Starting service in SGX debug mode");
 
 	info!("*** Running worker in mode: {:?} \n", WorkerModeProvider::worker_mode());
+
+	#[cfg(feature = "mockserver")]
+	thread::spawn(move || {
+		info!("*** Starting mock server");
+		lc_mock_server::run();
+	});
 
 	let clean_reset = matches.is_present("clean-reset");
 	if clean_reset {

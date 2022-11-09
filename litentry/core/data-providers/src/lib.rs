@@ -55,7 +55,7 @@ pub mod twitter_official;
 
 const TIMEOUT: Duration = Duration::from_secs(3u64);
 
-#[cfg(not(test))]
+#[cfg(all(not(test), not(feature = "mockserver")))]
 pub mod base_url {
 	pub(crate) const TWITTER_OFFICIAL: &str = "https://api.twitter.com";
 	pub(crate) const TWITTER_LITENTRY: &str = "http://47.57.13.126:8080";
@@ -64,7 +64,8 @@ pub mod base_url {
 	pub(crate) const DISCORD_LITENTRY: &str = "http://47.57.13.126:8080";
 }
 
-#[cfg(test)]
+// #[cfg(test)]
+#[cfg(any(test, feature = "mockserver"))]
 pub mod base_url {
 	pub(crate) const TWITTER_OFFICIAL: &str = "http://localhost:9527";
 	pub(crate) const TWITTER_LITENTRY: &str = "http://localhost:9527";
@@ -95,6 +96,7 @@ pub fn vec_to_string(vec: Vec<u8>) -> Result<String, Error> {
 }
 
 pub fn build_client(base_url: &str, headers: Headers) -> RestClient<HttpClient<DefaultSend>> {
+	// println!("base_url: {}", base_url);
 	let base_url = Url::parse(base_url).unwrap();
 	let http_client = HttpClient::new(DefaultSend {}, true, Some(TIMEOUT), Some(headers), None);
 	RestClient::new(http_client, base_url)

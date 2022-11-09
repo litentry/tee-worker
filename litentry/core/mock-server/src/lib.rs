@@ -23,11 +23,21 @@ use std::{
 };
 
 use codec::Encode;
-use httpmock::standalone::start_standalone_server;
+use httpmock::{standalone::start_standalone_server, MockServer};
 use itp_types::AccountId;
 use litentry_primitives::{ChallengeCode, Identity};
 use sp_core::blake2_256;
 use tokio::task::LocalSet;
+
+pub mod discord_litentry;
+pub mod discord_official;
+pub mod twitter_litentry;
+pub mod twitter_official;
+
+pub use discord_litentry::*;
+pub use discord_official::*;
+pub use twitter_litentry::*;
+pub use twitter_official::*;
 
 pub fn standalone_server() {
 	let _server = STANDALONE_SERVER.lock().unwrap_or_else(|e| e.into_inner());
@@ -47,4 +57,48 @@ pub fn mock_tweet_payload(who: &AccountId, identity: &Identity, code: &Challenge
 	payload.append(&mut identity.encode());
 
 	blake2_256(payload.as_slice()).to_vec()
+}
+
+pub trait Mock {
+	fn mock(&self, mock_server: &MockServer);
+}
+
+struct MockServerManager {
+	servers: Vec<Box<dyn Mock>>,
+	mock_server: MockServer,
+}
+impl MockServerManager {
+	pub fn new() -> Self {
+		let mock_server = MockServer::connect("localhost:9527");
+		MockServerManager { servers: vec![], mock_server }
+	}
+
+	pub fn register(&mut self, server: Box<dyn Mock>) {
+		self.servers.push(server);
+	}
+
+	pub fn run(&self) {
+		for server in &self.servers {
+			server.mock(&self.mock_server);
+		}
+	}
+}
+pub fn run() {
+	standalone_server();
+
+	let mut mock_server_manager = MockServerManager::new();
+
+	let discord_litentry = Box::new(DiscordLitentry::new());
+	mock_server_manager.register(discord_litentry);
+
+	let discord_official = Box::new(DiscordOfficial::new());
+	mock_server_manager.register(discord_official);
+
+	let twitter_litentry = Box::new(TwitterLitentry::new());
+	mock_server_manager.register(twitter_litentry);
+
+	let twitter_official = Box::new(TwitterOfficial::new());
+	mock_server_manager.register(twitter_official);
+
+	mock_server_manager.run();
 }
