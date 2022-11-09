@@ -58,7 +58,7 @@ def main(processes, config_path):
              #
              # litentry: increase the gap between worker launch
              #           we need a cleaner solution though, see https://github.com/integritee-network/worker/issues/731
-            sleep(180)
+            sleep(800)
 
         i += 1
 
