@@ -53,7 +53,7 @@ std = [
     "serde_json/std",
     "litentry-primitives/std",
 ]
-
+mockserver = []
 sgx = [
     "hex-sgx",
     "http-sgx",

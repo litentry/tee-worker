@@ -46,11 +46,14 @@ impl TwitterOfficialAPI for TwitterOfficial {
 	fn query_tweet(mock_server: &MockServer) {
 		let tweet_id = "100";
 
-		let account_id = AccountId::new([0u8; 32]);
+		let account_id = AccountId::new([
+			212, 53, 147, 199, 21, 253, 211, 28, 97, 20, 26, 189, 4, 169, 159, 214, 130, 44, 133,
+			88, 133, 76, 205, 227, 154, 86, 132, 231, 165, 109, 162, 125,
+		]); // Alice
 		let twitter_identity = Identity {
 			web_type: IdentityWebType::Web2(Web2Network::Twitter),
 			handle: IdentityHandle::String(
-				IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
+				IdentityString::try_from("mock_user".as_bytes().to_vec()).unwrap(),
 			),
 		};
 		let chanllenge_code: ChallengeCode =
@@ -58,7 +61,7 @@ impl TwitterOfficialAPI for TwitterOfficial {
 		let payload = mock_tweet_payload(&account_id, &twitter_identity, &chanllenge_code);
 
 		let tweet = Tweet {
-			author_id: "ericzhangeth".into(),
+			author_id: "mock_user".into(),
 			id: tweet_id.into(),
 			text: serde_json::to_string(&payload).unwrap(),
 		};

@@ -64,6 +64,7 @@ evm_std = [
     "evm",
     "ita-sgx-runtime/evm_std",
 ]
+mockserver = []
 sgx = [
     "sgx_tstd",
     "itp-sgx-externalities/sgx",

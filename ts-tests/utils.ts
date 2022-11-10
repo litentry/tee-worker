@@ -61,7 +61,7 @@ export async function getTEEShieldingKey(wsClient: WebSocketAsPromised, api: Api
 
 export async function initIntegrationTestContext(workerEndpoint: string, substrateEndpoint: string): Promise<IntegrationTestContext> {
     //TODO how to get the shard
-    const shard = '0xefc43e880608fd8ce4e28d3bcd941f8274a0567c86c69ab3497d851a8b00683b'
+    const shard = '0x35409e2978cab9573f4059daeb4230a41aeb6f8e5d8a98a4950e807e20cb1141'
     // const endpoint = "wss://localhost:2000"
     const wsp = new WebSocketAsPromised(workerEndpoint, <Options>{
         createWebSocket: (url: any) => new WebSocket(url),
@@ -215,7 +215,7 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
         };
 
         before('Starting Litentry(parachain&tee)', async function () {
-            const tmp = await initIntegrationTestContext("wss://localhost:2000", "ws://integritee-node:9912")
+            const tmp = await initIntegrationTestContext("wss://localhost:2000", "ws://localhost:9946")
             context.defaultSigner = tmp.defaultSigner
             context.shard = tmp.shard
             context.substrate = tmp.substrate
