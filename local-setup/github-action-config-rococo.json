@@ -4,8 +4,28 @@
       "source": "bin",
       "flags": [
         "--clean-reset",
-        "-M",
-        "162.19.84.27",
+        "-P",
+        "2000",
+        "-w",
+        "2001",
+        "-r",
+        "3443",
+        "-h",
+        "4545",
+        "-u",
+        "wss://parachain-eu-0.staging.litentry.io",
+        "-p",
+        "443"
+      ],
+      "subcommand_flags": [
+        "--skip-ra",
+        "--dev"
+      ]
+    },
+    {
+      "source": "bin",
+      "flags": [
+        "--clean-reset",
         "-P",
         "3000",
         "-w",
