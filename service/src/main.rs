@@ -87,9 +87,6 @@ use std::{
 use substrate_api_client::{utils::FromHexString, Header as HeaderTrait, XtStatus};
 use teerex_primitives::ShardIdentifier;
 
-#[cfg(feature = "mockserver")]
-use lc_mock_server;
-
 mod account_funding;
 mod config;
 mod enclave;

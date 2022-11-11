@@ -23,7 +23,6 @@ use std::{
 };
 
 use codec::Encode;
-use hex;
 use httpmock::{standalone::start_standalone_server, MockServer};
 use litentry_primitives::{ChallengeCode, Identity};
 use sp_core::{blake2_256, crypto::AccountId32 as AccountId};
@@ -54,7 +53,7 @@ pub fn mock_tweet_payload(who: &AccountId, identity: &Identity, code: &Challenge
 	let mut payload = code.encode();
 	payload.append(&mut who.encode());
 	payload.append(&mut identity.encode());
-	hex::encode(blake2_256(payload.as_slice()).to_vec())
+	hex::encode(blake2_256(payload.as_slice()))
 }
 
 pub trait Mock {
