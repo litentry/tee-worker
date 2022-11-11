@@ -56,7 +56,7 @@ jobs:
             mode: teeracle
           - flavor_id: sidechain-evm
             mode: sidechain
-            additional_features: evm
+            additional_features: evm, mockserver
 
     steps:
       - uses: actions/checkout@v3
@@ -206,6 +206,9 @@ jobs:
           - test: user-shielding-key
             flavor_id: sidechain
             demo_name: user-shielding-key
+          - test: ts-tests
+            flavor_id: ts-tests
+            demo_name: ts-tests
 
     steps:
       - uses: actions/checkout@v3
