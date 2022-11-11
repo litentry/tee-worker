@@ -167,11 +167,11 @@ impl TwitterOfficialClient {
 mod tests {
 	use super::*;
 	use httpmock::prelude::*;
-	use itp_types::AccountId;
 	use lc_mock_server::{mock_tweet_payload, standalone_server};
 	use litentry_primitives::{
 		ChallengeCode, Identity, IdentityHandle, IdentityString, IdentityWebType, Web2Network,
 	};
+	use sp_core::crypto::AccountId32 as AccountId;
 
 	#[test]
 	fn query_tweet_work() {

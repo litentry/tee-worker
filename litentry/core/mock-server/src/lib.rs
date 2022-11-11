@@ -23,10 +23,10 @@ use std::{
 };
 
 use codec::Encode;
+use hex;
 use httpmock::{standalone::start_standalone_server, MockServer};
-use itp_types::AccountId;
 use litentry_primitives::{ChallengeCode, Identity};
-use sp_core::blake2_256;
+use sp_core::{blake2_256, crypto::AccountId32 as AccountId};
 use tokio::task::LocalSet;
 
 pub mod discord_litentry;
@@ -38,7 +38,6 @@ pub use discord_litentry::*;
 pub use discord_official::*;
 pub use twitter_litentry::*;
 pub use twitter_official::*;
-
 pub fn standalone_server() {
 	let _server = STANDALONE_SERVER.lock().unwrap_or_else(|e| e.into_inner());
 }
@@ -51,12 +50,11 @@ lazy_static! {
 	}));
 }
 
-pub fn mock_tweet_payload(who: &AccountId, identity: &Identity, code: &ChallengeCode) -> Vec<u8> {
+pub fn mock_tweet_payload(who: &AccountId, identity: &Identity, code: &ChallengeCode) -> String {
 	let mut payload = code.encode();
 	payload.append(&mut who.encode());
 	payload.append(&mut identity.encode());
-
-	blake2_256(payload.as_slice()).to_vec()
+	hex::encode(blake2_256(payload.as_slice()).to_vec())
 }
 
 pub trait Mock {

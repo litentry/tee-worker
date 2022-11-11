@@ -15,11 +15,11 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use httpmock::{Method::GET, MockServer};
-use itp_types::AccountId;
 use lc_data_providers::twitter_official::*;
 use litentry_primitives::{
 	ChallengeCode, Identity, IdentityHandle, IdentityString, IdentityWebType, Web2Network,
 };
+use sp_core::crypto::AccountId32 as AccountId;
 
 use crate::{mock_tweet_payload, Mock};
 
@@ -60,11 +60,7 @@ impl TwitterOfficialAPI for TwitterOfficial {
 			[8, 104, 90, 56, 35, 213, 18, 250, 213, 210, 119, 241, 2, 174, 24, 8];
 		let payload = mock_tweet_payload(&account_id, &twitter_identity, &chanllenge_code);
 
-		let tweet = Tweet {
-			author_id: "mock_user".into(),
-			id: tweet_id.into(),
-			text: serde_json::to_string(&payload).unwrap(),
-		};
+		let tweet = Tweet { author_id: "mock_user".into(), id: tweet_id.into(), text: payload };
 
 		let path = format! {"/2/tweets/{}", tweet_id};
 		mock_server.mock(|when, then| {
