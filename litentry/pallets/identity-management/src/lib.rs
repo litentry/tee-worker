@@ -145,7 +145,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 			// we don't care about the current key
-			UserShieldingKeys::<T>::insert(&who, &key);
+			UserShieldingKeys::<T>::insert(&who, key);
 			Self::deposit_event(Event::UserShieldingKeySet { who, key });
 			Ok(())
 		}
@@ -159,7 +159,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 			// we don't care if it has already associated with any challenge code
-			ChallengeCodes::<T>::insert(&who, &identity, &code);
+			ChallengeCodes::<T>::insert(&who, &identity, code);
 			Self::deposit_event(Event::ChallengeCodeSet { who, identity, code });
 			Ok(())
 		}

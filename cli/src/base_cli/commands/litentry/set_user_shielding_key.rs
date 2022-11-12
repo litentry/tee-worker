@@ -58,7 +58,7 @@ impl SetUserShieldingKeyCommand {
 		let chain_api = chain_api.set_signer(sr25519_core::Pair::from(who));
 
 		let mut key = [0u8; 32];
-		let _ = hex::decode_to_slice(&self.key_hex, &mut key).expect("decoding key failed");
+		hex::decode_to_slice(&self.key_hex, &mut key).expect("decoding key failed");
 
 		let tee_shielding_key = get_shielding_key(cli).unwrap();
 		let encrypted_key = tee_shielding_key.encrypt(&key.encode()).unwrap();
