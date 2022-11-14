@@ -225,7 +225,7 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
         };
 
         before('Starting Litentry(parachain&tee)', async function () {
-            const tmp = await initIntegrationTestContext("wss://localhost:2000", "ws://localhost:9946")
+            const tmp = await initIntegrationTestContext("wss://localhost:2000", "ws://integritee-node:9912")
             context.defaultSigner = tmp.defaultSigner
             context.shard = tmp.shard
             context.substrate = tmp.substrate
