@@ -37,6 +37,6 @@ impl UserShiledingKeyCommand {
 			.into();
 		let key = perform_trusted_operation(cli, trusted_args, &top)
 			.and_then(|v| UserShieldingKeyType::decode(&mut v.as_slice()).ok());
-		println!("{}", hex::encode(&key.unwrap()));
+		println!("{}", hex::encode(key.unwrap()));
 	}
 }
