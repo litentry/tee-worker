@@ -51,7 +51,7 @@ where
 						error!("error verify web2: {:?}", e)
 					},
 					Ok(_) => {
-						let _ = context.decode_and_submit_trusted_call(
+						context.decode_and_submit_trusted_call(
 							request.encoded_shard,
 							request.encoded_callback,
 						)?;
@@ -68,7 +68,7 @@ where
 						error!("error verify web3: {:?}", e)
 					},
 					Ok(_) => {
-						let _ = context.decode_and_submit_trusted_call(
+						context.decode_and_submit_trusted_call(
 							request.encoded_shard,
 							request.encoded_callback,
 						)?;
@@ -149,7 +149,7 @@ where
 
 				debug!("in RequestType::SetUserShieldingKey read key is: {:?}", key);
 
-				let _ = context.decode_and_submit_trusted_call(
+				context.decode_and_submit_trusted_call(
 					request.encoded_shard,
 					request.encoded_callback,
 				)?;
