@@ -77,27 +77,16 @@ members = [
 ]
 
 [patch."https://github.com/apache/teaclave-sgx-sdk.git"]
-sgx_alloc = { version = "1.1.5", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", tag = "v1.1.5" }
-sgx_crypto_helper = { version = "1.1.5", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", tag = "v1.1.5" }
-sgx_libc = { version = "1.1.5", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", tag = "v1.1.5" }
-sgx_rand = { version = "1.1.5", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", tag = "v1.1.5" }
-sgx_tcrypto = { version = "1.1.5", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", tag = "v1.1.5" }
-sgx_trts = { version = "1.1.5", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", tag = "v1.1.5" }
-sgx_tstd = { version = "1.1.5", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", tag = "v1.1.5" }
-sgx_types = { version = "1.1.5", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", tag = "v1.1.5" }
-sgx_ucrypto = { version = "1.1.5", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", tag = "v1.1.5" }
-sgx_urts = { version = "1.1.5", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", tag = "v1.1.5" }
-
-# have to patch the substrate crates for polkadot-v0.9.28 due to too old rust toolchain
-# see also https://github.com/integritee-network/worker/issues/1000
-# I had to make sure the other crate dependencies point to the original repo though:
-# https://github.com/Kailai-Wang/substrate/commit/0bee196fbcac2e8663220b277a3767767202c630
-# otherwise I'll get "maybe two versions of ..." error
-[patch."https://github.com/paritytech/substrate.git"]
-sc-consensus-babe = { git = "https://github.com/Kailai-Wang/substrate", branch = "kai-patch-v0.9.28" }
-sc-transaction-pool = { git = "https://github.com/Kailai-Wang/substrate", branch = "kai-patch-v0.9.28" }
-[patch.crates-io]
-parity-db = { git = 'https://github.com/Kailai-Wang/parity-db', branch = "kai-patch-v0.9.28" }
+sgx_alloc = { version = "1.1.6", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v1.1.6-testing" }
+sgx_crypto_helper = { version = "1.1.6", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v1.1.6-testing" }
+sgx_libc = { version = "1.1.6", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v1.1.6-testing" }
+sgx_rand = { version = "1.1.6", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v1.1.6-testing" }
+sgx_tcrypto = { version = "1.1.6", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v1.1.6-testing" }
+sgx_trts = { version = "1.1.6", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v1.1.6-testing" }
+sgx_tstd = { version = "1.1.6", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v1.1.6-testing" }
+sgx_types = { version = "1.1.6", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v1.1.6-testing" }
+sgx_ucrypto = { version = "1.1.6", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v1.1.6-testing" }
+sgx_urts = { version = "1.1.6", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v1.1.6-testing" }
 
 #[patch."https://github.com/integritee-network/sgx-runtime"]
 #sgx-runtime = { path = "../sgx-runtime/runtime"}
