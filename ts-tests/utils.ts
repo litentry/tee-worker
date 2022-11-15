@@ -229,7 +229,8 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
             // const tmp = await initIntegrationTestContext("wss://localhost:2000", "ws://localhost:9946")
 
             // For docker service test
-            const tmp = await initIntegrationTestContext("wss://integritee-worker-1:2000", "ws://integritee-node:9912")
+            // Frist param: wss://integritee-worker:trusted-worker-port
+            const tmp = await initIntegrationTestContext("wss://integritee-worker-1:2011", "ws://integritee-node:9912")
             
             context.defaultSigner = tmp.defaultSigner
             context.shard = tmp.shard

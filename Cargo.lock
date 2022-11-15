@@ -283,8 +283,8 @@ version = "2.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "47e4f2b81832e72834d7518d8487a0396a28cc408186a2e8854c0f98011faf12"
 dependencies = [
- "serde 1.0.145",
- "serde_json 1.0.86",
+ "serde 1.0.147",
+ "serde_json 1.0.87",
 ]
 
 [[package]]
@@ -594,7 +594,7 @@ checksum = "cb53b6b315f924c7f113b162e53b3901c05fc9966baf84d201dfcc7432a4bb38"
 dependencies = [
  "lalrpop",
  "lalrpop-util",
- "regex 1.6.0",
+ "regex 1.7.0",
 ]
 
 [[package]]
@@ -3718,19 +3718,19 @@ dependencies = [
  "assert-json-diff",
  "async-object-pool",
  "async-trait",
- "base64 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "base64 0.13.1",
  "basic-cookies",
  "crossbeam-utils",
  "form_urlencoded",
- "futures-util 0.3.24",
+ "futures-util 0.3.25",
  "hyper",
  "isahc",
  "lazy_static",
  "levenshtein",
  "log 0.4.17",
- "regex 1.6.0",
- "serde 1.0.145",
- "serde_json 1.0.86",
+ "regex 1.7.0",
+ "serde 1.0.147",
+ "serde_json 1.0.87",
  "serde_regex",
  "similar",
  "tokio",
@@ -4208,7 +4208,7 @@ dependencies = [
  "http 0.2.8",
  "log 0.4.17",
  "mime",
- "once_cell 1.15.0",
+ "once_cell 1.16.0",
  "polling",
  "slab 0.4.7",
  "sluice",
@@ -5783,8 +5783,8 @@ dependencies = [
  "lalrpop-util",
  "petgraph",
  "pico-args",
- "regex 1.6.0",
- "regex-syntax 0.6.27",
+ "regex 1.7.0",
+ "regex-syntax 0.6.28",
  "string_cache",
  "term",
  "tiny-keccak",
@@ -5797,7 +5797,7 @@ version = "0.19.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bcf796c978e9b4d983414f4caedc9273aa33ee214c5b887bd55fde84c85d2dc4"
 dependencies = [
- "regex 1.6.0",
+ "regex 1.7.0",
 ]
 
 [[package]]
@@ -5932,7 +5932,7 @@ dependencies = [
  "lc-data-providers",
  "litentry-primitives",
  "parity-scale-codec",
- "serde_json 1.0.86",
+ "serde_json 1.0.87",
  "sp-core",
  "tokio",
 ]
@@ -12810,8 +12810,8 @@ version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8136f1a4ea815d7eac4101cfd0b16dc0cb5e1fe1b8609dfd728058656b7badf"
 dependencies = [
- "regex 1.6.0",
- "serde 1.0.145",
+ "regex 1.7.0",
+ "serde 1.0.147",
 ]
 
 [[package]]
@@ -13217,8 +13217,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6d7400c0eff44aa2fcb5e31a5f24ba9716ed90138769e4977a2ba6014ae63eb5"
 dependencies = [
  "async-channel",
- "futures-core 0.3.24",
- "futures-io 0.3.24",
+ "futures-core 0.3.25",
+ "futures-io 0.3.25",
 ]
 
 [[package]]
@@ -14123,7 +14123,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "213494b7a2b503146286049378ce02b482200519accc31872ee8be91fa820a08"
 dependencies = [
  "new_debug_unreachable",
- "once_cell 1.15.0",
+ "once_cell 1.16.0",
  "parking_lot 0.12.1",
  "phf_shared",
  "precomputed-hash",
