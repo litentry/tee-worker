@@ -132,6 +132,12 @@ fn main() {
 
 	info!("*** Running worker in mode: {:?} \n", WorkerModeProvider::worker_mode());
 
+	#[cfg(feature = "mockserver")]
+	thread::spawn(move || {
+		info!("*** Starting mock server");
+		lc_mock_server::run();
+	});
+
 	let clean_reset = matches.is_present("clean-reset");
 	if clean_reset {
 		setup::purge_files_from_cwd().unwrap();
@@ -310,7 +316,8 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 			sgx_quote_sign_type_t::SGX_UNLINKABLE_SIGNATURE,
 			&ra_url,
 			skip_ra,
-		)
+		);
+		info!("State provisioning server stopped.");
 	});
 
 	let tokio_handle = tokio_handle_getter.get_handle();

@@ -2,7 +2,7 @@ import WebSocketAsPromised = require("websocket-as-promised");
 import WebSocket = require("ws");
 import Options = require("websocket-as-promised/types/options");
 import {ApiPromise, Keyring, WsProvider} from "@polkadot/api";
-import {Vec} from "@polkadot/types";
+import {StorageKey, Vec} from "@polkadot/types";
 import {
     AESOutput,
     IntegrationTestContext,
@@ -60,8 +60,23 @@ export async function getTEEShieldingKey(wsClient: WebSocketAsPromised, api: Api
 }
 
 export async function initIntegrationTestContext(workerEndpoint: string, substrateEndpoint: string): Promise<IntegrationTestContext> {
-    //TODO how to get the shard
-    const shard = '0xefc43e880608fd8ce4e28d3bcd941f8274a0567c86c69ab3497d851a8b00683b'
+    const provider = new WsProvider(substrateEndpoint)
+    const api = await ApiPromise.create({
+        provider, types: teeTypes
+    })
+    await cryptoWaitReady()
+    const keys = await api.query.sidechain.workerForShard.entries() as [StorageKey, Codec][];
+    let shard = ""
+    for (let i = 0; i < keys.length; i++) {
+        //TODO shard may be different from mr_enclave. The default value of shard is mr_enclave
+        shard = keys[i][0].args[0].toHex()
+        console.log("query worker shard: ", shard)
+        break
+    }
+    if (shard == "") {
+        throw new Error("shard not found")
+    }
+
     // const endpoint = "wss://localhost:2000"
     const wsp = new WebSocketAsPromised(workerEndpoint, <Options>{
         createWebSocket: (url: any) => new WebSocket(url),
@@ -73,11 +88,6 @@ export async function initIntegrationTestContext(workerEndpoint: string, substra
     })
     await wsp.open()
 
-    const provider = new WsProvider(substrateEndpoint)
-    const api = await ApiPromise.create({
-        provider, types: teeTypes
-    })
-    await cryptoWaitReady()
     const keyring = new Keyring({type: 'sr25519'});
 
 
@@ -215,7 +225,13 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
         };
 
         before('Starting Litentry(parachain&tee)', async function () {
-            const tmp = await initIntegrationTestContext("wss://localhost:2000", "ws://integritee-node:9912")
+            // // For test locally
+            // const tmp = await initIntegrationTestContext("wss://localhost:2000", "ws://localhost:9946")
+
+            // For docker service test
+            // Frist param: wss://integritee-worker:trusted-worker-port
+            const tmp = await initIntegrationTestContext("wss://integritee-worker-1:2011", "ws://integritee-node:9912")
+            
             context.defaultSigner = tmp.defaultSigner
             context.shard = tmp.shard
             context.substrate = tmp.substrate

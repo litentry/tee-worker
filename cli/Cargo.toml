@@ -58,6 +58,7 @@ evm = [
     "ita-stf/evm_std",
     "pallet-evm",
 ]
+mockserver = []
 teeracle = []
 sidechain = []
 offchain-worker = []
