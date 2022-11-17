@@ -132,6 +132,12 @@ fn main() {
 
 	info!("*** Running worker in mode: {:?} \n", WorkerModeProvider::worker_mode());
 
+	#[cfg(feature = "mockserver")]
+	thread::spawn(move || {
+		info!("*** Starting mock server");
+		lc_mock_server::run();
+	});
+
 	let clean_reset = matches.is_present("clean-reset");
 	if clean_reset {
 		setup::purge_files_from_cwd().unwrap();

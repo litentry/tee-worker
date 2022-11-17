@@ -57,6 +57,9 @@ jobs:
           - flavor_id: sidechain-evm
             mode: sidechain
             additional_features: evm
+          - flavor_id: mockserver
+            mode: sidechain
+            additional_features: mockserver
 
     steps:
       - uses: actions/checkout@v3
@@ -206,6 +209,9 @@ jobs:
           - test: user-shielding-key
             flavor_id: sidechain
             demo_name: user-shielding-key
+          - test: ts-tests
+            flavor_id: mockserver
+            demo_name: ts-tests
 
     steps:
       - uses: actions/checkout@v3
