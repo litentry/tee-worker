@@ -121,10 +121,6 @@ pub fn set_block_number(block_number: u32) {
 
 // Litentry
 pub fn aes_encrypt_default(key: &UserShieldingKeyType, data: &[u8]) -> AesOutput {
-	aes_encrypt(key, data)
-}
-
-pub fn aes_encrypt(key: &UserShieldingKeyType, data: &[u8]) -> AesOutput {
 	let mut in_out = data.to_vec();
 
 	let nonce = RingAeadNonceSequence::new();
