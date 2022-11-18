@@ -108,6 +108,12 @@ RUN mkdir ${LOG_DIR}
 RUN ldd /usr/local/bin/integritee-cli && \
 	/usr/local/bin/integritee-cli --version
 
+## ts-tests
+RUN apt-get install -y curl
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash
+RUN apt-get install -y nodejs
+RUN npm install -g yarn
+
 ENTRYPOINT ["/usr/local/bin/integritee-cli"]
 
 
