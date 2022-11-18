@@ -20,7 +20,6 @@ use crate::{StfError, StfResult, ENCLAVE_ACCOUNT_KEY};
 use ring::{
 	aead::{Aad, BoundKey, Nonce, NonceSequence, SealingKey, UnboundKey, AES_256_GCM},
 	error::Unspecified,
-	rand::{SecureRandom, SystemRandom},
 };
 
 use codec::{Decode, Encode};
@@ -126,7 +125,7 @@ pub fn aes_encrypt_default(key: &UserShieldingKeyType, data: &[u8]) -> AesOutput
 }
 
 pub fn aes_encrypt(key: &UserShieldingKeyType, data: &[u8]) -> AesOutput {
-	let mut in_out = data.to_vec().clone();
+	let mut in_out = data.to_vec();
 
 	let nonce = RingAeadNonceSequence::new();
 	let aad = b"";
