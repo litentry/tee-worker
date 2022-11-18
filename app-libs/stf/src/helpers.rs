@@ -34,7 +34,6 @@ use std::prelude::v1::*;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate rand_sgx as rand;
 
-#[cfg(not(feature = "mockserver"))]
 use rand::Rng;
 
 pub fn get_storage_value<V: Decode>(
