@@ -79,7 +79,7 @@ services:
     depends_on: ['relaychain-alice', 'relaychain-bob']
     command:
       - --base-path=/data
-      - --chain=/app/litmus-dev-2106.json
+      - --chain=/app/rococo-dev-2106.json
       - --ws-external
       - --rpc-external
       - --rpc-cors=all
