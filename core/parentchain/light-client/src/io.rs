@@ -84,6 +84,9 @@ where
 	if genesis == params.get_genesis_header().hash() {
 		let mut validator = init_validator::<B, OCallApi>(params, ocall_api)?;
 		validator.set_state(validation_state);
+		LightClientStateSeal::<B, LightValidationState<B>>::seal_to_static_file(
+			validator.get_state(),
+		)?;
 		info!("Found already initialized light client with Genesis Hash: {:?}", genesis);
 		info!("light client state: {:?}", validator);
 		Ok(validator)
