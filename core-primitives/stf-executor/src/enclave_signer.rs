@@ -31,7 +31,7 @@ use itp_stf_state_observer::traits::ObserveState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::ShardIdentifier;
 use sp_core::{ed25519::Pair as Ed25519Pair, Pair};
-use std::sync::Arc;
+use std::{boxed::Box, sync::Arc};
 
 pub struct StfEnclaveSigner<OCallApi, StateObserver, ShieldingKeyRepository, Stf, TopPoolAuthor> {
 	state_observer: Arc<StateObserver>,
@@ -125,7 +125,7 @@ where
 		let pending_tx = Index::try_from(pending_tx).map_err(|e| Error::Other(e.into()))?;
 		let adjust_nonce: Index = current_nonce.into() + pending_tx;
 		Ok(trusted_call.sign(
-			&KeyPair::Ed25519(enclave_call_signing_key),
+			&KeyPair::Ed25519(Box::new(enclave_call_signing_key)),
 			adjust_nonce,
 			&mr_enclave.m,
 			shard,

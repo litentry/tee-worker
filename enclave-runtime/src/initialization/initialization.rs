@@ -16,16 +16,16 @@
 */
 use crate::{
 	error::{Error, Result as EnclaveResult},
-	global_components::{
+	initialization::global_components::{
 		EnclaveBlockImportConfirmationHandler, EnclaveGetterExecutor, EnclaveOCallApi,
 		EnclaveOffchainWorkerExecutor, EnclaveRpcConnectionRegistry, EnclaveRpcResponder,
 		EnclaveShieldingKeyRepository, EnclaveSidechainApi, EnclaveSidechainBlockImportQueue,
 		EnclaveSidechainBlockImportQueueWorker, EnclaveSidechainBlockImporter,
 		EnclaveSidechainBlockSyncer, EnclaveStateFileIo, EnclaveStateHandler,
-		EnclaveStateKeyRepository, EnclaveStateObserver, EnclaveStateSnapshotRepository,
-		EnclaveStfEnclaveSigner, EnclaveStfExecutor, EnclaveTopPool, EnclaveTopPoolAuthor,
-		EnclaveValidatorAccessor, GLOBAL_ATTESTATION_HANDLER_COMPONENT,
-		GLOBAL_EXTRINSICS_FACTORY_COMPONENT,
+		EnclaveStateInitializer, EnclaveStateKeyRepository, EnclaveStateObserver,
+		EnclaveStateSnapshotRepository, EnclaveStfEnclaveSigner, EnclaveStfExecutor,
+		EnclaveTopPool, EnclaveTopPoolAuthor, EnclaveValidatorAccessor,
+		GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_EXTRINSICS_FACTORY_COMPONENT,
 		GLOBAL_IMMEDIATE_PARENTCHAIN_IMPORT_DISPATCHER_COMPONENT,
 		GLOBAL_NODE_METADATA_REPOSITORY_COMPONENT, GLOBAL_OCALL_API_COMPONENT,
 		GLOBAL_PARENTCHAIN_BLOCK_VALIDATOR_ACCESS_COMPONENT, GLOBAL_RPC_WS_HANDLER_COMPONENT,
@@ -34,11 +34,15 @@ use crate::{
 		GLOBAL_SIDECHAIN_IMPORT_QUEUE_WORKER_COMPONENT, GLOBAL_STATE_HANDLER_COMPONENT,
 		GLOBAL_STATE_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_OBSERVER_COMPONENT,
 		GLOBAL_STF_EXECUTOR_COMPONENT, GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
-		GLOBAL_TRIGGERED_PARENTCHAIN_IMPORT_DISPATCHER_COMPONENT,
 		GLOBAL_WEB_SOCKET_SERVER_COMPONENT,
 	},
 	ocall::OcallApi,
 	rpc::{rpc_response_channel::RpcResponseChannel, worker_api_direct::public_api_rpc_handler},
+	utils::{
+		get_extrinsic_factory_from_solo_or_parachain,
+		get_node_metadata_repository_from_solo_or_parachain,
+		get_validator_accessor_from_solo_or_parachain,
+	},
 	Hash,
 };
 use base58::ToBase58;
@@ -113,32 +117,29 @@ pub(crate) fn init_enclave(mu_ra_url: String, untrusted_worker_url: String) -> E
 		Arc::new(EnclaveStateKeyRepository::new(state_key, Arc::new(AesSeal)));
 	GLOBAL_STATE_KEY_REPOSITORY_COMPONENT.initialize(state_key_repository.clone());
 
-	let state_file_io =
-		Arc::new(EnclaveStateFileIo::new(state_key_repository, shielding_key_repository.clone()));
-	let state_snapshot_repository_loader =
-		StateSnapshotRepositoryLoader::<EnclaveStateFileIo>::new(state_file_io);
+	let state_file_io = Arc::new(EnclaveStateFileIo::new(state_key_repository));
+	let state_initializer =
+		Arc::new(EnclaveStateInitializer::new(shielding_key_repository.clone()));
+	let state_snapshot_repository_loader = StateSnapshotRepositoryLoader::<
+		EnclaveStateFileIo,
+		EnclaveStateInitializer,
+	>::new(state_file_io, state_initializer.clone());
+
 	let state_snapshot_repository =
 		state_snapshot_repository_loader.load_snapshot_repository(STATE_SNAPSHOTS_CACHE_SIZE)?;
 	let state_observer = initialize_state_observer(&state_snapshot_repository)?;
 	GLOBAL_STATE_OBSERVER_COMPONENT.initialize(state_observer.clone());
 
-	let state_handler =
-		Arc::new(StateHandler::new(state_snapshot_repository, state_observer.clone()));
+	let state_handler = Arc::new(StateHandler::load_from_repository(
+		state_snapshot_repository,
+		state_observer.clone(),
+		state_initializer,
+	)?);
 
 	GLOBAL_STATE_HANDLER_COMPONENT.initialize(state_handler.clone());
 
 	let ocall_api = Arc::new(OcallApi);
 	GLOBAL_OCALL_API_COMPONENT.initialize(ocall_api.clone());
-
-	let node_metadata_repository = Arc::new(NodeMetadataRepository::default());
-	GLOBAL_NODE_METADATA_REPOSITORY_COMPONENT.initialize(node_metadata_repository.clone());
-
-	let stf_executor = Arc::new(EnclaveStfExecutor::new(
-		ocall_api.clone(),
-		state_handler.clone(),
-		node_metadata_repository,
-	));
-	GLOBAL_STF_EXECUTOR_COMPONENT.initialize(stf_executor);
 
 	// For debug purposes, list shards. no problem to panic if fails.
 	let shards = state_handler.list_shards().unwrap();
@@ -208,7 +209,7 @@ pub(crate) fn init_enclave_sidechain_components() -> EnclaveResult<()> {
 	let top_pool_author = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
 
 	let parentchain_block_import_dispatcher =
-		GLOBAL_TRIGGERED_PARENTCHAIN_IMPORT_DISPATCHER_COMPONENT.get()?;
+		utils::get_triggered_dispatcher_from_solo_or_parachain()?;
 
 	let state_key_repository = GLOBAL_STATE_KEY_REPOSITORY_COMPONENT.get()?;
 
@@ -223,9 +224,9 @@ pub(crate) fn init_enclave_sidechain_components() -> EnclaveResult<()> {
 	));
 
 	let sidechain_block_import_queue = GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT.get()?;
-	let metadata_repository = GLOBAL_NODE_METADATA_REPOSITORY_COMPONENT.get()?;
-	let extrinsics_factory = GLOBAL_EXTRINSICS_FACTORY_COMPONENT.get()?;
-	let validator_accessor = GLOBAL_PARENTCHAIN_BLOCK_VALIDATOR_ACCESS_COMPONENT.get()?;
+	let metadata_repository = get_node_metadata_repository_from_solo_or_parachain()?;
+	let extrinsics_factory = get_extrinsic_factory_from_solo_or_parachain()?;
+	let validator_accessor = get_validator_accessor_from_solo_or_parachain()?;
 
 	let sidechain_block_import_confirmation_handler =
 		Arc::new(EnclaveBlockImportConfirmationHandler::new(
