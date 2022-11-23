@@ -14,11 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, LightClientState};
 use itp_component_container::ComponentGetter;
-use itp_extrinsics_factory::ExtrinsicsFactory;
-use itp_nonce_cache::GLOBAL_NONCE_CACHE;
-use itp_sgx_crypto::{Ed25519Seal, Rsa3072Seal};
+use itp_sgx_crypto::Rsa3072Seal;
 use itp_sgx_io::StaticSealedIO;
 use lc_stf_task_receiver::{stf_task_receiver::run_stf_task_receiver, StfTaskContext};
 use log::*;
@@ -28,8 +25,7 @@ use std::sync::Arc;
 use crate::{
 	error::{Error, Result},
 	initialization::global_components::{
-		EnclaveStfEnclaveSigner, GLOBAL_NODE_METADATA_REPOSITORY_COMPONENT,
-		GLOBAL_OCALL_API_COMPONENT, GLOBAL_PARENTCHAIN_BLOCK_VALIDATOR_ACCESS_COMPONENT,
+		EnclaveStfEnclaveSigner, GLOBAL_OCALL_API_COMPONENT,
 		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_OBSERVER_COMPONENT,
 		GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 	},
@@ -51,37 +47,9 @@ pub unsafe extern "C" fn run_stf_task_handler() -> sgx_status_t {
 /// Runs an extrinsic request inside the enclave, opening a channel and waiting for
 /// senders to send requests.
 fn run_stf_task_handler_internal() -> Result<()> {
-	let validator_access = GLOBAL_PARENTCHAIN_BLOCK_VALIDATOR_ACCESS_COMPONENT.get()?;
-
-	// This gets the latest imported block. We accept that all of AURA, up until the block production
-	// itself, will  operate on a parentchain block that is potentially outdated by one block
-	// (in case we have a block in the queue, but not imported yet).
-	let (_, genesis_hash) = validator_access.execute_on_validator(|v| {
-		let latest_parentchain_header = v.latest_finalized_header(v.num_relays())?;
-		let genesis_hash = v.genesis_hash(v.num_relays())?;
-		Ok((latest_parentchain_header, genesis_hash))
-	})?;
-	let authority = Ed25519Seal::unseal_from_static_file()?;
-	let node_metadata_repository = GLOBAL_NODE_METADATA_REPOSITORY_COMPONENT.get()?;
-
-	let _extrinsics_factory = ExtrinsicsFactory::new(
-		genesis_hash,
-		authority,
-		GLOBAL_NONCE_CACHE.clone(),
-		node_metadata_repository,
-	);
-
 	let author_api = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
-
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
-	// For debug purposes, list shards. no problem to panic if fails.
-	// let shards = state_handler.list_shards().unwrap();
-	// let default_shard_identifier: ShardIdentifier = if let Some(shard) = shards.get(0) {
-	// 	Ok(sp_core::H256::from_slice(shard.as_bytes()))
-	// } else {
-	// 	Err(Error::Stf("Could not retrieve shard".to_string()))
-	// }?;
 
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 	let shielding_key = Rsa3072Seal::unseal_from_static_file().unwrap();
