@@ -2,8 +2,8 @@ use log::{error, info, warn};
 use serde_json::Value;
 use sp_core::H256 as Hash;
 use std::{
-	string::String,
-	sync::mpsc::{channel, Receiver, RecvError, Sender as ThreadOut},
+	string::{String, ToString},
+	sync::mpsc::{channel, Sender as ThreadOut},
 	thread,
 	thread::sleep,
 	time::Duration,
@@ -23,11 +23,9 @@ use substrate_api_client::{
 	},
 	ApiClientError, ApiResult, XtStatus,
 };
-use ws::{
-	connect,
-	util::{Timeout, Token},
-	CloseCode, ErrorKind, Handshake, Message, Result as WsResult, Sender, WebSocket,
-};
+use ws::{connect, CloseCode, ErrorKind, Handshake, Message, Result as WsResult, Sender};
+
+const DISCONNECTED: &str = "disconnected";
 
 pub struct LitentryRpcClient {
 	pub out: Sender,
@@ -47,20 +45,14 @@ impl ws::Handler for LitentryRpcClient {
 		(self.on_message_fn)(msg, self.out.clone(), self.result.clone())
 	}
 
-	// fn on_close(&mut self, code: CloseCode, reason: &str) {
-	// 	let _ = self.result.send("on_close".to_string());
-	//
-	// 	log::warn!("on_close: {:?},reason:{:?}", code, reason);
-	// }
-	//
-	// fn on_shutdown(&mut self) {
-	// 	let _ = self.result.send("on_close".to_string());
-	// }
+	fn on_close(&mut self, code: CloseCode, reason: &str) {
+		let _ = self.result.send(DISCONNECTED.to_string());
+		warn!("on_close: {:?},reason:{:?}", code, reason);
+	}
 
 	fn on_error(&mut self, err: ws::Error) {
 		// Ignore connection reset errors by default, but allow library clients to see them by
 		// overriding this method if they want
-
 		if let ErrorKind::Io(ref err) = err.kind {
 			log::error!("what error: {:?}", err);
 			if let Some(104) = err.raw_os_error() {
@@ -68,12 +60,8 @@ impl ws::Handler for LitentryRpcClient {
 				return
 			}
 		}
-		error!("some error");
-		let _ = self.result.send("disconnected".to_string());
+		let _ = self.result.send(DISCONNECTED.to_string());
 		log::error!("occur an error {:?}", err);
-		// if !log_enabled!(ErrorLevel) {
-		// println!("Encountered an error: {}\nEnable a logger to see more information.", err);
-		// }
 	}
 }
 
@@ -84,8 +72,8 @@ pub struct LitentryWsRpcClient {
 }
 
 impl LitentryWsRpcClient {
-	pub fn new(url: &str) -> LitentryWsRpcClient {
-		LitentryWsRpcClient { url: url.to_string(), max_attempts: 3 }
+	pub fn new(url: &str, max_attempts: u32) -> LitentryWsRpcClient {
+		LitentryWsRpcClient { url: url.to_string(), max_attempts }
 	}
 }
 
@@ -204,12 +192,17 @@ impl LitentryWsRpcClient {
 		let (thread_in, thread_out) = channel::<u32>();
 		thread::spawn(move || {
 			let mut current_attempt: u32 = 0;
-			let a = thread_in.send(current_attempt);
+			let _ = thread_in.send(current_attempt);
 			while current_attempt < max_attempts {
 				match wrap_result_out.recv() {
 					Ok(out) =>
 						if out.as_str() == "disconnected" {
-							info!("disconnected");
+							warn!(
+								"disconnected. attempt connect after {} sec. current attempt {}",
+								5 * (current_attempt + 1),
+								current_attempt
+							);
+							sleep(Duration::from_secs((5 * (current_attempt + 1)) as u64));
 							let _ = thread_in.send(current_attempt);
 							current_attempt += 1;
 						} else {
@@ -217,7 +210,7 @@ impl LitentryWsRpcClient {
 							let _ = result_in.send(out);
 						},
 					Err(e) => {
-						log::error!("recvError: {:?}", e);
+						log::error!("recvError 2: {:?}", e);
 						current_attempt = max_attempts;
 						break
 					},
@@ -238,8 +231,6 @@ impl LitentryWsRpcClient {
 						result: wrap_result_in.clone(),
 						on_message_fn,
 					});
-					info!("current:{}", current_attempt);
-					sleep(Duration::from_secs((5 * (current_attempt + 1)) as u64));
 				},
 				Err(e) => {
 					log::error!("recvError: {:?}", e);
@@ -261,7 +252,6 @@ impl LitentryWsRpcClient {
 				result: result_in.clone(),
 				on_message_fn,
 			})?;
-			// info!("2222");
 			let out = result_out.recv()?;
 			if out.as_str() == "disconnected" {
 				warn!(
@@ -279,58 +269,4 @@ impl LitentryWsRpcClient {
 		}
 		Err(ApiClientError::RpcClient("max connection attempts exceeded".to_string()))
 	}
-
-	// fn attempt_connect(
-	// 	self,
-	// 	result_in: ThreadOut<String>,
-	// 	result_out: Receiver<String>,
-	// ) -> ApiResult<String> {
-	// 	let mut current_attempt: u32 = 1;
-	//
-	// 	while current_attempt <= self.max_attempts {
-	// 		connect(self.url.clone(), |out| LitentryRpcClient {
-	// 			out,
-	// 			url: parsed.clone(),
-	// 			request: jsonreq.clone(),
-	// 			result: result_in.clone(),
-	// 			on_message_fn,
-	// 		})?;
-	// 		let out = result_out.recv()?;
-	// 		if out.as_str() == "on_close" {
-	// 			current_attempt += 1;
-	// 			warn!(
-	// 				"attempt connect after {} sec. current attempt {}",
-	// 				5 * current_attempt,
-	// 				current_attempt
-	// 			);
-	// 			sleep(Duration::from_secs(5));
-	// 			continue
-	// 		} else {
-	// 			current_attempt = 1;
-	// 			return Ok(out)
-	// 		}
-	// 	}
-	// 	Err(ApiClientError::RpcClient("max connection attempts exceeded".to_string()))
-	// }
-}
-
-pub fn connect2<F, H>(url: url::Url, factory: F) -> Result<(), ws::Error>
-where
-	F: FnMut(Sender) -> H,
-	H: ws::Handler,
-{
-	let mut ws = WebSocket::new(factory)?;
-	ws.connect(url)?;
-	ws.run()?;
-	Ok(())
-}
-
-fn parse_url(url: String) -> Result<url::Url, ws::Error> {
-	let t = url::Url::parse(url.as_str()).map_err(|err| {
-		ws::Error::new(
-			ErrorKind::Internal,
-			format!("Unable to parse {} as url due to {:?}", url, err),
-		)
-	})?;
-	Ok(t)
 }

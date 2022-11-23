@@ -49,7 +49,7 @@ impl NodeApiFactory {
 
 impl CreateNodeApi for NodeApiFactory {
 	fn create_api(&self) -> Result<ParentchainApi> {
-		ParentchainApi::new(WsRpcClient::new(self.node_url.as_str()))
+		ParentchainApi::new(WsRpcClient::new(self.node_url.as_str(), 100))
 			.map_err(NodeApiFactoryError::FailedToCreateNodeApi)
 			.map(|a| a.set_signer(self.signer.clone()))
 	}
@@ -58,7 +58,7 @@ impl CreateNodeApi for NodeApiFactory {
 #[cfg(test)]
 mod test {
 	use crate::{CreateNodeApi, NodeApiFactory};
-	use itp_api_client_extensions::ChainApi;
+	// use itp_api_client_extensions::ChainApi;
 	use sp_core::Pair;
 	use std::{sync::mpsc::channel, thread::sleep, time::Duration};
 	// use test_env_log::test;
@@ -70,24 +70,24 @@ mod test {
 	#[test]
 	fn test_api() {
 		init();
-		println!("xxxx1111");
 		let alice = sp_core::sr25519::Pair::from_string("//Alice", None).unwrap();
 		let factory = NodeApiFactory::new("ws://host.docker.internal:9944".to_string(), alice);
-		println!("xxxx212");
 		let api = factory.create_api().unwrap();
-		println!("xxxx12121");
 		let (sender, receiver) = channel();
 		// for _i in 0..10 {
 		// 	let a = api.last_finalized_block();
 		// 	println!("block:{:?}", a);
 		// 	sleep(Duration::from_secs(10))
 		// }
-		println!("xxxx");
 		let _ = api.subscribe_finalized_heads(sender);
 
 		loop {
 			let a = receiver.recv();
 			log::info!("xxxxx head: {:?}", a);
+			if a.is_err() {
+				sleep(Duration::from_secs(1));
+				return
+			}
 		}
 	}
 }
