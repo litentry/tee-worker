@@ -50,7 +50,7 @@ impl SetChallengeCodeCommand {
 
 		let top: TrustedOperation =
 			TrustedCall::set_challenge_code_runtime(root.public().into(), who, identity, code)
-				.sign(&KeyPair::Sr25519(root), nonce, &mrenclave, &shard)
+				.sign(&KeyPair::Sr25519(Box::new(root)), nonce, &mrenclave, &shard)
 				.into_trusted_operation(trusted_args.direct);
 		perform_trusted_operation(cli, trusted_args, &top);
 	}

@@ -86,10 +86,12 @@ std = [
     "pallet-transaction-payment/std",
     "pallet-parentchain/std",
     "pallet-identity-management/std",
+    "pallet-grandpa/std",
     "sp-api/std",
     "sp-core/std",
     "sp-inherents/std",
     "sp-runtime/std",
     "sp-std/std",
     "sp-version/std",
+    "sp-consensus-aura/std",
 ]

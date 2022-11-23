@@ -49,7 +49,7 @@ impl SetUserShieldingKeyPreflightCommand {
 
 		let top: TrustedOperation =
 			TrustedCall::set_user_shielding_key_preflight(root.public().into(), who, key)
-				.sign(&KeyPair::Sr25519(root), nonce, &mrenclave, &shard)
+				.sign(&KeyPair::Sr25519(Box::new(root)), nonce, &mrenclave, &shard)
 				.into_trusted_operation(trusted_args.direct);
 		perform_trusted_operation(cli, trusted_args, &top);
 	}

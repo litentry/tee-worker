@@ -18,9 +18,7 @@
 #[cfg(feature = "test")]
 use crate::test_genesis::test_genesis_setup;
 
-use crate::{
-	helpers::enclave_signer_account, Arc, ShardIdentifier, Stf, StfError, ENCLAVE_ACCOUNT_KEY,
-};
+use crate::{helpers::enclave_signer_account, ShardIdentifier, Stf, StfError, ENCLAVE_ACCOUNT_KEY};
 use codec::Encode;
 use frame_support::traits::{OriginTrait, UnfilteredDispatchable};
 use itp_node_api::metadata::{
@@ -38,7 +36,7 @@ use itp_types::OpaqueCall;
 use itp_utils::stringify::account_id_to_string;
 use log::*;
 use sp_runtime::traits::StaticLookup;
-use std::{fmt::Debug, format, prelude::v1::*, vec};
+use std::{fmt::Debug, format, prelude::v1::*, sync::Arc, vec};
 
 impl<Call, Getter, State, Runtime, AccountId> InitState<State, AccountId>
 	for Stf<Call, Getter, State, Runtime>

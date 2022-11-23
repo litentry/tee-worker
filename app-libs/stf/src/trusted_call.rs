@@ -23,7 +23,7 @@ use std::vec::Vec;
 
 use crate::{
 	helpers::{aes_encrypt_default, ensure_enclave_signer_account},
-	AccountId, Arc, IdentityManagement, KeyPair, MetadataOf, Runtime, ShardIdentifier, Signature,
+	AccountId, IdentityManagement, KeyPair, MetadataOf, Runtime, ShardIdentifier, Signature,
 	StfError, System, TrustedOperation,
 };
 use codec::{Decode, Encode};
@@ -41,7 +41,7 @@ use litentry_primitives::{
 use log::*;
 use sp_io::hashing::blake2_256;
 use sp_runtime::{traits::Verify, MultiAddress};
-use std::{format, prelude::v1::*};
+use std::{format, prelude::v1::*, sync::Arc};
 
 #[cfg(feature = "evm")]
 use ita_sgx_runtime::{AddressMapping, HashedAddressMapping};
