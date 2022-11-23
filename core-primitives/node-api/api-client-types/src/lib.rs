@@ -46,11 +46,16 @@ pub type ParentchainUncheckedExtrinsic<Call> =
 pub use api::*;
 
 #[cfg(feature = "std")]
+mod client;
+
+#[cfg(feature = "std")]
 mod api {
 	use super::ParentchainExtrinsicParams;
 	use substrate_api_client::Api;
 
-	pub use substrate_api_client::{rpc::WsRpcClient, ApiClientError};
+	pub use crate::client::LitentryWsRpcClient;
+	pub use substrate_api_client::ApiClientError;
 
-	pub type ParentchainApi = Api<sp_core::sr25519::Pair, WsRpcClient, ParentchainExtrinsicParams>;
+	pub type ParentchainApi =
+		Api<sp_core::sr25519::Pair, LitentryWsRpcClient, ParentchainExtrinsicParams>;
 }

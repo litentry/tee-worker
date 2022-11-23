@@ -18,7 +18,7 @@
 use crate::Cli;
 use base58::FromBase58;
 use itc_rpc_client::direct_client::{DirectApi, DirectClient as DirectWorkerApi};
-use itp_node_api::api_client::{ParentchainApi, WsRpcClient};
+use itp_node_api::api_client::{LitentryWsRpcClient as WsRpcClient, ParentchainApi};
 use log::*;
 use my_node_runtime::{AccountId, Signature};
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;

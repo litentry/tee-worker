@@ -4598,6 +4598,7 @@ name = "itp-api-client-extensions"
 version = "0.9.0"
 dependencies = [
  "itp-types",
+ "log 0.4.17",
  "parity-scale-codec",
  "sp-core",
  "sp-finality-grandpa",
@@ -4610,8 +4611,14 @@ dependencies = [
 name = "itp-api-client-types"
 version = "0.9.0"
 dependencies = [
+ "hex 0.4.3",
+ "log 0.4.17",
+ "serde 1.0.147",
+ "serde_json 1.0.87",
  "sp-core",
  "substrate-api-client",
+ "url 2.3.1",
+ "ws",
 ]
 
 [[package]]
@@ -4757,7 +4764,10 @@ dependencies = [
 name = "itp-node-api-factory"
 version = "0.9.0"
 dependencies = [
+ "env_logger",
+ "itp-api-client-extensions",
  "itp-api-client-types",
+ "log 0.4.17",
  "sp-core",
  "thiserror 1.0.37",
 ]

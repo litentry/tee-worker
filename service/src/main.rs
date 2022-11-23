@@ -758,7 +758,7 @@ fn subscribe_to_parentchain_new_headers<E: EnclaveBase + Sidechain>(
 			Err(e) => Err(Error::ApiSubscriptionDisconnected(e)),
 		}?;
 
-		println!(
+		info!(
 			"[+] Received finalized header update ({}), syncing parent chain...",
 			new_header.number
 		);

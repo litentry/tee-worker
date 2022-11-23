@@ -16,7 +16,7 @@
 
 */
 
-use itp_api_client_types::{ParentchainApi, WsRpcClient};
+use itp_api_client_types::{LitentryWsRpcClient as WsRpcClient, ParentchainApi};
 use sp_core::sr25519;
 
 /// Trait to create a node API, based on a node URL and signer.
@@ -52,5 +52,42 @@ impl CreateNodeApi for NodeApiFactory {
 		ParentchainApi::new(WsRpcClient::new(self.node_url.as_str()))
 			.map_err(NodeApiFactoryError::FailedToCreateNodeApi)
 			.map(|a| a.set_signer(self.signer.clone()))
+	}
+}
+
+#[cfg(test)]
+mod test {
+	use crate::{CreateNodeApi, NodeApiFactory};
+	use itp_api_client_extensions::ChainApi;
+	use sp_core::Pair;
+	use std::{sync::mpsc::channel, thread::sleep, time::Duration};
+	// use test_env_log::test;
+
+	fn init() {
+		let _ = env_logger::builder().is_test(true).try_init();
+	}
+
+	#[test]
+	fn test_api() {
+		init();
+		println!("xxxx1111");
+		let alice = sp_core::sr25519::Pair::from_string("//Alice", None).unwrap();
+		let factory = NodeApiFactory::new("ws://host.docker.internal:9944".to_string(), alice);
+		println!("xxxx212");
+		let api = factory.create_api().unwrap();
+		println!("xxxx12121");
+		let (sender, receiver) = channel();
+		// for _i in 0..10 {
+		// 	let a = api.last_finalized_block();
+		// 	println!("block:{:?}", a);
+		// 	sleep(Duration::from_secs(10))
+		// }
+		println!("xxxx");
+		let _ = api.subscribe_finalized_heads(sender);
+
+		loop {
+			let a = receiver.recv();
+			log::info!("xxxxx head: {:?}", a);
+		}
 	}
 }
