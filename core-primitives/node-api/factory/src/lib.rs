@@ -55,39 +55,36 @@ impl CreateNodeApi for NodeApiFactory {
 	}
 }
 
-#[cfg(test)]
-mod test {
-	use crate::{CreateNodeApi, NodeApiFactory};
-	// use itp_api_client_extensions::ChainApi;
-	use sp_core::Pair;
-	use std::{sync::mpsc::channel, thread::sleep, time::Duration};
-	// use test_env_log::test;
-
-	fn init() {
-		let _ = env_logger::builder().is_test(true).try_init();
-	}
-
-	#[test]
-	fn test_api() {
-		init();
-		let alice = sp_core::sr25519::Pair::from_string("//Alice", None).unwrap();
-		let factory = NodeApiFactory::new("ws://host.docker.internal:9944".to_string(), alice);
-		let api = factory.create_api().unwrap();
-		let (sender, receiver) = channel();
-		// for _i in 0..10 {
-		// 	let a = api.last_finalized_block();
-		// 	println!("block:{:?}", a);
-		// 	sleep(Duration::from_secs(10))
-		// }
-		let _ = api.subscribe_finalized_heads(sender);
-
-		loop {
-			let a = receiver.recv();
-			log::info!("xxxxx head: {:?}", a);
-			if a.is_err() {
-				sleep(Duration::from_secs(1));
-				return
-			}
-		}
-	}
-}
+// #[cfg(test)]
+// mod test {
+// 	use crate::{CreateNodeApi, NodeApiFactory};
+// 	use sp_core::Pair;
+// 	use std::{sync::mpsc::channel, thread::sleep, time::Duration};
+//
+// 	fn init() {
+// 		let _ = env_logger::builder().is_test(true).try_init();
+// 	}
+//
+// 	#[test]
+// 	fn test_api() {
+// 		init();
+// 		let alice = sp_core::sr25519::Pair::from_string("//Alice", None).unwrap();
+// 		let factory = NodeApiFactory::new("ws://host.docker.internal:9944".to_string(), alice);
+// 		let api = factory.create_api().unwrap();
+// 		let (sender, receiver) = channel();
+// 		// for _i in 0..10 {
+// 		// 	let a = api.last_finalized_block();
+// 		// 	println!("block:{:?}", a);
+// 		// 	sleep(Duration::from_secs(10))
+// 		// }
+// 		let _ = api.subscribe_finalized_heads(sender);
+//
+// 		loop {
+// 			let a = receiver.recv();
+// 			if a.is_err() {
+// 				sleep(Duration::from_secs(1));
+// 				return
+// 			}
+// 		}
+// 	}
+// }
