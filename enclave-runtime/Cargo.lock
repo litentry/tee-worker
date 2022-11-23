@@ -2399,7 +2399,7 @@ dependencies = [
 [[package]]
 name = "jsonrpc-core"
 version = "18.0.0"
-source = "git+https://github.com/scs/jsonrpc?branch=bh/remove-sp-std-dependency#b39ee8be82eba2392bf5d683e14f674d76f9691a"
+source = "git+https://github.com/scs/jsonrpc?branch=no_std_v18#0faf53c491c3222b96242a973d902dd06e9b6674"
 dependencies = [
  "futures 0.3.8",
  "log",
