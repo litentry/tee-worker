@@ -4291,7 +4291,7 @@ dependencies = [
  "pallet-parentchain",
  "pallet-sudo",
  "parity-scale-codec",
- "primitives",
+ "primitives 0.9.10 (git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev)",
  "rand 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.7.3 (git+https://github.com/mesalock-linux/rand-sgx?tag=sgx_1.1.3)",
  "ring 0.16.20",
@@ -4417,6 +4417,7 @@ dependencies = [
  "litentry-primitives",
  "log 0.4.17",
  "pallet-identity-management 0.1.0 (git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev)",
+ "pallet-vc-management 0.1.0 (git+https://github.com/litentry/litentry-parachain.git?branch=vc-schema)",
  "parity-scale-codec",
  "sgx_tstd",
  "sgx_types",
@@ -6710,7 +6711,7 @@ version = "0.1.0"
 dependencies = [
  "hex 0.4.3",
  "parity-scale-codec",
- "primitives",
+ "primitives 0.9.10 (git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev)",
  "scale-info",
  "serde 1.0.147",
  "serde_json 1.0.87",
@@ -7061,7 +7062,7 @@ version = "0.1.0"
 source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#59b698f4870ad936f91571ea2a4feb29919e4cb2"
 dependencies = [
  "parity-scale-codec",
- "primitives",
+ "primitives 0.9.10 (git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev)",
  "scale-info",
  "serde 1.0.147",
  "serde_json 1.0.87",
@@ -8326,7 +8327,7 @@ dependencies = [
  "hex 0.4.3",
  "log 0.4.17",
  "parity-scale-codec",
- "primitives",
+ "primitives 0.9.10 (git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev)",
  "scale-info",
  "sp-arithmetic",
  "sp-core",
@@ -8349,7 +8350,7 @@ dependencies = [
  "mock-tee-primitives",
  "pallet-identity-management 0.1.0 (git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev)",
  "parity-scale-codec",
- "primitives",
+ "primitives 0.9.10 (git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev)",
  "rsa",
  "scale-info",
  "sha2 0.10.6",
@@ -8506,7 +8507,7 @@ dependencies = [
  "pallet-balances",
  "pallet-session",
  "parity-scale-codec",
- "primitives",
+ "primitives 0.9.10 (git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev)",
  "scale-info",
  "serde 1.0.147",
  "sp-runtime",
@@ -8825,7 +8826,25 @@ dependencies = [
  "hex 0.4.3",
  "log 0.4.17",
  "parity-scale-codec",
- "primitives",
+ "primitives 0.9.10 (git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev)",
+ "scale-info",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-runtime",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.28)",
+]
+
+[[package]]
+name = "pallet-vc-management"
+version = "0.1.0"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=vc-schema#a326dc7fd7d83cbc4eef35c51d0a00be1425a4eb"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "hex 0.4.3",
+ "log 0.4.17",
+ "parity-scale-codec",
+ "primitives 0.9.10 (git+https://github.com/litentry/litentry-parachain.git?branch=vc-schema)",
  "scale-info",
  "sp-arithmetic",
  "sp-core",
@@ -10465,6 +10484,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "primitives"
+version = "0.9.10"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=vc-schema#a326dc7fd7d83cbc4eef35c51d0a00be1425a4eb"
+dependencies = [
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-runtime",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.28)",
+]
+
+[[package]]
 name = "prioritized-metered-channel"
 version = "0.2.0"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.28#314298c32ac6df996ea8f3fe23fa5d3768340066"
@@ -11170,13 +11201,13 @@ dependencies = [
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
  "pallet-utility",
- "pallet-vc-management",
+ "pallet-vc-management 0.1.0 (git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev)",
  "pallet-vesting",
  "pallet-xcm",
  "parachain-info",
  "parity-scale-codec",
  "polkadot-parachain",
- "primitives",
+ "primitives 0.9.10 (git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev)",
  "runtime-common",
  "scale-info",
  "serde 1.0.147",
@@ -11276,7 +11307,7 @@ dependencies = [
  "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-runtime-parachains",
- "primitives",
+ "primitives 0.9.10 (git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev)",
  "scale-info",
  "sp-core",
  "sp-io 6.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.28)",

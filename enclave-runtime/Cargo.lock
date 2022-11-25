@@ -1614,6 +1614,7 @@ dependencies = [
  "litentry-primitives",
  "log",
  "pallet-identity-management 0.1.0 (git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev)",
+ "pallet-vc-management",
  "parity-scale-codec",
  "sgx_tstd",
  "sgx_types",
@@ -2623,7 +2624,7 @@ name = "litentry-primitives"
 version = "0.1.0"
 dependencies = [
  "parity-scale-codec",
- "primitives",
+ "primitives 0.9.10 (git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev)",
  "scale-info",
  "serde 1.0.147",
  "serde_json 1.0.87",
@@ -2948,7 +2949,7 @@ dependencies = [
  "hex 0.4.3",
  "log",
  "parity-scale-codec",
- "primitives",
+ "primitives 0.9.10 (git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev)",
  "scale-info",
  "sp-arithmetic",
  "sp-core",
@@ -3013,6 +3014,24 @@ dependencies = [
  "scale-info",
  "sp-core",
  "sp-io",
+ "sp-runtime",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.28)",
+]
+
+[[package]]
+name = "pallet-vc-management"
+version = "0.1.0"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=vc-schema#a326dc7fd7d83cbc4eef35c51d0a00be1425a4eb"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "hex 0.4.3",
+ "log",
+ "parity-scale-codec",
+ "primitives 0.9.10 (git+https://github.com/litentry/litentry-parachain.git?branch=vc-schema)",
+ "scale-info",
+ "sp-arithmetic",
+ "sp-core",
  "sp-runtime",
  "sp-std 4.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.28)",
 ]
@@ -3148,6 +3167,18 @@ dependencies = [
 name = "primitives"
 version = "0.9.10"
 source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#59b698f4870ad936f91571ea2a4feb29919e4cb2"
+dependencies = [
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-runtime",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.28)",
+]
+
+[[package]]
+name = "primitives"
+version = "0.9.10"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=vc-schema#a326dc7fd7d83cbc4eef35c51d0a00be1425a4eb"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
