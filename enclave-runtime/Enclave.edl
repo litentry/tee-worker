@@ -81,7 +81,8 @@ enclave {
 		public sgx_status_t perform_ra(
 			[in, size=w_url_size] uint8_t* w_url, uint32_t w_url_size,
 			[out, size=unchecked_extrinsic_size] uint8_t* unchecked_extrinsic, uint32_t unchecked_extrinsic_size,
-			int skip_ra
+			int skip_ra,
+			int linkable
 		);
 
 		public sgx_status_t update_market_data_xt(
@@ -90,7 +91,7 @@ enclave {
             [out, size=unchecked_extrinsic_size] uint8_t* unchecked_extrinsic, uint32_t unchecked_extrinsic_size
 		);
 
-		public sgx_status_t dump_ra_to_disk();
+		public sgx_status_t dump_ra_to_disk(int linkable);
 
 		public sgx_status_t run_state_provisioning_server(int fd, sgx_quote_sign_type_t quote_type, int skip_ra);
         public sgx_status_t request_state_provisioning(

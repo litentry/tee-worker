@@ -38,6 +38,7 @@ pub(crate) fn sync_state<
 	shard: &ShardIdentifier,
 	enclave_api: &E,
 	skip_ra: bool,
+	linkable: bool,
 ) {
 	// FIXME: we now assume that keys are equal for all shards.
 	let provider_url = match WorkerModeProvider::worker_mode() {
@@ -50,14 +51,13 @@ pub(crate) fn sync_state<
 
 	println!("Requesting state provisioning from worker at {}", &provider_url);
 
-	enclave_request_state_provisioning(
-		enclave_api,
-		sgx_quote_sign_type_t::SGX_UNLINKABLE_SIGNATURE,
-		&provider_url,
-		shard,
-		skip_ra,
-	)
-	.unwrap();
+	let mut sign_type = sgx_quote_sign_type_t::SGX_UNLINKABLE_SIGNATURE;
+	if linkable {
+		sign_type = sgx_quote_sign_type_t::SGX_LINKABLE_SIGNATURE;
+	}
+
+	enclave_request_state_provisioning(enclave_api, sign_type, &provider_url, shard, skip_ra)
+		.unwrap();
 	println!("[+] State provisioning successfully performed.");
 }
 

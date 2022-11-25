@@ -26,9 +26,9 @@ use sgx_types::*;
 
 /// general remote attestation methods
 pub trait RemoteAttestation {
-	fn perform_ra(&self, w_url: &str, skip_ra: bool) -> EnclaveResult<Vec<u8>>;
+	fn perform_ra(&self, w_url: &str, skip_ra: bool, linkable: bool) -> EnclaveResult<Vec<u8>>;
 
-	fn dump_ra_to_disk(&self) -> EnclaveResult<()>;
+	fn dump_ra_to_disk(&self, linkable: bool) -> EnclaveResult<()>;
 }
 
 /// call-backs that are made from inside the enclave (using o-call), to e-calls again inside the enclave
@@ -73,7 +73,7 @@ pub trait TlsRemoteAttestation {
 }
 
 impl RemoteAttestation for Enclave {
-	fn perform_ra(&self, w_url: &str, skip_ra: bool) -> EnclaveResult<Vec<u8>> {
+	fn perform_ra(&self, w_url: &str, skip_ra: bool, linkable: bool) -> EnclaveResult<Vec<u8>> {
 		let mut retval = sgx_status_t::SGX_SUCCESS;
 
 		let unchecked_extrinsic_size = EXTRINSIC_MAX_SIZE;
@@ -90,6 +90,7 @@ impl RemoteAttestation for Enclave {
 				unchecked_extrinsic.as_mut_ptr(),
 				unchecked_extrinsic.len() as u32,
 				skip_ra.into(),
+				linkable.into(),
 			)
 		};
 
@@ -99,10 +100,10 @@ impl RemoteAttestation for Enclave {
 		Ok(unchecked_extrinsic)
 	}
 
-	fn dump_ra_to_disk(&self) -> EnclaveResult<()> {
+	fn dump_ra_to_disk(&self, linkable: bool) -> EnclaveResult<()> {
 		let mut retval = sgx_status_t::SGX_SUCCESS;
 
-		let result = unsafe { ffi::dump_ra_to_disk(self.eid, &mut retval) };
+		let result = unsafe { ffi::dump_ra_to_disk(self.eid, &mut retval, linkable.into()) };
 
 		ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
 		ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));

@@ -92,6 +92,10 @@ subcommands:
                 long: skip-ra
                 short: s
                 help: skip remote attestation. Set this flag if running enclave in SW mode
+            - linkable:
+                long: linkable
+                short: l
+                help: Set this flag if this SPID is associated with linkable quotes.
             - shard:
                 required: false
                 index: 1
@@ -122,6 +126,11 @@ subcommands:
                   long: skip-ra
                   short: s
                   help: skip remote attestation. Set this flag if running enclave in SW mode
+            - linkable:
+                long: linkable
+                short: l
+                help: Set this flag if this SPID is associated with linkable quotes.
+
     - shielding-key:
         about: Get the public RSA3072 key from the TEE to be used to encrypt requests
     - signing-key:

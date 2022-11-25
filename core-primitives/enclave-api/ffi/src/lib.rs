@@ -98,9 +98,14 @@ extern "C" {
 		unchecked_extrinsic: *mut u8,
 		unchecked_extrinsic_size: u32,
 		skip_ra: c_int,
+		linkable: c_int,
 	) -> sgx_status_t;
 
-	pub fn dump_ra_to_disk(eid: sgx_enclave_id_t, retval: *mut sgx_status_t) -> sgx_status_t;
+	pub fn dump_ra_to_disk(
+		eid: sgx_enclave_id_t,
+		retval: *mut sgx_status_t,
+		linkable: c_int,
+	) -> sgx_status_t;
 
 	pub fn test_main_entrance(eid: sgx_enclave_id_t, retval: *mut sgx_status_t) -> sgx_status_t;
 

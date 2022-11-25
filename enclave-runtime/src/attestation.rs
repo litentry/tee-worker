@@ -105,6 +105,7 @@ pub unsafe extern "C" fn perform_ra(
 	unchecked_extrinsic: *mut u8,
 	unchecked_extrinsic_size: u32,
 	skip_ra: c_int,
+	linkable: c_int,
 ) -> sgx_status_t {
 	if w_url.is_null() || unchecked_extrinsic.is_null() {
 		return sgx_status_t::SGX_ERROR_INVALID_PARAMETER
@@ -114,7 +115,7 @@ pub unsafe extern "C" fn perform_ra(
 	let extrinsic_slice =
 		slice::from_raw_parts_mut(unchecked_extrinsic, unchecked_extrinsic_size as usize);
 
-	let extrinsic = match perform_ra_internal(url, skip_ra == 1) {
+	let extrinsic = match perform_ra_internal(url, skip_ra == 1, linkable == 1) {
 		Ok(xt) => xt,
 		Err(e) => return e.into(),
 	};
@@ -126,12 +127,16 @@ pub unsafe extern "C" fn perform_ra(
 	sgx_status_t::SGX_SUCCESS
 }
 
-fn perform_ra_internal(url: String, skip_ra: bool) -> EnclaveResult<OpaqueExtrinsic> {
+fn perform_ra_internal(
+	url: String,
+	skip_ra: bool,
+	linkable: bool,
+) -> EnclaveResult<OpaqueExtrinsic> {
 	let attestation_handler = GLOBAL_ATTESTATION_HANDLER_COMPONENT.get()?;
 	let extrinsics_factory = GLOBAL_EXTRINSICS_FACTORY_COMPONENT.get()?;
 	let node_metadata_repo = GLOBAL_NODE_METADATA_REPOSITORY_COMPONENT.get()?;
 
-	let cert_der = attestation_handler.perform_ra(skip_ra)?;
+	let cert_der = attestation_handler.perform_ra(skip_ra, linkable)?;
 
 	info!("    [Enclave] Compose register enclave call");
 	let call_ids = node_metadata_repo
@@ -146,7 +151,7 @@ fn perform_ra_internal(url: String, skip_ra: bool) -> EnclaveResult<OpaqueExtrin
 }
 
 #[no_mangle]
-pub extern "C" fn dump_ra_to_disk() -> sgx_status_t {
+pub extern "C" fn dump_ra_to_disk(linkable: c_int) -> sgx_status_t {
 	let attestation_handler = match GLOBAL_ATTESTATION_HANDLER_COMPONENT.get() {
 		Ok(r) => r,
 		Err(e) => {
@@ -154,7 +159,7 @@ pub extern "C" fn dump_ra_to_disk() -> sgx_status_t {
 			return sgx_status_t::SGX_ERROR_UNEXPECTED
 		},
 	};
-	match attestation_handler.dump_ra_to_disk() {
+	match attestation_handler.dump_ra_to_disk(linkable == 1) {
 		Ok(_) => sgx_status_t::SGX_SUCCESS,
 		Err(e) => e.into(),
 	}

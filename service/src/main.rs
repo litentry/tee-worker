@@ -198,6 +198,7 @@ fn main() {
 				&shard,
 				enclave.as_ref(),
 				run_config.skip_ra,
+				run_config.linkable,
 			);
 		}
 
@@ -219,6 +220,7 @@ fn main() {
 			&extract_shard(&smatches.value_of("shard").map(|s| s.to_string()), enclave.as_ref()),
 			enclave.as_ref(),
 			smatches.is_present("skip-ra"),
+			smatches.is_present("linkable"),
 		);
 	} else if matches.is_present("shielding-key") {
 		setup::generate_shielding_key_file(enclave.as_ref());
@@ -226,7 +228,13 @@ fn main() {
 		setup::generate_signing_key_file(enclave.as_ref());
 	} else if matches.is_present("dump-ra") {
 		info!("*** Perform RA and dump cert to disk");
-		enclave.dump_ra_to_disk().unwrap();
+
+		let mut linkable = false;
+		if let Some(run_config) = &config.run_config {
+			linkable = run_config.linkable;
+		}
+
+		enclave.dump_ra_to_disk(linkable).unwrap();
 	} else if matches.is_present("mrenclave") {
 		println!("{}", enclave.get_mrenclave().unwrap().encode().to_base58());
 	} else if let Some(sub_matches) = matches.subcommand_matches("init-shard") {
@@ -235,11 +243,21 @@ fn main() {
 			&extract_shard(&sub_matches.value_of("shard").map(|s| s.to_string()), enclave.as_ref()),
 		);
 	} else if let Some(sub_matches) = matches.subcommand_matches("test") {
+		let mut linkable = false;
+		if let Some(run_config) = &config.run_config {
+			linkable = run_config.linkable;
+		}
+
+		let mut quote_sign_type = sgx_quote_sign_type_t::SGX_UNLINKABLE_SIGNATURE;
+		if linkable {
+			quote_sign_type = sgx_quote_sign_type_t::SGX_LINKABLE_SIGNATURE;
+		}
+
 		if sub_matches.is_present("provisioning-server") {
 			println!("*** Running Enclave MU-RA TLS server\n");
 			enclave_run_state_provisioning_server(
 				enclave.as_ref(),
-				sgx_quote_sign_type_t::SGX_UNLINKABLE_SIGNATURE,
+				quote_sign_type,
 				&config.mu_ra_url(),
 				sub_matches.is_present("skip-ra"),
 			);
@@ -252,7 +270,7 @@ fn main() {
 			);
 			enclave_request_state_provisioning(
 				enclave.as_ref(),
-				sgx_quote_sign_type_t::SGX_UNLINKABLE_SIGNATURE,
+				quote_sign_type,
 				&config.mu_ra_url_external(),
 				&shard,
 				sub_matches.is_present("skip-ra"),
@@ -307,13 +325,19 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	println!("MU-RA server listening on {}", config.mu_ra_url());
 	let run_config = config.run_config.clone().expect("Run config missing");
 	let skip_ra = run_config.skip_ra;
+	let linkable = run_config.linkable;
 	let is_development_mode = run_config.dev;
 	let ra_url = config.mu_ra_url();
 	let enclave_api_key_prov = enclave.clone();
+
+	let mut quote_sign_type = sgx_quote_sign_type_t::SGX_UNLINKABLE_SIGNATURE;
+	if linkable {
+		quote_sign_type = sgx_quote_sign_type_t::SGX_LINKABLE_SIGNATURE;
+	}
 	thread::spawn(move || {
 		enclave_run_state_provisioning_server(
 			enclave_api_key_prov.as_ref(),
-			sgx_quote_sign_type_t::SGX_UNLINKABLE_SIGNATURE,
+			quote_sign_type,
 			&ra_url,
 			skip_ra,
 		);
@@ -421,7 +445,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	} else {
 		println!("[!] creating remote attestation report and create enclave register extrinsic.");
 	};
-	let uxt = enclave.perform_ra(&trusted_url, skip_ra).unwrap();
+	let uxt = enclave.perform_ra(&trusted_url, skip_ra, linkable).unwrap();
 
 	let mut xthex = hex::encode(uxt);
 	xthex.insert_str(0, "0x");

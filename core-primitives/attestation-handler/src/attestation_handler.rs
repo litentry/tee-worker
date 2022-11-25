@@ -80,13 +80,13 @@ pub trait AttestationHandler {
 	/// Generates an encoded remote attestation certificate.
 	/// If skip_ra is set, it will not perform a remote attestation via IAS
 	/// but instead generate a mock certificate.
-	fn perform_ra(&self, skip_ra: bool) -> EnclaveResult<Vec<u8>>;
+	fn perform_ra(&self, skip_ra: bool, linkable: bool) -> EnclaveResult<Vec<u8>>;
 
 	/// Get the measurement register value of the enclave
 	fn get_mrenclave(&self) -> EnclaveResult<[u8; MR_ENCLAVE_SIZE]>;
 
 	/// Write the remote attestation report to the disk
-	fn dump_ra_to_disk(&self) -> EnclaveResult<()>;
+	fn dump_ra_to_disk(&self, linkable: bool) -> EnclaveResult<()>;
 
 	/// Create the remote attestation report and encapsulate it in a DER certificate
 	/// Returns a pair consisting of (private key DER, certificate DER)
@@ -105,9 +105,12 @@ impl<OCallApi> AttestationHandler for IasAttestationHandler<OCallApi>
 where
 	OCallApi: EnclaveAttestationOCallApi,
 {
-	fn perform_ra(&self, skip_ra: bool) -> EnclaveResult<Vec<u8>> {
+	fn perform_ra(&self, skip_ra: bool, linkable: bool) -> EnclaveResult<Vec<u8>> {
 		// Our certificate is unlinkable.
-		let sign_type = sgx_quote_sign_type_t::SGX_UNLINKABLE_SIGNATURE;
+		let mut sign_type = sgx_quote_sign_type_t::SGX_UNLINKABLE_SIGNATURE;
+		if linkable {
+			sign_type = sgx_quote_sign_type_t::SGX_LINKABLE_SIGNATURE;
+		}
 
 		// FIXME: should call `create_ra_report_and_signature` in skip_ra mode as well:
 		// https://github.com/integritee-network/worker/issues/321.
@@ -130,9 +133,12 @@ where
 		}
 	}
 
-	fn dump_ra_to_disk(&self) -> EnclaveResult<()> {
+	fn dump_ra_to_disk(&self, linkable: bool) -> EnclaveResult<()> {
 		// our certificate is unlinkable
-		let sign_type = sgx_quote_sign_type_t::SGX_UNLINKABLE_SIGNATURE;
+		let mut sign_type = sgx_quote_sign_type_t::SGX_UNLINKABLE_SIGNATURE;
+		if linkable {
+			sign_type = sgx_quote_sign_type_t::SGX_LINKABLE_SIGNATURE;
+		}
 
 		let (_key_der, cert_der) = match self.create_ra_report_and_signature(sign_type, false) {
 			Ok(r) => r,
@@ -483,7 +489,6 @@ where
 		//       9. quote_size
 
 		let spid: sgx_spid_t = Self::load_spid(RA_SPID_FILE)?;
-
 		let quote_result =
 			self.ocall_api.get_quote(sigrl_vec, report, sign_type, spid, quote_nonce)?;
 
@@ -493,7 +498,7 @@ where
 		// Added 09-28-2018
 		// Perform a check on qe_report to verify if the qe_report is valid
 		match rsgx_verify_report(&qe_report) {
-			Ok(()) => debug!("    [Enclave] rsgx_verify_report success!"),
+			Ok(()) => info!("    [Enclave] rsgx_verify_report success!"),
 			Err(x) => {
 				error!("    [Enclave] rsgx_verify_report failed. {:?}", x);
 				return Err(x)

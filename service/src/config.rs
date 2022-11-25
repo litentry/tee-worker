@@ -175,6 +175,8 @@ impl From<&ArgMatches<'_>> for Config {
 pub struct RunConfig {
 	/// Skip remote attestation. Set this flag if running enclave in SW mode
 	pub skip_ra: bool,
+	/// Set linkable quote type. SGX_LINKABLE_SIGNATURE / SGX_UNLINKABLE_SIGNATURE
+	pub linkable: bool,
 	/// Set this flag if running in development mode to bootstrap enclave account on parentchain via //Alice.
 	pub dev: bool,
 	/// Request key and state provisioning from a peer worker.
@@ -188,6 +190,7 @@ pub struct RunConfig {
 impl From<&ArgMatches<'_>> for RunConfig {
 	fn from(m: &ArgMatches<'_>) -> Self {
 		let skip_ra = m.is_present("skip-ra");
+		let linkable = m.is_present("linkable");
 		let dev = m.is_present("dev");
 		let request_state = m.is_present("request-state");
 		let shard = m.value_of("shard").map(|s| s.to_string());
@@ -195,7 +198,7 @@ impl From<&ArgMatches<'_>> for RunConfig {
 			parse(i).unwrap_or_else(|e| panic!("teeracle-interval parsing error {:?}", e))
 		});
 
-		Self { skip_ra, dev, request_state, shard, teeracle_update_interval }
+		Self { skip_ra, linkable, dev, request_state, shard, teeracle_update_interval }
 	}
 }
 
@@ -324,6 +327,7 @@ mod test {
 			("request-state", Default::default()),
 			("dev", Default::default()),
 			("skip-ra", Default::default()),
+			("linkable", Default::default()),
 			("shard", Default::default()),
 			("teeracle-interval", Default::default()),
 		]);
