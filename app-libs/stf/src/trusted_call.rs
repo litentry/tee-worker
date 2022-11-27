@@ -23,7 +23,7 @@ use std::vec::Vec;
 
 use crate::{
 	helpers::{aes_encrypt_default, ensure_enclave_signer_account},
-	AccountId, Arc, IdentityManagement, KeyPair, MetadataOf, Runtime, ShardIdentifier, Signature,
+	AccountId, IdentityManagement, KeyPair, MetadataOf, Runtime, ShardIdentifier, Signature,
 	StfError, System, TrustedOperation,
 };
 use codec::{Decode, Encode};
@@ -41,7 +41,7 @@ use litentry_primitives::{
 use log::*;
 use sp_io::hashing::blake2_256;
 use sp_runtime::{traits::Verify, MultiAddress};
-use std::{format, prelude::v1::*};
+use std::{format, prelude::v1::*, sync::Arc};
 
 #[cfg(feature = "evm")]
 use ita_sgx_runtime::{AddressMapping, HashedAddressMapping};
@@ -649,8 +649,12 @@ mod tests {
 			42,
 			42,
 		);
-		let signed_call =
-			call.sign(&KeyPair::Sr25519(AccountKeyring::Alice.pair()), nonce, &mrenclave, &shard);
+		let signed_call = call.sign(
+			&KeyPair::Sr25519(Box::new(AccountKeyring::Alice.pair())),
+			nonce,
+			&mrenclave,
+			&shard,
+		);
 
 		assert!(signed_call.verify_signature(&mrenclave, &shard));
 	}

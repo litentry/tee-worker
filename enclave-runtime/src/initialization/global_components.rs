@@ -21,7 +21,11 @@
 //! and ensures that the global instances are initialized once.
 
 use crate::{
-	ocall::OcallApi, rpc::rpc_response_channel::RpcResponseChannel,
+	initialization::parentchain::{
+		parachain::FullParachainHandler, solochain::FullSolochainHandler,
+	},
+	ocall::OcallApi,
+	rpc::rpc_response_channel::RpcResponseChannel,
 	tls_ra::seal_handler::SealHandler,
 };
 use ita_sgx_runtime::Runtime;
@@ -33,6 +37,7 @@ use itc_direct_rpc_server::{
 use itc_parentchain::{
 	block_import_dispatcher::{
 		immediate_dispatcher::ImmediateDispatcher, triggered_dispatcher::TriggeredDispatcher,
+		BlockImportDispatcher,
 	},
 	block_importer::ParentchainBlockImporter,
 	indirect_calls_executor::IndirectCallsExecutor,
@@ -57,7 +62,8 @@ use itp_stf_executor::{
 	state_getter::StfStateGetter,
 };
 use itp_stf_state_handler::{
-	file_io::sgx::SgxStateFileIo, state_snapshot_repository::StateSnapshotRepository, StateHandler,
+	file_io::sgx::SgxStateFileIo, state_initializer::StateInitializer,
+	state_snapshot_repository::StateSnapshotRepository, StateHandler,
 };
 use itp_stf_state_observer::state_observer::StateObserver;
 use itp_top_pool::basic_pool::BasicPool;
@@ -84,11 +90,13 @@ pub type EnclaveTrustedCallSigned = TrustedCallSigned;
 pub type EnclaveStf = Stf<EnclaveTrustedCallSigned, EnclaveGetter, StfState, Runtime>;
 pub type EnclaveStateKeyRepository = KeyRepository<Aes, AesSeal>;
 pub type EnclaveShieldingKeyRepository = KeyRepository<Rsa3072KeyPair, Rsa3072Seal>;
-pub type EnclaveStateFileIo =
-	SgxStateFileIo<EnclaveStateKeyRepository, EnclaveShieldingKeyRepository, EnclaveStf, StfState>;
+pub type EnclaveStateFileIo = SgxStateFileIo<EnclaveStateKeyRepository, StfState>;
 pub type EnclaveStateSnapshotRepository = StateSnapshotRepository<EnclaveStateFileIo>;
 pub type EnclaveStateObserver = StateObserver<StfState>;
-pub type EnclaveStateHandler = StateHandler<EnclaveStateSnapshotRepository, EnclaveStateObserver>;
+pub type EnclaveStateInitializer =
+	StateInitializer<StfState, EnclaveStf, EnclaveShieldingKeyRepository>;
+pub type EnclaveStateHandler =
+	StateHandler<EnclaveStateSnapshotRepository, EnclaveStateObserver, EnclaveStateInitializer>;
 pub type EnclaveGetterExecutor = GetterExecutor<EnclaveStateObserver, StfStateGetter<EnclaveStf>>;
 pub type EnclaveOCallApi = OcallApi;
 pub type EnclaveNodeMetadataRepository = NodeMetadataRepository<NodeMetadata>;
@@ -101,6 +109,16 @@ pub type EnclaveStfEnclaveSigner = StfEnclaveSigner<
 	EnclaveStf,
 	EnclaveTopPoolAuthor,
 >;
+pub type EnclaveAttestationHandler = IasAttestationHandler<EnclaveOCallApi>;
+
+pub type EnclaveRpcConnectionRegistry = ConnectionRegistry<Hash, ConnectionToken>;
+pub type EnclaveRpcWsHandler =
+	RpcWsHandler<RpcWatchExtractor<Hash>, EnclaveRpcConnectionRegistry, Hash>;
+pub type EnclaveWebSocketServer = TungsteniteWsServer<EnclaveRpcWsHandler, FromFileConfigProvider>;
+pub type EnclaveRpcResponder = RpcResponder<EnclaveRpcConnectionRegistry, Hash, RpcResponseChannel>;
+pub type EnclaveSidechainApi = SidechainApi<ParentchainBlock>;
+
+// Parentchain types
 pub type EnclaveExtrinsicsFactory =
 	ExtrinsicsFactory<Pair, NonceCache, EnclaveNodeMetadataRepository>;
 pub type EnclaveIndirectCallsExecutor = IndirectCallsExecutor<
@@ -124,16 +142,14 @@ pub type EnclaveParentchainBlockImporter = ParentchainBlockImporter<
 pub type EnclaveParentchainBlockImportQueue = BlockImportQueue<SignedParentchainBlock>;
 pub type EnclaveTriggeredParentchainBlockImportDispatcher =
 	TriggeredDispatcher<EnclaveParentchainBlockImporter, EnclaveParentchainBlockImportQueue>;
+
 pub type EnclaveImmediateParentchainBlockImportDispatcher =
 	ImmediateDispatcher<EnclaveParentchainBlockImporter>;
-pub type EnclaveAttestationHandler = IasAttestationHandler<EnclaveOCallApi>;
 
-pub type EnclaveRpcConnectionRegistry = ConnectionRegistry<Hash, ConnectionToken>;
-pub type EnclaveRpcWsHandler =
-	RpcWsHandler<RpcWatchExtractor<Hash>, EnclaveRpcConnectionRegistry, Hash>;
-pub type EnclaveWebSocketServer = TungsteniteWsServer<EnclaveRpcWsHandler, FromFileConfigProvider>;
-pub type EnclaveRpcResponder = RpcResponder<EnclaveRpcConnectionRegistry, Hash, RpcResponseChannel>;
-pub type EnclaveSidechainApi = SidechainApi<ParentchainBlock>;
+pub type EnclaveParentchainBlockImportDispatcher = BlockImportDispatcher<
+	EnclaveTriggeredParentchainBlockImportDispatcher,
+	EnclaveImmediateParentchainBlockImportDispatcher,
+>;
 
 /// Sidechain types
 pub type EnclaveSidechainState =
@@ -205,10 +221,6 @@ pub static GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT: ComponentContainer<
 	EnclaveShieldingKeyRepository,
 > = ComponentContainer::new("Shielding key repository");
 
-/// STF executor.
-pub static GLOBAL_STF_EXECUTOR_COMPONENT: ComponentContainer<EnclaveStfExecutor> =
-	ComponentContainer::new("STF executor");
-
 /// O-Call API
 pub static GLOBAL_OCALL_API_COMPONENT: ComponentContainer<EnclaveOCallApi> =
 	ComponentContainer::new("O-call API");
@@ -236,28 +248,12 @@ pub static GLOBAL_ATTESTATION_HANDLER_COMPONENT: ComponentContainer<EnclaveAttes
 /// Parentchain component instances
 ///-------------------------------------------------------------------------------------------------
 
-/// Triggered parentchain block import dispatcher.
-pub static GLOBAL_TRIGGERED_PARENTCHAIN_IMPORT_DISPATCHER_COMPONENT: ComponentContainer<
-	EnclaveTriggeredParentchainBlockImportDispatcher,
-> = ComponentContainer::new("triggered parentchain import dispatcher");
+/// Solochain Handler.
+pub static GLOBAL_FULL_SOLOCHAIN_HANDLER_COMPONENT: ComponentContainer<FullSolochainHandler> =
+	ComponentContainer::new("full solochain handler");
 
-/// Immediate parentchain block import dispatcher.
-pub static GLOBAL_IMMEDIATE_PARENTCHAIN_IMPORT_DISPATCHER_COMPONENT: ComponentContainer<
-	EnclaveImmediateParentchainBlockImportDispatcher,
-> = ComponentContainer::new("immediate parentchain import dispatcher");
-
-/// Parentchain block validator accessor.
-pub static GLOBAL_PARENTCHAIN_BLOCK_VALIDATOR_ACCESS_COMPONENT: ComponentContainer<
-	EnclaveValidatorAccessor,
-> = ComponentContainer::new("parentchain block validator accessor");
-
-/// Extrinsics factory.
-pub static GLOBAL_EXTRINSICS_FACTORY_COMPONENT: ComponentContainer<EnclaveExtrinsicsFactory> =
-	ComponentContainer::new("extrinsics_factory");
-
-pub static GLOBAL_NODE_METADATA_REPOSITORY_COMPONENT: ComponentContainer<
-	EnclaveNodeMetadataRepository,
-> = ComponentContainer::new("node metadata repository");
+pub static GLOBAL_FULL_PARACHAIN_HANDLER_COMPONENT: ComponentContainer<FullParachainHandler> =
+	ComponentContainer::new("full parachain handler");
 
 /// Sidechain component instances
 ///-------------------------------------------------------------------------------------------------
