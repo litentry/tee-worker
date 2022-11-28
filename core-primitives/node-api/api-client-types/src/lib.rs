@@ -53,7 +53,7 @@ mod api {
 	use super::ParentchainExtrinsicParams;
 	use substrate_api_client::Api;
 
-	pub use crate::client::LitentryWsRpcClient;
+	pub use itp_node_api_client::LitentryWsRpcClient;
 	pub use substrate_api_client::ApiClientError;
 
 	pub type ParentchainApi =
