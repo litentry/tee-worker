@@ -12,7 +12,7 @@ http = { version = "0.2", optional = true }
 http_req = { optional = true, features = ["rust-tls"], branch = "master", git = "https://github.com/integritee-network/http_req" }
 thiserror = { version = "1.0.26", optional = true }
 url = { version = "2.0.0", optional = true }
-chrono = { version = "0.4.0" }
+# chrono = { version = "0.4.19", optional = true }
 
 # no_std dependencies
 log = { version = "0.4", default-features = false }
@@ -29,10 +29,14 @@ http_req-sgx = { package = "http_req", git = "https://github.com/integritee-netw
 sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "master", features = ["net", "thread"], optional = true }
 thiserror_sgx = { package = "thiserror", git = "https://github.com/mesalock-linux/thiserror-sgx", tag = "sgx_1.1.3", optional = true }
 url_sgx = { package = "url", git = "https://github.com/mesalock-linux/rust-url-sgx", tag = "sgx_1.1.3", optional = true }
+# chrono_sgx = { package = "chrono", git = "https://github.com/mesalock-linux/chrono-sgx", optional = true }
 
 # litentry
 litentry-primitives = { path = "../../primitives", default-features = false }
 
+
+[dev-dependencies]
+chrono = { version = "0.4.19" }
 
 [features]
 default = ["std"]
@@ -47,7 +51,7 @@ std = [
     "serde/std",
     "serde_json/std",
     "litentry-primitives/std",
-    "chrono/std",
+    # "chrono",
 ]
 
 sgx = [
@@ -59,4 +63,5 @@ sgx = [
     "sgx_tstd",
     "itc-rest-client/sgx",
     "litentry-primitives/sgx",
+    # "chrono_sgx",
 ]

@@ -25,6 +25,7 @@ extern crate sgx_tstd as std;
 // re-export module to properly feature gate sgx and regular std environment
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub mod sgx_reexport_prelude {
+	// pub use chrono_sgx as chrono;
 	pub use thiserror_sgx as thiserror;
 	pub use url_sgx as url;
 }
@@ -37,7 +38,7 @@ use std::{fmt::Debug, string::String};
 pub mod a1;
 pub mod a2;
 pub mod a3;
-pub mod a4;
+pub mod a4_7_12;
 
 pub type Result<T> = core::result::Result<T, Error>;
 
@@ -53,7 +54,7 @@ pub enum Error {
 	Assertion3Error(String),
 
 	#[error("Assertion error: {0}")]
-	Assertion4Error(String),
+	Assertion4_7_12Error(String),
 
 	#[error("Other error: {0}")]
 	AssertionOtherError(String),

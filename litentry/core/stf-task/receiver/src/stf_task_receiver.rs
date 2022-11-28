@@ -15,6 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
+	chrono::{TimeZone, Utc},
 	format, AuthorApi, Error, HandleState, Hash, SgxExternalitiesTrait, ShardIdentifier,
 	ShieldingCryptoDecrypt, ShieldingCryptoEncrypt, StfEnclaveSigning, StfTaskContext,
 };
@@ -23,6 +24,10 @@ use ita_sgx_runtime::IdentityManagement;
 use lc_stf_task_sender::{stf_task_sender, RequestType};
 use litentry_primitives::{Assertion, IdentityWebType, Web2Network};
 use log::*;
+use std::string::ToString;
+
+const LIT_TOKEN_ADDRESS: &str = "0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723";
+const DOT_TOKEN_ADDRESS: &str = "0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723";
 
 // lifetime elision: StfTaskContext is guaranteed to outlive the fn
 pub fn run_stf_task_receiver<K, A, S, H>(context: &StfTaskContext<K, A, S, H>) -> Result<(), Error>
@@ -109,8 +114,47 @@ where
 					}
 				},
 				Assertion::A4 => {
-					if let Err(e) = lc_assertion_build::a4::build(request.vec_identity) {
+					// let from_date = format!("{:?}", Utc::now());
+					let from_date = "2022-10-16T00:00:00Z".to_string();
+					let token_address = LIT_TOKEN_ADDRESS.to_string();
+					let mini_balance = 0f64;
+					if let Err(e) = lc_assertion_build::a4_7_12::build(
+						request.vec_identity,
+						from_date,
+						token_address,
+						mini_balance,
+					) {
 						error!("error verify assertion4: {:?}", e)
+					}
+				},
+				Assertion::A7(mini_balance, year) => {
+					// let from_date =
+					// 	format!("{:?}", Utc.with_ymd_and_hms(year as i32, 1, 1, 0, 0, 0));
+					let from_date = "2022-10-16T00:00:00Z".to_string();
+					let token_address = DOT_TOKEN_ADDRESS.to_string();
+					let mini_balance: f64 = (mini_balance / (10 ^ 12)) as f64;
+					if let Err(e) = lc_assertion_build::a4_7_12::build(
+						request.vec_identity,
+						from_date,
+						token_address,
+						mini_balance,
+					) {
+						error!("error verify assertion7: {:?}", e)
+					}
+				},
+				Assertion::A12(mini_balance, year) => {
+					// let from_date =
+					// 	format!("{:?}", Utc.with_ymd_and_hms(year as i32, 1, 1, 0, 0, 0));
+					let from_date = "2022-10-16T00:00:00Z".to_string();
+					let token_address = LIT_TOKEN_ADDRESS.to_string();
+					let mini_balance: f64 = (mini_balance / (10 ^ 12)) as f64;
+					if let Err(e) = lc_assertion_build::a4_7_12::build(
+						request.vec_identity,
+						from_date,
+						token_address,
+						mini_balance,
+					) {
+						error!("error verify assertion7: {:?}", e)
 					}
 				},
 				_ => {

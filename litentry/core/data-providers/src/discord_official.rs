@@ -93,7 +93,7 @@ impl DiscordOfficialClient {
 
 #[cfg(test)]
 mod tests {
-	use crate::discord_official::DiscordOfficialClient;
+	// use crate::discord_official::DiscordOfficialClient;
 
 	#[test]
 	fn query_message_work() {
