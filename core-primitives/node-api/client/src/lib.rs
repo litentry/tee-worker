@@ -56,10 +56,17 @@ impl LitentryWsRpcClient {
 		let mut socket: MySocket;
 
 		let send_request =
-			|socket: &mut MySocket, json_req: String| -> Result<String, ApiClientError> {
+			|socket: &mut MySocket, json_req: String| -> Result<String, (ApiClientError, bool)> {
 				match socket.write_message(Message::Text(json_req.clone())) {
-					Ok(_) => on_message_fn(socket),
-					Err(e) => Err(ApiClientError::RpcClient(format!("{:?}", e))),
+					Ok(_) => {
+						let r = on_message_fn(socket);
+						let _ = socket.close(None);
+						r
+					},
+					Err(e) => {
+						let _ = socket.close(None);
+						Err((ApiClientError::RpcClient(format!("{:?}", e)), true))
+					},
 				}
 			};
 
@@ -85,9 +92,16 @@ impl LitentryWsRpcClient {
 
 							match send_request(&mut socket, json_req.clone()) {
 								Ok(e) => return Ok(e),
-								Err(e) => {
-									error!("failed to send request. error:{:?}", e);
-									if current_attempt == self.max_attempts {
+								Err((e, retry)) => {
+									error!(
+										"failed to send request. error:{:?}, retry:{:?}",
+										e, retry
+									);
+									if retry {
+										if current_attempt == self.max_attempts {
+											return Err(e)
+										}
+									} else {
 										return Err(e)
 									}
 								},

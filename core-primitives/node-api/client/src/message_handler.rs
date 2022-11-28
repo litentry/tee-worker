@@ -14,111 +14,105 @@ use tungstenite::{
 	Message,
 };
 
-pub type OnMessageFn = fn(socket: &mut MySocket) -> Result<String, ApiClientError>;
+pub type OnMessageFn = fn(socket: &mut MySocket) -> Result<String, (ApiClientError, bool)>; // message, (error, retry)
 
-pub fn on_get_request_msg(socket: &mut MySocket) -> Result<String, ApiClientError> {
-	let msg = read_until_text_message(socket).map_err(|e| RpcClient(format!("{:?}", e)))?;
+pub fn on_get_request_msg(socket: &mut MySocket) -> Result<String, (ApiClientError, bool)> {
+	let msg = read_until_text_message(socket).map_err(|e| (RpcClient(format!("{:?}", e)), true))?;
 	// let msg = socket.read_message().map_err(|e| RpcClient(format!("{:?}", e)))?;
 
-	socket
-		.close(Some(CloseFrame { code: CloseCode::Normal, reason: Default::default() }))
-		.map_err(|e| RpcClient(format!("{:?}", e)))?;
 	// println!("aaa {:?}", socket.read_message()); // close message
 	debug!("Got get_request_msg {}", msg);
 	let result_str = serde_json::from_str(msg.as_str())
 		.map(|v: serde_json::Value| v["result"].to_string())
-		.map_err(|e| Deserializing(e.into()))?;
+		.map_err(|e| (Deserializing(e.into()), false))?;
 	Ok(result_str)
 }
 
-pub fn on_extrinsic_msg_until_finalized(socket: &mut MySocket) -> Result<String, ApiClientError> {
+pub fn on_extrinsic_msg_until_finalized(
+	socket: &mut MySocket,
+) -> Result<String, (ApiClientError, bool)> {
 	loop {
-		let msg = read_until_text_message(socket).map_err(|e| RpcClient(format!("{:?}", e)))?;
+		let msg =
+			read_until_text_message(socket).map_err(|e| (RpcClient(format!("{:?}", e)), true))?;
 		debug!("receive msg:{:?}", msg);
 		match parse_status(msg) {
-			Ok((XtStatus::Finalized, val)) => return end_process(socket, val),
+			Ok((XtStatus::Finalized, val)) => return Ok(val.unwrap_or("".to_string())),
 			Ok((XtStatus::Future, _)) => {
 				warn!("extrinsic has 'future' status. aborting");
-				return end_process(socket, None)
+				return Err((ApiClientError::UnsupportedXtStatus(XtStatus::Future), false))
 			},
-			Err(e) => {
-				let _ = end_process(socket, None);
-				return Err(RpcClient(format!("{:?}", e)))
-			},
+			Err(e) => return Err((RpcClient(format!("{:?}", e)), false)),
 			_ => continue,
 		}
 	}
 }
 
-pub fn on_extrinsic_msg_until_in_block(socket: &mut MySocket) -> Result<String, ApiClientError> {
+pub fn on_extrinsic_msg_until_in_block(
+	socket: &mut MySocket,
+) -> Result<String, (ApiClientError, bool)> {
 	loop {
-		let msg = read_until_text_message(socket).map_err(|e| RpcClient(format!("{:?}", e)))?;
+		let msg =
+			read_until_text_message(socket).map_err(|e| (RpcClient(format!("{:?}", e)), true))?;
 		match parse_status(msg) {
-			Ok((XtStatus::Finalized, val)) => return end_process(socket, val),
-			Ok((XtStatus::InBlock, val)) => return end_process(socket, val),
+			Ok((XtStatus::Finalized, val)) => return Ok(val.unwrap_or("".to_string())),
+			Ok((XtStatus::InBlock, val)) => return Ok(val.unwrap_or("".to_string())),
 			Ok((XtStatus::Future, _)) => {
 				warn!("extrinsic has 'future' status. aborting");
-				return end_process(socket, None)
+				return Err((ApiClientError::UnsupportedXtStatus(XtStatus::Future), false))
 			},
-			Err(e) => {
-				let _ = end_process(socket, None);
-				return Err(RpcClient(format!("{:?}", e)))
-			},
+			Err(e) => return Err((RpcClient(format!("{:?}", e)), false)),
 			_ => continue,
 		}
 	}
 }
 
-pub fn on_extrinsic_msg_until_ready(socket: &mut MySocket) -> Result<String, ApiClientError> {
+pub fn on_extrinsic_msg_until_ready(
+	socket: &mut MySocket,
+) -> Result<String, (ApiClientError, bool)> {
 	loop {
-		let msg = read_until_text_message(socket).map_err(|e| RpcClient(format!("{:?}", e)))?;
+		let msg =
+			read_until_text_message(socket).map_err(|e| (RpcClient(format!("{:?}", e)), true))?;
 		match parse_status(msg) {
-			Ok((XtStatus::Finalized, val)) => return end_process(socket, val),
-			Ok((XtStatus::Ready, _)) => return end_process(socket, None),
+			Ok((XtStatus::Finalized, val)) => return Ok(val.unwrap_or("".to_string())),
+			Ok((XtStatus::Ready, _)) => return Ok("".to_string()),
 			Ok((XtStatus::Future, _)) => {
 				warn!("extrinsic has 'future' status. aborting");
-				return end_process(socket, None)
+				return Err((ApiClientError::UnsupportedXtStatus(XtStatus::Future), false))
 			},
-			Err(e) => {
-				let _ = end_process(socket, None);
-				return Err(RpcClient(format!("{:?}", e)))
-			},
+			Err(e) => return Err((RpcClient(format!("{:?}", e)), false)),
 			_ => continue,
 		}
 	}
 }
 
-pub fn on_extrinsic_msg_until_broadcast(socket: &mut MySocket) -> Result<String, ApiClientError> {
+pub fn on_extrinsic_msg_until_broadcast(
+	socket: &mut MySocket,
+) -> Result<String, (ApiClientError, bool)> {
 	loop {
-		let msg = read_until_text_message(socket).map_err(|e| RpcClient(format!("{:?}", e)))?;
+		let msg =
+			read_until_text_message(socket).map_err(|e| (RpcClient(format!("{:?}", e)), true))?;
 		match parse_status(msg) {
-			Ok((XtStatus::Finalized, val)) => return end_process(socket, val),
-			Ok((XtStatus::Broadcast, _)) => return end_process(socket, None),
+			Ok((XtStatus::Finalized, val)) => return Ok(val.unwrap_or("".to_string())),
+			Ok((XtStatus::Broadcast, _)) => return Ok("".to_string()),
 			Ok((XtStatus::Future, _)) => {
 				warn!("extrinsic has 'future' status. aborting");
-				return end_process(socket, None)
+				// let _ = end_process(socket, None);
+				return Err((ApiClientError::UnsupportedXtStatus(XtStatus::Future), false))
 			},
-			Err(e) => {
-				let _ = end_process(socket, None);
-				return Err(RpcClient(format!("{:?}", e)))
-			},
+			Err(e) => return Err((RpcClient(format!("{:?}", e)), false)),
 			_ => continue,
 		}
 	}
 }
 
-pub fn on_extrinsic_msg_submit_only(socket: &mut MySocket) -> Result<String, ApiClientError> {
-	loop {
-		let msg = socket.read_message().map_err(|e| RpcClient(format!("{:?}", e)))?;
-		debug!("got msg {}", msg);
-		match result_from_json_response(msg) {
-			Ok(None) => continue,
-			Ok(Some(val)) => return end_process(socket, Some(val)),
-			Err(e) => {
-				let _ = end_process(socket, None)?;
-				return Err(e)
-			},
-		}
+pub fn on_extrinsic_msg_submit_only(
+	socket: &mut MySocket,
+) -> Result<String, (ApiClientError, bool)> {
+	let msg = read_until_text_message(socket).map_err(|e| (RpcClient(format!("{:?}", e)), true))?;
+	debug!("got msg {}", msg);
+	return match result_from_json_response(msg) {
+		Ok(val) => Ok(val),
+		Err(e) => Err((e, false)),
 	}
 }
 
@@ -153,12 +147,12 @@ pub fn on_subscription_msg(msg: String) -> Result<String, ApiClientError> {
 	Ok("".to_string())
 }
 
-fn end_process(socket: &mut MySocket, val: Option<String>) -> Result<String, ApiClientError> {
-	socket
-		.close(Some(CloseFrame { code: CloseCode::Normal, reason: Default::default() }))
-		.map_err(|e| RpcClient(format!("{:?}", e)))?;
-	return Ok(val.unwrap_or("".to_string()))
-}
+// fn end_process(socket: &mut MySocket, val: Option<String>) -> Result<String, ApiClientError> {
+// 	socket
+// 		.close(Some(CloseFrame { code: CloseCode::Normal, reason: Default::default() }))
+// 		.map_err(|e| RpcClient(format!("{:?}", e)))?;
+// 	return Ok(val.unwrap_or("".to_string()))
+// }
 
 fn parse_status(msg: String) -> Result<(XtStatus, Option<String>), ApiClientError> {
 	let value: serde_json::Value = serde_json::from_str(msg.as_str())?;
@@ -190,19 +184,10 @@ fn parse_status(msg: String) -> Result<(XtStatus, Option<String>), ApiClientErro
 	}
 }
 
-fn result_from_json_response(resp: Message) -> Result<Option<String>, ApiClientError> {
-	if !match resp {
-		Message::Text(_) => true,
-		_ => false,
-	} {
-		return Ok(None)
-	}
-
-	let resp = resp.to_text().map_err(|e| Other(e.into()))?;
-	let value: serde_json::Value = serde_json::from_str(resp)?;
+fn result_from_json_response(resp: String) -> Result<String, ApiClientError> {
+	let value: serde_json::Value = serde_json::from_str(resp.as_str())?;
 	let resp = value["result"].as_str().ok_or_else(|| into_extrinsic_err(&value))?;
-
-	Ok(Some(resp.to_string()))
+	Ok(resp.to_string())
 }
 
 /// Todo: this is the code that was used in `parse_status` Don't we want to just print the

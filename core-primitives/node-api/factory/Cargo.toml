@@ -15,7 +15,7 @@ itp-api-client-types = { path = "../api-client-types" }
 
 
 [dev-dependencies]
-sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28", features = ['std'] }
+sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.29", features = ['std'] }
 itp-api-client-extensions = { path = "../api-client-extensions" }
 env_logger = "*"
 log = "0.4"
