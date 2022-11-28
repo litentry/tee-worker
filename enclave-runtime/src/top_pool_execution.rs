@@ -17,14 +17,17 @@
 
 use crate::{
 	error::Result,
-	global_components::{
-		GLOBAL_EXTRINSICS_FACTORY_COMPONENT, GLOBAL_OCALL_API_COMPONENT,
-		GLOBAL_PARENTCHAIN_BLOCK_VALIDATOR_ACCESS_COMPONENT,
-		GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT, GLOBAL_SIDECHAIN_IMPORT_QUEUE_WORKER_COMPONENT,
-		GLOBAL_STATE_HANDLER_COMPONENT, GLOBAL_STF_EXECUTOR_COMPONENT,
-		GLOBAL_TOP_POOL_AUTHOR_COMPONENT, GLOBAL_TRIGGERED_PARENTCHAIN_IMPORT_DISPATCHER_COMPONENT,
+	initialization::global_components::{
+		GLOBAL_OCALL_API_COMPONENT, GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT,
+		GLOBAL_SIDECHAIN_IMPORT_QUEUE_WORKER_COMPONENT, GLOBAL_STATE_HANDLER_COMPONENT,
+		GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 	},
 	sync::{EnclaveLock, EnclaveStateRWLock},
+	utils::{
+		get_extrinsic_factory_from_solo_or_parachain, get_stf_executor_from_solo_or_parachain,
+		get_triggered_dispatcher_from_solo_or_parachain,
+		get_validator_accessor_from_solo_or_parachain,
+	},
 };
 use codec::Encode;
 use itc_parentchain::{
@@ -90,10 +93,9 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 
 	let slot_beginning_timestamp = duration_now();
 
-	let parentchain_import_dispatcher =
-		GLOBAL_TRIGGERED_PARENTCHAIN_IMPORT_DISPATCHER_COMPONENT.get()?;
+	let parentchain_import_dispatcher = get_triggered_dispatcher_from_solo_or_parachain()?;
 
-	let validator_access = GLOBAL_PARENTCHAIN_BLOCK_VALIDATOR_ACCESS_COMPONENT.get()?;
+	let validator_access = get_validator_accessor_from_solo_or_parachain()?;
 
 	// This gets the latest imported block. We accept that all of AURA, up until the block production
 	// itself, will  operate on a parentchain block that is potentially outdated by one block
@@ -108,31 +110,27 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 	let sidechain_block_import_queue_worker =
 		GLOBAL_SIDECHAIN_IMPORT_QUEUE_WORKER_COMPONENT.get()?;
 
-	let sidechain_block_queue_start = Instant::now();
-
 	let latest_parentchain_header =
 		sidechain_block_import_queue_worker.process_queue(&current_parentchain_header)?;
 
 	info!(
 		"Elapsed time to process sidechain block import queue: {} ms",
-		sidechain_block_queue_start.elapsed().as_millis()
+		start_time.elapsed().as_millis()
 	);
 
-	let stf_executor = GLOBAL_STF_EXECUTOR_COMPONENT.get()?;
+	let stf_executor = get_stf_executor_from_solo_or_parachain()?;
 
 	let top_pool_author = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
 
 	let block_composer = GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT.get()?;
 
-	let extrinsics_factory = GLOBAL_EXTRINSICS_FACTORY_COMPONENT.get()?;
+	let extrinsics_factory = get_extrinsic_factory_from_solo_or_parachain()?;
 
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 
 	let authority = Ed25519Seal::unseal_from_static_file()?;
-
-	info!("Elapsed time before AURA execution: {} ms", start_time.elapsed().as_millis());
 
 	match yield_next_slot(
 		slot_beginning_timestamp,
@@ -141,12 +139,12 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 		&mut LastSlotSeal,
 	)? {
 		Some(slot) => {
-			let remaining_time = slot.ends_at - slot.timestamp;
-			info!(
-				"Remaining slot time for aura: {} ms, {}% of slot time",
-				remaining_time.as_millis(),
-				(remaining_time.as_millis() as f64 / slot.duration.as_millis() as f64) * 100f64
-			);
+			if slot.duration_remaining().is_none() {
+				warn!("No time remaining in slot, skipping AURA execution");
+				return Ok(())
+			}
+
+			log_remaining_slot_duration(&slot, "Before AURA");
 
 			let shards = state_handler.list_shards()?;
 			let env = ProposerFactory::<Block, _, _, _>::new(
@@ -156,7 +154,7 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 			);
 
 			let (blocks, opaque_calls) = exec_aura_on_slot::<_, _, SignedSidechainBlock, _, _, _>(
-				slot,
+				slot.clone(),
 				authority,
 				ocall_api.clone(),
 				parentchain_import_dispatcher,
@@ -169,13 +167,17 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 			// Drop lock as soon as we don't need it anymore.
 			drop(_enclave_write_lock);
 
+			log_remaining_slot_duration(&slot, "After AURA");
+
 			send_blocks_and_extrinsics::<Block, _, _, _, _>(
 				blocks,
 				opaque_calls,
 				ocall_api,
 				validator_access.as_ref(),
 				extrinsics_factory.as_ref(),
-			)?
+			)?;
+
+			log_remaining_slot_duration(&slot, "After broadcasting and sending extrinsic");
 		},
 		None => {
 			debug!("No slot yielded. Skipping block production.");
@@ -217,7 +219,8 @@ where
 	NumberFor<ParentchainBlock>: BlockNumberOps,
 	PEnvironment:
 		Environment<ParentchainBlock, SignedSidechainBlock, Error = ConsensusError> + Send + Sync,
-	BlockImportTrigger: TriggerParentchainBlockImport<SignedParentchainBlock<ParentchainBlock>>,
+	BlockImportTrigger:
+		TriggerParentchainBlockImport<SignedBlockType = SignedParentchainBlock<ParentchainBlock>>,
 {
 	debug!("[Aura] Executing aura for slot: {:?}", slot);
 
@@ -270,4 +273,24 @@ where
 	validator_access.execute_mut_on_validator(|v| v.send_extrinsics(xts))?;
 
 	Ok(())
+}
+
+fn log_remaining_slot_duration<B: BlockTrait<Hash = H256>>(
+	slot_info: &SlotInfo<B>,
+	stage_name: &str,
+) {
+	match slot_info.duration_remaining() {
+		None => {
+			info!("No time remaining in slot (id: {:?}, stage: {})", slot_info.slot, stage_name);
+		},
+		Some(remainder) => {
+			info!(
+				"Remaining time in slot (id: {:?}, stage {}): {} ms, {}% of slot time",
+				slot_info.slot,
+				stage_name,
+				remainder.as_millis(),
+				(remainder.as_millis() as f64 / slot_info.duration.as_millis() as f64) * 100f64
+			);
+		},
+	};
 }

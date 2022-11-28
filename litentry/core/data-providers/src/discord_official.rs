@@ -93,16 +93,39 @@ impl DiscordOfficialClient {
 
 #[cfg(test)]
 mod tests {
-	// use crate::discord_official::DiscordOfficialClient;
+	use super::*;
+	use httpmock::prelude::*;
+	use lc_mock_server::standalone_server;
 
 	#[test]
 	fn query_message_work() {
-		// TODO launch a mockserver?
-		// std::env::set_var("DISCORD_AUTHORIZATION_TOKEN", "");
-		// let mut client = DiscordOfficialClient::new();
-		// let channel_id = "919848392035794945".as_bytes().to_vec();
-		// let message_id = "".as_bytes().to_vec();
-		// let result = client.query_message(channel_id, message_id);
-		// assert!(result.is_ok(), "query discord error: {:?}", result);
+		standalone_server();
+		let server = httpmock::MockServer::connect("localhost:9527");
+
+		let channel_id = "919848392035794945";
+		let message_id = "1";
+
+		let user_id = "001";
+		let username = "elon";
+		let author = DiscordMessageAuthor { id: user_id.into(), username: username.into() };
+
+		let body = DiscordMessage {
+			id: message_id.into(),
+			channel_id: channel_id.into(),
+			content: "Hello, elon.".into(),
+			author,
+		};
+
+		let path = format! {"/api/channels/{}/messages/{}", channel_id, message_id};
+		server.mock(|when, then| {
+			when.method(GET).path(path);
+			then.status(200).body(serde_json::to_string(&body).unwrap());
+		});
+
+		let mut client = DiscordOfficialClient::new();
+		let channel_id = "919848392035794945".as_bytes().to_vec();
+		let message_id = "1".as_bytes().to_vec();
+		let result = client.query_message(channel_id, message_id);
+		assert!(result.is_ok(), "query discord error: {:?}", result);
 	}
 }

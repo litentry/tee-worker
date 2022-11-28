@@ -79,7 +79,7 @@ services:
     depends_on: ['relaychain-alice', 'relaychain-bob']
     command:
       - --base-path=/data
-      - --chain=/app/litmus-dev-2106.json
+      - --chain=/app/rococo-dev-2106.json
       - --ws-external
       - --rpc-external
       - --rpc-cors=all
@@ -107,14 +107,14 @@ services:
       target: deployed-worker
     depends_on: ['integritee-node']
     environment:
-      - RUST_LOG=warn,ws=warn,sp_io=warn,substrate_api_client=warn,jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=warn,integritee_service=warn,ita_stf=warn
+      - RUST_LOG=warn,ws=warn,sp_io=warn,substrate_api_client=warn,jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=warn,integritee_service=warn,ita_stf=warn,enclave_runtime::top_pool_execution=info
     networks:
       - integritee-test-network
     entrypoint: "dockerize -wait tcp://integritee-node:9912 -timeout 600s
       /usr/local/bin/integritee-service --clean-reset --ws-external -M integritee-worker-1 -T wss://integritee-worker-1
       -u ws://integritee-node -U ws://integritee-worker-1 -P 2011 -w 2101 -p 9912 -h 4645
       run --dev --skip-ra"
-    restart: always
+    restart: "no"
   integritee-worker-2:
     image: integritee-worker:dev
     container_name: integritee-worker-2

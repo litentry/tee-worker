@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Executes a direct call on a worker and checks the balance afterwards.
+#
 # setup:
 # run all on localhost:
 #   integritee-node purge-chain --dev
@@ -87,6 +89,11 @@ echo ""
 # Send funds from Alice to Bob's account.
 echo "* Send ${AMOUNTTRANSFER} funds from Alice's incognito account to Bob's incognito account"
 $CLIENT trusted --mrenclave ${MRENCLAVE} --direct transfer ${ICGACCOUNTALICE} ${ICGACCOUNTBOB} ${AMOUNTTRANSFER}
+echo ""
+
+# Prevent getter being executed too early and returning an outdated result, before the transfer was made.
+echo "* Waiting 2 seconds"
+sleep 2
 echo ""
 
 echo "* Get balance of Alice's incognito account"

@@ -46,12 +46,12 @@ impl SetChallengeCodeCommand {
 		let identity = serde_json::from_str(self.identity.as_str()).unwrap();
 
 		let mut code = [0u8; 16];
-		let _ = hex::decode_to_slice(&self.code_hex, &mut code).expect("decoding code failed");
+		hex::decode_to_slice(&self.code_hex, &mut code).expect("decoding code failed");
 
 		let top: TrustedOperation =
 			TrustedCall::set_challenge_code_runtime(root.public().into(), who, identity, code)
-				.sign(&KeyPair::Sr25519(root), nonce, &mrenclave, &shard)
+				.sign(&KeyPair::Sr25519(Box::new(root)), nonce, &mrenclave, &shard)
 				.into_trusted_operation(trusted_args.direct);
-		let _ = perform_trusted_operation(cli, trusted_args, &top);
+		perform_trusted_operation(cli, trusted_args, &top);
 	}
 }

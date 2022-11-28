@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Sidechain Demo:
+#
+# Demonstrates that transfers happening on worker1 are communicated via sidechain blocks to worker2.
+# It does essentially the same as `m8.sh`, but in one script and more streamlined.
+#
 # setup:
 # run all on localhost:
 #   integritee-node purge-chain --dev
@@ -11,14 +16,14 @@
 #   integritee-service signing-key
 #   integritee-service run
 #
-# then run this script
-
+# Then run this script.
+#
 # usage:
 #  export RUST_LOG_LOG=integritee-cli=info,ita_stf=info
 #  demo_sidechain.sh -p <NODEPORT> -A <WORKER1PORT> -B <WORKER2PORT> -m file
 #
 # TEST_BALANCE_RUN is either "first" or "second"
-# if -m file is set, the mrenclave will be read from file
+# if -m file is set, the mrenclave will be read from file.
 
 while getopts ":m:p:A:B:t:u:W:V:C:" opt; do
     case $opt in
@@ -113,11 +118,19 @@ echo "* First transfer: Send ${AMOUNTTRANSFER} funds from Alice's incognito acco
 $CLIENTWORKER1 trusted --mrenclave ${MRENCLAVE} --direct transfer ${ICGACCOUNTALICE} ${ICGACCOUNTBOB} ${AMOUNTTRANSFER}
 echo ""
 
-# Send funds from Alice to Bobs account, on worker 1.
-# TODO: send xt from worker 1 instead, currently we have problems in this test.
-#       see https://github.com/litentry/tee-worker/issues/76
-echo "* Second transfer: Send ${AMOUNTTRANSFER} funds from Alice's incognito account to Bob's incognito account (on worker 1)"
-$CLIENTWORKER1 trusted --mrenclave ${MRENCLAVE} --direct transfer ${ICGACCOUNTALICE} ${ICGACCOUNTBOB} ${AMOUNTTRANSFER}
+# Prevent nonce clash when sending direct trusted calls to different workers.
+echo "* Waiting 2 seconds"
+sleep 2
+echo ""
+
+# Send funds from Alice to Bobs account, on worker 2.
+echo "* Second transfer: Send ${AMOUNTTRANSFER} funds from Alice's incognito account to Bob's incognito account (on worker 2)"
+$CLIENTWORKER2 trusted --mrenclave ${MRENCLAVE} --direct transfer ${ICGACCOUNTALICE} ${ICGACCOUNTBOB} ${AMOUNTTRANSFER}
+echo ""
+
+# Prevent getter being executed too early and returning an outdated result, before the transfer was made.
+echo "* Waiting 2 seconds"
+sleep 2
 echo ""
 
 echo "* Get balance of Alice's incognito account (on worker 1)"

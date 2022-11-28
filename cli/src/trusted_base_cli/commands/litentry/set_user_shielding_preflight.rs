@@ -44,13 +44,13 @@ impl SetUserShieldingKeyPreflightCommand {
 		let nonce = get_layer_two_nonce!(root, cli, trusted_args);
 
 		let mut key = UserShieldingKeyType::default();
-		let _ =
-			hex::decode_to_slice(&self.key_hex, &mut key).expect("decoding shielding_key failed");
+
+		hex::decode_to_slice(&self.key_hex, &mut key).expect("decoding shielding_key failed");
 
 		let top: TrustedOperation =
 			TrustedCall::set_user_shielding_key_preflight(root.public().into(), who, key)
-				.sign(&KeyPair::Sr25519(root), nonce, &mrenclave, &shard)
+				.sign(&KeyPair::Sr25519(Box::new(root)), nonce, &mrenclave, &shard)
 				.into_trusted_operation(trusted_args.direct);
-		let _ = perform_trusted_operation(cli, trusted_args, &top);
+		perform_trusted_operation(cli, trusted_args, &top);
 	}
 }

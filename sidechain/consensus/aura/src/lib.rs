@@ -104,7 +104,7 @@ impl<AuthorityPair, ParentchainBlock, SidechainBlock, Environment, OcallApi, Imp
 
 /// The fraction of total block time we are allowed to be producing the block. So that we have
 /// enough time send create and send the block to fellow validateers.
-pub const BLOCK_PROPOSAL_SLOT_PORTION: f32 = 0.8;
+pub const BLOCK_PROPOSAL_SLOT_PORTION: f32 = 0.7;
 
 #[derive(PartialEq, Eq, Debug)]
 pub enum SlotClaimStrategy {
@@ -130,7 +130,8 @@ where
 	E::Proposer: Proposer<ParentchainBlock, SignedSidechainBlock>,
 	SignedSidechainBlock: SignedBlock + Send + 'static,
 	OcallApi: ValidateerFetch + EnclaveOnChainOCallApi + Send + 'static,
-	ImportTrigger: TriggerParentchainBlockImport<SignedParentchainBlock<ParentchainBlock>>,
+	ImportTrigger:
+		TriggerParentchainBlockImport<SignedBlockType = SignedParentchainBlock<ParentchainBlock>>,
 {
 	type Proposer = E::Proposer;
 	type Claim = AuthorityPair::Public;
@@ -535,9 +536,8 @@ mod tests {
 
 		// hard to compare actual numbers but we can at least ensure that the general concept works
 		assert!(
-			proposing_remaining_duration(&slot_info, duration_now()) > SLOT_DURATION / 2
-				&& proposing_remaining_duration(&slot_info, duration_now())
-					< SLOT_DURATION.mul_f32(BLOCK_PROPOSAL_SLOT_PORTION + 0.01)
+			proposing_remaining_duration(&slot_info, duration_now())
+				< SLOT_DURATION.mul_f32(BLOCK_PROPOSAL_SLOT_PORTION + 0.01)
 		);
 	}
 
@@ -546,9 +546,8 @@ mod tests {
 		let slot_info = now_slot_with_default_header(0.into());
 
 		assert!(
-			proposing_remaining_duration(&slot_info, Duration::from_millis(0)) > SLOT_DURATION / 2
-				&& proposing_remaining_duration(&slot_info, Duration::from_millis(0))
-					< SLOT_DURATION.mul_f32(BLOCK_PROPOSAL_SLOT_PORTION + 0.01)
+			proposing_remaining_duration(&slot_info, Duration::from_millis(0))
+				< SLOT_DURATION.mul_f32(BLOCK_PROPOSAL_SLOT_PORTION + 0.01)
 		);
 	}
 

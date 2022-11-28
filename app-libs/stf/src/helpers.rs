@@ -16,10 +16,12 @@
 */
 
 use crate::{StfError, StfResult, ENCLAVE_ACCOUNT_KEY};
-use aes_gcm::{
-	aead::{Aead, KeyInit, OsRng, Payload},
-	AeadCore, Aes256Gcm,
+
+use ring::{
+	aead::{Aad, BoundKey, Nonce, NonceSequence, SealingKey, UnboundKey, AES_256_GCM},
+	error::Unspecified,
 };
+
 use codec::{Decode, Encode};
 use itp_storage::{storage_double_map_key, storage_map_key, storage_value_key, StorageHasher};
 use itp_utils::stringify::account_id_to_string;
@@ -118,23 +120,54 @@ pub fn set_block_number(block_number: u32) {
 
 // Litentry
 pub fn aes_encrypt_default(key: &UserShieldingKeyType, data: &[u8]) -> AesOutput {
-	// it requires "std" but it shouldn't be a problem
-	let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
-	aes_encrypt(key, data, b"", nonce.into())
+	let mut in_out = data.to_vec();
+
+	let nonce = RingAeadNonceSequence::new();
+	let aad = b"";
+	let unbound_key = UnboundKey::new(&AES_256_GCM, key.as_slice()).unwrap();
+	let mut sealing_key = SealingKey::new(unbound_key, nonce.clone());
+	sealing_key.seal_in_place_append_tag(Aad::from(aad), &mut in_out).unwrap();
+
+	AesOutput { ciphertext: in_out.to_vec(), aad: aad.to_vec(), nonce: nonce.nonce }
 }
 
-pub fn aes_encrypt(
-	key: &UserShieldingKeyType,
-	data: &[u8],
-	aad: &[u8],
-	nonce: [u8; USER_SHIELDING_KEY_NONCE_LEN],
-) -> AesOutput {
-	let cipher = Aes256Gcm::new(key.into());
-	let payload = Payload { msg: data, aad };
-	let ciphertext = cipher.encrypt(&nonce.into(), payload).unwrap();
-	AesOutput { ciphertext, aad: aad.to_vec(), nonce }
+#[cfg(feature = "mockserver")]
+pub fn generate_challenge_code() -> ChallengeCode {
+	// Hard Code ChallengeCode for mockserver test
+	// rand::thread_rng().gen::<ChallengeCode>()
+	// hex: 0x08685a3823d512fad5d277f102ae1808
+	let code: ChallengeCode = [8, 104, 90, 56, 35, 213, 18, 250, 213, 210, 119, 241, 2, 174, 24, 8];
+	code
 }
 
+#[cfg(not(feature = "mockserver"))]
 pub fn generate_challenge_code() -> ChallengeCode {
 	rand::thread_rng().gen::<ChallengeCode>()
+}
+
+#[derive(Clone)]
+pub struct RingAeadNonceSequence {
+	pub nonce: [u8; USER_SHIELDING_KEY_NONCE_LEN],
+}
+
+impl RingAeadNonceSequence {
+	fn new() -> RingAeadNonceSequence {
+		RingAeadNonceSequence { nonce: [0u8; USER_SHIELDING_KEY_NONCE_LEN] }
+	}
+}
+
+impl NonceSequence for RingAeadNonceSequence {
+	fn advance(&mut self) -> Result<Nonce, Unspecified> {
+		let nonce = Nonce::assume_unique_for_key(self.nonce);
+
+		// FIXME: in function `ring::rand::sysrand::fill': undefined reference to `syscall'
+		// let mut nonce_vec = vec![0; USER_SHIELDING_KEY_NONCE_LEN];
+		// let rand = SystemRandom::new();
+		// rand.fill(&mut nonce_vec).unwrap();
+		let nonce_vec = rand::thread_rng().gen::<[u8; USER_SHIELDING_KEY_NONCE_LEN]>();
+
+		self.nonce.copy_from_slice(&nonce_vec[0..USER_SHIELDING_KEY_NONCE_LEN]);
+
+		Ok(nonce)
+	}
 }

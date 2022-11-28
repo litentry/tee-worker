@@ -8,7 +8,7 @@ import {LitentryIdentity, LitentryValidationData} from "./type-definitions";
 
 const twitterIdentity = <LitentryIdentity>{
     handle: {
-        PlainString: `0x${Buffer.from('2934243054', 'utf8').toString("hex")}`
+        PlainString: `0x${Buffer.from('mock_user', 'utf8').toString("hex")}`
     },
     web_type: {
         Web2Identity: "Twitter"
@@ -18,7 +18,7 @@ const twitterIdentity = <LitentryIdentity>{
 const twitterValidationData = <LitentryValidationData>{
     Web2Validation: {
         Twitter: {
-            tweet_id: `0x${Buffer.from('1582944056396500992', 'utf8').toString('hex')}`
+            tweet_id: `0x${Buffer.from('100', 'utf8').toString('hex')}`
         }
     }
 };
@@ -66,8 +66,8 @@ describeLitentry('Test Identity', (context) => {
         assert.equal(who, u8aToHex(context.defaultSigner.addressRaw), "check caller error")
     })
 
-    // step('unlink identity', async function () {
-    //     const who = await unlinkIdentity(context, context.defaultSigner, aesKey, true, twitterIdentity)
-    //     assert.equal(who, u8aToHex(context.defaultSigner.addressRaw), "check caller error")
-    // })
+    step('unlink identity', async function () {
+        const who = await unlinkIdentity(context, context.defaultSigner, aesKey, true, twitterIdentity)
+        assert.equal(who, u8aToHex(context.defaultSigner.addressRaw), "check caller error")
+    })
 });
