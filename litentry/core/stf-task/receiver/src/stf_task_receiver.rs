@@ -127,6 +127,24 @@ where
 						error!("error verify assertion4: {:?}", e)
 					}
 				},
+				Assertion::A5(twitter_account, original_tweet_id) =>
+					match lc_assertion_build::a5::build(
+						request.vec_identity.to_vec(),
+						twitter_account,
+						original_tweet_id,
+					) {
+						Ok(_) => {},
+						Err(e) => {
+							log::error!("error verify assertion5: {:?}", e)
+						},
+					},
+				Assertion::A6 => match lc_assertion_build::a6::build(request.vec_identity.to_vec())
+				{
+					Ok(_) => {},
+					Err(e) => {
+						log::error!("error verify assertion6: {:?}", e)
+					},
+				},
 				Assertion::A7(mini_balance, year) => {
 					// let from_date =
 					// 	format!("{:?}", Utc.with_ymd_and_hms(year as i32, 1, 1, 0, 0, 0));
@@ -156,24 +174,6 @@ where
 					) {
 						error!("error verify assertion7: {:?}", e)
 					}
-				},
-				Assertion::A5(twitter_account, original_tweet_id) =>
-					match lc_assertion_build::a5::build(
-						request.vec_identity.to_vec(),
-						twitter_account,
-						original_tweet_id,
-					) {
-						Ok(_) => {},
-						Err(e) => {
-							log::error!("error verify assertion5: {:?}", e)
-						},
-					},
-				Assertion::A6 => match lc_assertion_build::a6::build(request.vec_identity.to_vec())
-				{
-					Ok(_) => {},
-					Err(e) => {
-						log::error!("error verify assertion6: {:?}", e)
-					},
 				},
 				_ => {
 					unimplemented!()
