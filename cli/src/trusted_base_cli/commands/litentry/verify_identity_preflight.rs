@@ -62,7 +62,7 @@ impl VerifyIdentityPreflightCommand {
 			validation_data.unwrap(),
 			self.parent_block_number,
 		)
-		.sign(&KeyPair::Sr25519(root), nonce, &mrenclave, &shard)
+		.sign(&KeyPair::Sr25519(Box::new(root)), nonce, &mrenclave, &shard)
 		.into_trusted_operation(trusted_args.direct);
 		let _ = perform_trusted_operation(cli, trusted_args, &top);
 	}

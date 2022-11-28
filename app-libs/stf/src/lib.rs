@@ -40,7 +40,7 @@ use itp_node_api_metadata::Error as MetadataError;
 use itp_node_api_metadata_provider::Error as MetadataProviderError;
 use sp_core::{crypto::AccountId32, ed25519, sr25519, Pair, H256};
 use sp_runtime::{traits::Verify, MultiSignature};
-use std::{string::String, sync::Arc};
+use std::{boxed::Box, string::String};
 
 pub use getter::*;
 pub use stf_sgx_primitives::{types::*, Stf};
@@ -105,11 +105,10 @@ impl From<MetadataProviderError> for StfError {
 		StfError::InvalidMetadata
 	}
 }
-
 #[derive(Clone)]
 pub enum KeyPair {
-	Sr25519(sr25519::Pair),
-	Ed25519(ed25519::Pair),
+	Sr25519(Box<sr25519::Pair>),
+	Ed25519(Box<ed25519::Pair>),
 }
 
 impl KeyPair {
@@ -123,13 +122,13 @@ impl KeyPair {
 
 impl From<ed25519::Pair> for KeyPair {
 	fn from(x: ed25519::Pair) -> Self {
-		KeyPair::Ed25519(x)
+		KeyPair::Ed25519(Box::new(x))
 	}
 }
 
 impl From<sr25519::Pair> for KeyPair {
 	fn from(x: sr25519::Pair) -> Self {
-		KeyPair::Sr25519(x)
+		KeyPair::Sr25519(Box::new(x))
 	}
 }
 
