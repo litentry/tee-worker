@@ -156,6 +156,7 @@ where
 					) {
 						error!("error verify assertion7: {:?}", e)
 					}
+				},
 				Assertion::A5(twitter_account, original_tweet_id) =>
 					match lc_assertion_build::a5::build(
 						request.vec_identity.to_vec(),

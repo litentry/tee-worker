@@ -38,9 +38,6 @@ litentry-primitives = { path = "../../primitives", default-features = false }
 lc-mock-server = { path = "../mock-server" }
 httpmock = "0.6"
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29", default-features = false }
-
-
-[dev-dependencies]
 chrono = { version = "0.4.19" }
 
 [features]
