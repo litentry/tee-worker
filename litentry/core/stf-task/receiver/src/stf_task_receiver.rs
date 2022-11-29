@@ -15,7 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	chrono::{TimeZone, Utc},
+	chrono::{offset::Utc as TzUtc, TimeZone},
 	format, AuthorApi, Error, HandleState, Hash, SgxExternalitiesTrait, ShardIdentifier,
 	ShieldingCryptoDecrypt, ShieldingCryptoEncrypt, StfEnclaveSigning, StfTaskContext,
 };
@@ -114,8 +114,9 @@ where
 					}
 				},
 				Assertion::A4 => {
-					let from_date = format!("{:?}", Utc::now());
-					// let from_date = "2022-10-16T00:00:00Z".to_string();
+					let from_date = "2022-10-16T00:00:00Z".to_string();
+					#[cfg(feature = "clock")]
+					let from_date = format!("{:?}", TzUtc::now());
 					let token_address = LIT_TOKEN_ADDRESS.to_string();
 					let mini_balance = 0f64;
 					if let Err(e) = lc_assertion_build::a4_7_12::build(
@@ -146,9 +147,8 @@ where
 					},
 				},
 				Assertion::A7(mini_balance, year) => {
-					let from_date =
-						format!("{:?}", Utc.with_ymd_and_hms(year as i32, 1, 1, 0, 0, 0));
-					// let from_date = "2022-10-16T00:00:00Z".to_string();
+					let dt1 = TzUtc.ymd(year as i32, 1, 1).and_hms(0, 0, 0);
+					let from_date = format!("{:?}", dt1);
 					let token_address = DOT_TOKEN_ADDRESS.to_string();
 					let mini_balance: f64 = (mini_balance / (10 ^ 12)) as f64;
 					if let Err(e) = lc_assertion_build::a4_7_12::build(
@@ -161,9 +161,8 @@ where
 					}
 				},
 				Assertion::A12(mini_balance, year) => {
-					let from_date =
-						format!("{:?}", Utc.with_ymd_and_hms(year as i32, 1, 1, 0, 0, 0));
-					// let from_date = "2022-10-16T00:00:00Z".to_string();
+					let dt1 = TzUtc.ymd(year as i32, 1, 1).and_hms(0, 0, 0);
+					let from_date = format!("{:?}", dt1);
 					let token_address = LIT_TOKEN_ADDRESS.to_string();
 					let mini_balance: f64 = (mini_balance / (10 ^ 12)) as f64;
 					if let Err(e) = lc_assertion_build::a4_7_12::build(

@@ -29,9 +29,6 @@ pub mod sgx_reexport_prelude {
 	pub use url_sgx as url;
 }
 
-#[cfg(feature = "std")]
-pub use chrono;
-
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
