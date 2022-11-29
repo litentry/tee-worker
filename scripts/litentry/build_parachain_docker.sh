@@ -6,7 +6,7 @@ cd "$ROOTDIR"
 # with '#' so that it filters out the pallet dependency
 SHA=$(grep -F 'https://github.com/litentry/litentry-parachain.git?branch=tee-dev#' Cargo.lock | head -n1 | sed 's/.*#//;s/"$//')
 
-PARACHAIN_DIR=/tmp/litentry-parachain
+PARACHAIN_DIR=${1:-/tmp/litentry-parachain}
 [ -d "$PARACHAIN_DIR" ] && rm -rf "$PARACHAIN_DIR"
 git clone https://github.com/litentry/litentry-parachain "$PARACHAIN_DIR"
 cd "$PARACHAIN_DIR"
