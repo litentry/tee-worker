@@ -25,7 +25,6 @@ extern crate sgx_tstd as std;
 // re-export module to properly feature gate sgx and regular std environment
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub mod sgx_reexport_prelude {
-	// pub use chrono_sgx as chrono;
 	pub use thiserror_sgx as thiserror;
 	pub use url_sgx as url;
 }
