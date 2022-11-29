@@ -55,35 +55,32 @@ pub fn build(
 	// let mini_balance = 0f64;
 
 	for identity in identities {
-		match identity.web_type {
-			IdentityWebType::Web3(web3_type) => {
-				match identity.handle {
-					IdentityHandle::Address20(addr) =>
-						addresses.push(from_utf8(&addr).unwrap().to_string()),
-					IdentityHandle::Address32(addr) =>
-						addresses.push(from_utf8(&addr).unwrap().to_string()),
-					IdentityHandle::String(addr) =>
-						addresses.push(from_utf8(&addr).unwrap().to_string()),
-				}
+		if let IdentityWebType::Web3(web3_type) = identity.web_type {
+			match identity.handle {
+				IdentityHandle::Address20(addr) =>
+					addresses.push(from_utf8(&addr).unwrap().to_string()),
+				IdentityHandle::Address32(addr) =>
+					addresses.push(from_utf8(&addr).unwrap().to_string()),
+				IdentityHandle::String(addr) =>
+					addresses.push(from_utf8(&addr).unwrap().to_string()),
+			}
 
-				match web3_type {
-					Web3Network::Substrate(SubstrateNetwork::Polkadot) =>
-						network = VerifiedCredentialsNetwork::Polkadot,
-					Web3Network::Substrate(SubstrateNetwork::Kusama) =>
-						network = VerifiedCredentialsNetwork::Kusama,
-					Web3Network::Substrate(SubstrateNetwork::Litentry) =>
-						network = VerifiedCredentialsNetwork::Litentry,
-					Web3Network::Substrate(SubstrateNetwork::Litmus) =>
-						network = VerifiedCredentialsNetwork::Litmus,
-					Web3Network::Evm(EvmNetwork::Ethereum) =>
-						network = VerifiedCredentialsNetwork::Ethereum,
-					_ =>
-						return Err(Error::Assertion4_7_12Error(
-							"network type not implemented".to_string(),
-						)),
-				}
-			},
-			_ => (),
+			match web3_type {
+				Web3Network::Substrate(SubstrateNetwork::Polkadot) =>
+					network = VerifiedCredentialsNetwork::Polkadot,
+				Web3Network::Substrate(SubstrateNetwork::Kusama) =>
+					network = VerifiedCredentialsNetwork::Kusama,
+				Web3Network::Substrate(SubstrateNetwork::Litentry) =>
+					network = VerifiedCredentialsNetwork::Litentry,
+				Web3Network::Substrate(SubstrateNetwork::Litmus) =>
+					network = VerifiedCredentialsNetwork::Litmus,
+				Web3Network::Evm(EvmNetwork::Ethereum) =>
+					network = VerifiedCredentialsNetwork::Ethereum,
+				_ =>
+					return Err(Error::Assertion4_7_12Error(
+						"network type not implemented".to_string(),
+					)),
+			}
 		};
 	}
 

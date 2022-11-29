@@ -74,7 +74,7 @@ impl VerifiedCredentialsIsHodlerIn {
 		VerifiedCredentialsIsHodlerIn { addresses, from_date, network, token_address, mini_balance }
 	}
 
-	pub fn to_string(&self) -> String {
+	pub fn conv_to_string(&self) -> String {
 		let mut flat = "addresses:[".to_string();
 		for addr in self.addresses.iter() {
 			flat += &format!("\"{}\",", addr);
@@ -135,8 +135,8 @@ impl GraphQLClient {
 	) -> Result<IsHodlerOut, Error> {
 		// FIXME: for the moment, the `path` is partially hard-code here.
 		let path = "latest/graphql?query=query{VerifiedCredentialsIsHodler(".to_string()
-			+ &credentials.to_string()
-			+ &"){isHodler, address}}".to_string();
+			+ &credentials.conv_to_string()
+			+ "){isHodler, address}}";
 
 		let response = self
 			.client

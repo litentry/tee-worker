@@ -15,10 +15,16 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	chrono::{offset::Utc as TzUtc, TimeZone},
 	format, AuthorApi, Error, HandleState, Hash, SgxExternalitiesTrait, ShardIdentifier,
 	ShieldingCryptoDecrypt, ShieldingCryptoEncrypt, StfEnclaveSigning, StfTaskContext,
 };
+
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+use crate::chrono::{offset::Utc as TzUtc, TimeZone};
+
+#[cfg(feature = "std")]
+use chrono::{offset::Utc as TzUtc, TimeZone};
+
 use codec::Decode;
 use ita_sgx_runtime::IdentityManagement;
 use lc_stf_task_sender::{stf_task_sender, RequestType};
@@ -147,6 +153,9 @@ where
 					},
 				},
 				Assertion::A7(mini_balance, year) => {
+					#[cfg(feature = "std")]
+					let dt1 = TzUtc.with_ymd_and_hms(year as i32, 1, 1, 0, 0, 0);
+					#[cfg(all(not(feature = "std"), feature = "sgx"))]
 					let dt1 = TzUtc.ymd(year as i32, 1, 1).and_hms(0, 0, 0);
 					let from_date = format!("{:?}", dt1);
 					let token_address = DOT_TOKEN_ADDRESS.to_string();
@@ -161,6 +170,9 @@ where
 					}
 				},
 				Assertion::A12(mini_balance, year) => {
+					#[cfg(feature = "std")]
+					let dt1 = TzUtc.with_ymd_and_hms(year as i32, 1, 1, 0, 0, 0);
+					#[cfg(all(not(feature = "std"), feature = "sgx"))]
 					let dt1 = TzUtc.ymd(year as i32, 1, 1).and_hms(0, 0, 0);
 					let from_date = format!("{:?}", dt1);
 					let token_address = LIT_TOKEN_ADDRESS.to_string();
