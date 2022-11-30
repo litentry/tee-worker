@@ -446,7 +446,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	let mut register_enclave_xt_header: Option<Header> = None;
 	let mut we_are_primary_validateer: bool = false;
 
-	// node_api.
+	// litentry, Check if the enclave is already registered
 	match node_api.get_keys(storage_key("Teerex", "EnclaveRegistry"), None) {
 		Ok(Some(keys)) => {
 			let trusted_url = trusted_url.as_bytes().to_vec();
@@ -465,8 +465,12 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 				) {
 					Ok(Some(value)) => {
 						if value.mr_enclave.to_vec() == mrenclave && value.url == trusted_url {
+							// enclave is already registered, we should reset the nonce_cache
+							enclave
+								.set_nonce(nonce)
+								.expect("Could not set nonce of enclave. Returning here...");
 							found = true;
-							log::info!("fond enclave: {:?}", value);
+							info!("fond enclave: {:?}", value);
 							break
 						}
 					},
