@@ -98,7 +98,7 @@ pub trait AttestationHandler {
 }
 
 pub struct IasAttestationHandler<OCallApi> {
-	ocall_api: Arc<OCallApi>,
+	pub ocall_api: Arc<OCallApi>,
 }
 
 impl<OCallApi> AttestationHandler for IasAttestationHandler<OCallApi>
@@ -328,7 +328,7 @@ where
 		Ok(Vec::new())
 	}
 
-	fn make_ias_client_config() -> rustls::ClientConfig {
+	pub fn make_ias_client_config() -> rustls::ClientConfig {
 		let mut config = rustls::ClientConfig::new();
 
 		config.root_store.add_server_trust_anchors(&webpki_roots::TLS_SERVER_ROOTS);
@@ -418,7 +418,7 @@ where
 		self.parse_response_attn_report(&plaintext)
 	}
 
-	fn as_u32_le(&self, array: [u8; 4]) -> u32 {
+	pub fn as_u32_le(&self, array: [u8; 4]) -> u32 {
 		u32::from(array[0])
 			+ (u32::from(array[1]) << 8)
 			+ (u32::from(array[2]) << 16)
@@ -556,7 +556,7 @@ where
 		}
 	}
 
-	fn get_ias_api_key() -> EnclaveResult<String> {
+	pub fn get_ias_api_key() -> EnclaveResult<String> {
 		io::read_to_string(RA_API_KEY_FILE)
 			.map(|key| key.trim_end().to_owned())
 			.map_err(|e| EnclaveError::Other(e.into()))
@@ -584,7 +584,6 @@ fn decode_spid(hex_encoded_string: &str) -> SgxResult<sgx_spid_t> {
 
 #[cfg(feature = "test")]
 pub mod tests {
-
 	use super::*;
 
 	pub fn decode_spid_works() {

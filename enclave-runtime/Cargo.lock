@@ -676,6 +676,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex 0.4.3",
+ "httparse",
  "ipfs-unixfs",
  "ita-exchange-oracle",
  "ita-sgx-runtime",
