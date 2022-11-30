@@ -107,6 +107,9 @@ where
 
 	if genesis_hash == params.genesis_header.hash() {
 		validator.set_state(validation_state);
+		LightClientStateSeal::<B, LightValidationState<B>>::seal_to_static_file(
+			validator.get_state(),
+		)?;
 		info!("Found already initialized light client with Genesis Hash: {:?}", genesis_hash);
 	}
 	info!("light client state: {:?}", validator);
