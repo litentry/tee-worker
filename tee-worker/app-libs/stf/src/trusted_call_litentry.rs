@@ -31,7 +31,7 @@ use lc_stf_task_sender::{
 };
 use litentry_primitives::{
 	Assertion, ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType,
-	ValidationData,
+	VCSchemaContent, VCSchemaId, ValidationData,
 };
 use log::*;
 use sp_runtime::BoundedVec;
@@ -219,6 +219,52 @@ impl TrustedCallSigned {
 		}
 		.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
 		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+		Ok(())
+	}
+
+	pub fn vc_schema_issue_preflight(
+		who: AccountId,
+		id: VCSchemaId,
+		content: VCSchemaContent,
+		bn: ParentchainBlockNumber,
+	) -> StfResult<()> {
+		info!(
+			"vc_schema_issue_preflight, who.str = {:?}, id = {:?}, content = {:?}, bn = {:?}",
+			account_id_to_string(&who),
+			id,
+			content,
+			bn,
+		);
+		Ok(())
+	}
+
+	pub fn vc_schema_issue_runtime(
+		who: AccountId,
+		id: VCSchemaId,
+		content: VCSchemaContent,
+		bn: ParentchainBlockNumber,
+	) -> StfResult<()> {
+		info!(
+			"vc_schema_issue_preflight, who.str = {:?}, id = {:?}, content = {:?}, bn = {:?}",
+			account_id_to_string(&who),
+			id,
+			content,
+			bn,
+		);
+
+		// ita_sgx_runtime::IdentityManagementCall::<Runtime>::verify_identity {
+		// 	who: who.clone(),
+		// 	identity: identity.clone(),
+		// 	verification_request_block: bn,
+		// }
+		// .dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+		// .map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+
+		// // remove challenge code
+		// ita_sgx_runtime::IdentityManagementCall::<Runtime>::remove_challenge_code { who, identity }
+		// 	.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+		// 	.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+
 		Ok(())
 	}
 }

@@ -36,7 +36,8 @@ use itp_stf_interface::ExecuteCall;
 use itp_types::OpaqueCall;
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{
-	ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType, ValidationData,
+	ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType, VCSchemaContent,
+	VCSchemaId, ValidationData,
 };
 use log::*;
 use sp_io::hashing::blake2_256;
@@ -118,6 +119,20 @@ pub enum TrustedCall {
 		ParentchainBlockNumber,
 	), // (EnclaveSigner, Account, identity, validation, blocknumber)
 	verify_identity_runtime(AccountId, AccountId, Identity, ParentchainBlockNumber), // (EnclaveSigner, Account, identity, blocknumber)
+	vc_schema_issue_preflight(
+		AccountId,
+		AccountId,
+		VCSchemaId,
+		VCSchemaContent,
+		ParentchainBlockNumber,
+	), // (EnclaveSigner, Account, SchemaId, SchemaContent, blocknumber)
+	vc_schema_issue_runtime(
+		AccountId,
+		AccountId,
+		VCSchemaId,
+		VCSchemaContent,
+		ParentchainBlockNumber,
+	), // (EnclaveSigner, Account, SchemaId, SchemaContent, blocknumber)
 	set_challenge_code_runtime(AccountId, AccountId, Identity, ChallengeCode),       // only for testing
 }
 
@@ -143,6 +158,8 @@ impl TrustedCall {
 			TrustedCall::unlink_identity_runtime(account, _, _) => account,
 			TrustedCall::verify_identity_preflight(account, _, _, _, _) => account,
 			TrustedCall::verify_identity_runtime(account, _, _, _) => account,
+			TrustedCall::vc_schema_issue_preflight(account, _, _, _, _) => account,
+			TrustedCall::vc_schema_issue_runtime(account, _, _, _, _) => account,
 			TrustedCall::set_challenge_code_runtime(account, _, _, _) => account,
 		}
 	}
@@ -513,15 +530,41 @@ where
 				}
 				Ok(())
 			},
-			TrustedCall::verify_identity_preflight(
-				enclave_account,
-				account,
-				identity,
-				validation_data,
-				bn,
-			) => {
+			TrustedCall::vc_schema_issue_preflight(enclave_account, account, id, content, bn) => {
 				ensure_enclave_signer_account(&enclave_account)?;
-				Self::verify_identity_preflight(shard, account, identity, validation_data, bn)
+				Self::vc_schema_issue_preflight(account, id, content, bn)
+			},
+			TrustedCall::vc_schema_issue_runtime(enclave_account, account, id, content, bn) => {
+				ensure_enclave_signer_account(&enclave_account)?;
+				debug!(
+					"vc_schema_issue_runtime, account: {}, id: {:?}, content: {:?}, bn: {:?}",
+					account_id_to_string(&account),
+					id,
+					content,
+					bn
+				);
+				match Self::vc_schema_issue_runtime(
+					account.clone(),
+					id.clone(),
+					content.clone(),
+					bn,
+				) {
+					Ok(()) => {
+						info!(
+							"vc_schema_issue_runtime {} OK. id: {:?}",
+							account_id_to_string(&account),
+							id.clone()
+						);
+					},
+					Err(err) => {
+						info!(
+							"vc_schema_issue_runtime {} error: {}",
+							account_id_to_string(&account),
+							err
+						);
+					},
+				}
+				Ok(())
 			},
 			TrustedCall::verify_identity_runtime(enclave_account, who, identity, bn) => {
 				ensure_enclave_signer_account(&enclave_account)?;
@@ -562,6 +605,16 @@ where
 				}
 				Ok(())
 			},
+			TrustedCall::verify_identity_preflight(
+				enclave_account,
+				account,
+				identity,
+				validation_data,
+				bn,
+			) => {
+				ensure_enclave_signer_account(&enclave_account)?;
+				Self::verify_identity_preflight(shard, account, identity, validation_data, bn)
+			},
 			TrustedCall::set_challenge_code_runtime(enclave_account, account, did, code) => {
 				ensure_enclave_signer_account(&enclave_account)?;
 				Self::set_challenge_code_runtime(account, did, code)
@@ -587,6 +640,8 @@ where
 			TrustedCall::unlink_identity_runtime(..) => debug!("No storage updates needed..."),
 			TrustedCall::verify_identity_preflight(..) => debug!("No storage updates needed..."),
 			TrustedCall::verify_identity_runtime(..) => debug!("No storage updates needed..."),
+			TrustedCall::vc_schema_issue_preflight(..) => debug!("No storage updates needed..."),
+			TrustedCall::vc_schema_issue_runtime(..) => debug!("No storage updates needed..."),
 			TrustedCall::set_challenge_code_runtime(..) => debug!("No storage updates needed..."),
 			#[cfg(feature = "evm")]
 			_ => debug!("No storage updates needed..."),

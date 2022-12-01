@@ -29,16 +29,20 @@ use ita_stf::{AccountId, TrustedCall, TrustedOperation};
 use itp_node_api::{
 	api_client::ParentchainUncheckedExtrinsic,
 	metadata::{
-		pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata,
+		pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, pallet_vcm::VCMCallIndexes,
+		provider::AccessNodeMetadata,
 	},
 };
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{CallWorkerFn, OpaqueCall, ShardIdentifier, ShieldFundsFn, H256};
-use litentry_primitives::{Identity, UserShieldingKeyType, ValidationData};
+use litentry_primitives::{
+	Identity, UserShieldingKeyType, VCSchemaContent, VCSchemaId, ValidationData,
+};
 use log::*;
 use pallet_imp::{LinkIdentityFn, SetUserShieldingKeyFn, UnlinkIdentityFn, VerifyIdentityFn};
+use pallet_vcm::{VCSchemaActivatedFn, VCSchemaDisabledFn, VCSchemaIssuedFn, VCSchemaRevokedFn};
 use sp_core::blake2_256;
 use sp_runtime::traits::{AccountIdLookup, Block as ParentchainBlockTrait, Header, StaticLookup};
 use std::{sync::Arc, vec::Vec};
@@ -97,7 +101,7 @@ where
 	StfEnclaveSigner: StfEnclaveSigning,
 	TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
 	NodeMetadataProvider: AccessNodeMetadata,
-	NodeMetadataProvider::MetadataType: TeerexCallIndexes + IMPCallIndexes,
+	NodeMetadataProvider::MetadataType: TeerexCallIndexes + IMPCallIndexes + VCMCallIndexes,
 {
 	pub fn new(
 		shielding_key_repo: Arc<ShieldingKeyRepository>,
@@ -169,7 +173,6 @@ where
 
 	is_parentchain_function!(is_shield_funds_function, shield_funds_call_indexes);
 	is_parentchain_function!(is_call_worker_function, call_worker_call_indexes);
-
 	is_parentchain_function!(
 		is_set_user_shielding_key_function,
 		set_user_shielding_key_call_indexes
@@ -177,6 +180,7 @@ where
 	is_parentchain_function!(is_link_identity_funciton, link_identity_call_indexes);
 	is_parentchain_function!(is_unlink_identity_funciton, unlink_identity_call_indexes);
 	is_parentchain_function!(is_verify_identity_funciton, verify_identity_call_indexes);
+	is_parentchain_function!(is_vc_schema_issued_function, vc_schema_issued_call_indexes);
 }
 
 impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
@@ -193,7 +197,7 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 	StfEnclaveSigner: StfEnclaveSigning,
 	TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
 	NodeMetadataProvider: AccessNodeMetadata,
-	NodeMetadataProvider::MetadataType: TeerexCallIndexes + IMPCallIndexes,
+	NodeMetadataProvider::MetadataType: TeerexCallIndexes + IMPCallIndexes + VCMCallIndexes,
 {
 	fn execute_indirect_calls_in_extrinsics<ParentchainBlock>(
 		&self,
@@ -204,7 +208,8 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 	{
 		let block_number = *block.header().number();
 		let block_hash = block.hash();
-		debug!("Scanning block {:?} for relevant xt", block_number);
+		info!("Scanning block block_number {:?} for relevant xt", block_number);
+
 		let mut executed_shielding_calls = Vec::<H256>::new();
 		for xt_opaque in block.extrinsics().iter() {
 			let encoded_xt_opaque = xt_opaque.encode();
@@ -384,6 +389,43 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 						let encrypted_trusted_call =
 							shielding_key.encrypt(&trusted_operation.encode())?;
 						self.submit_trusted_call(shard, encrypted_trusted_call);
+					}
+				}
+			}
+
+			//Found VC SchemaIssued extrinsic
+			if let Ok(xt) = ParentchainUncheckedExtrinsic::<VCSchemaIssuedFn>::decode(
+				&mut encoded_xt_opaque.as_slice(),
+			) {
+				let call = self
+					.node_meta_data_provider
+					.get_from_metadata(|meta_data| meta_data.vc_schema_issued_call_indexes())??;
+
+				if self.is_vc_schema_issued_function(&xt.function.0) {
+					info!("is_vc_schema_issued_function true");
+
+					let (_, schema_id, schema_content) = xt.function;
+					info!(
+							"Found Schema Issued extrinsic in block: \nSchema Id {:?} \nSchema Content: {}",
+							bs58::encode(schema_id.clone()).into_string(),
+							bs58::encode(schema_content.clone()).into_string()
+						);
+					if let Some((multiaddress_account, _, _)) = xt.signature {
+						let account = AccountIdLookup::lookup(multiaddress_account)?;
+						let enclave_account_id = self.stf_enclave_signer.get_enclave_account()?;
+
+						let id = VCSchemaId::decode(&mut schema_id.as_slice())?;
+						let content = VCSchemaContent::decode(&mut schema_content.as_slice())?;
+
+						let trusted_call = TrustedCall::vc_schema_issue_runtime(
+							enclave_account_id,
+							account,
+							id,
+							content,
+							block_number
+								.try_into()
+								.map_err(|_| crate::error::Error::ConvertParentchainBlockNumber)?,
+						);
 					}
 				}
 			}

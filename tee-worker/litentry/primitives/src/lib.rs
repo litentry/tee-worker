@@ -35,3 +35,6 @@ pub use assertion::*;
 pub use validation_data::*;
 
 pub type ChallengeCode = [u8; 16];
+
+pub type VCSchemaId = [u8; 256];
+pub type VCSchemaContent = [u8; 2048];
